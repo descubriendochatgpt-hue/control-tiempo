@@ -144,6 +144,12 @@ table.cfg input,table.cfg select{padding:4px 6px;font-size:12px}
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:9px 16px;border-radius:20px;font-size:13px;font-weight:600;z-index:90}
 @media (prefers-reduced-motion:no-preference){.toast{animation:up .18s ease-out}}
 @keyframes up{from{opacity:0;transform:translate(-50%,8px)}}
+
+.blk{cursor:grab;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.blk small.hito{display:block;font-size:10px;font-weight:600;color:var(--bc);opacity:.95;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:1px}
+.blk.arrastrando{cursor:grabbing;z-index:25;filter:brightness(1.3);box-shadow:0 10px 26px rgba(0,0,0,.6);transform:scale(1.02)}
+.blk.nodrop{outline:2px solid var(--bad);outline-offset:-2px}
+.cell.destino{background:rgba(143,208,255,.10);box-shadow:inset 0 0 0 1px rgba(143,208,255,.35)}
 </style>
 </head>
 <body>
@@ -465,7 +471,7 @@ function recurrentesDeSemana(lunes){
     const p=P(r.proyecto);if(!p||!p.activo)return;
     if(r.cadencia>1&&(n%r.cadencia)!==0)return;
     out.push({id:r.id+'@'+lunes,rid:r.id,proyecto:r.proyecto,nombre:r.nombre,
-      horas:r.horas,pend:r.horas,etiquetas:r.etiquetas,desplaza:false,
+      horas:r.horas,pend:r.horas,etiquetas:r.etiquetas,desplaza:false,hitoNombre:'Producción recurrente',
       publica:addDays(lunes,r.diaPub),sinDeuda:!r.minimo,minimo:!!r.minimo,recurrente:true});
   });
   return out;
@@ -479,7 +485,7 @@ function tareasDisponibles(){
       h.tareas.forEach(t=>{
         const pend=Math.round((t.horas-horasTarea(t.id))*100)/100;
         if(t.estado==='completada'||pend<=0.25)return;
-        out.push({id:t.id,proyecto:p.id,hito:h.id,nombre:t.nombre,horas:t.horas,pend,
+        out.push({id:t.id,proyecto:p.id,hito:h.id,hitoNombre:h.nombre,nombre:t.nombre,horas:t.horas,pend,
           etiquetas:t.etiquetas||[],desplaza:!!t.desplaza,critica:!!t.critica,
           bloqueante:!!t.bloqueante,fecha:h.fecha});
       });
@@ -518,7 +524,7 @@ function construirCola(lunes,capacidad){
   // 4. deuda, la más antigua primero
   deuda.forEach(d=>{
     const t=tar.find(x=>x.id===d.tareaId);
-    cola.push({id:d.tareaId||uid('d'),proyecto:d.proyecto,nombre:d.nombre,pend:d.horas,
+    cola.push({id:d.tareaId||uid('d'),proyecto:d.proyecto,nombre:d.nombre,pend:d.horas,hitoNombre:t?t.hitoNombre:null,
       etiquetas:t?t.etiquetas:['escritorio'],desplaza:t?t.desplaza:false,prio:4,esDeuda:true,deudaId:d.id,
       razon:'Deuda de '+d.semanaOrigen});
   });
@@ -589,7 +595,7 @@ function generarPlan(lunes,capacidad,diasOff,opts={}){
         const h=Math.min(pend,libre);
         const fin=cur+Math.round(h*60);
         bloques.push({id:uid('b'),fecha:j.fecha,ini:cur,fin,tipo:'trabajo',proyecto:'CASA',tareaId:o.t.id,
-          nombre:o.t.nombre,estado:'planificado',
+          nombre:o.t.nombre,hito:o.h.nombre,estado:'planificado',
           motivo:'Jornada completa de obra con cargo a la cuota de '+mesDe(j.fecha)+'. Se agrupan tareas para que el viaje se pague una sola vez.'});
         usadas+=h;porProyecto.CASA=(porProyecto.CASA||0)+h;pend-=h;cur=fin;
       }
@@ -630,6 +636,7 @@ function generarPlan(lunes,capacidad,diasOff,opts={}){
       if(fin>hu.max)continue;
       bloques.push({id:uid('b'),fecha:hu.fecha,ini,fin,tipo:'trabajo',proyecto:item.proyecto,
         tareaId:item.recurrente?null:item.id,recurrenteId:item.rid||null,nombre:item.nombre,
+        hito:item.hitoNombre||null,
         estado:'planificado',deudaId:item.deudaId||null,
         motivo:item.razon+'. Colocada en «'+hu.nombre+'» porque admite '+(item.etiquetas.join(', ')||'cualquier contexto')+'.'});
       hu.usadas+=h;hu.libreMin=fin;pend-=h;usadas+=h;dset.add(item.proyecto);
@@ -756,6 +763,15 @@ function fichaEjercicio(fecha,bloque){
     ejercicios:EJ[k].l.map((n,i)=>({nombre:n,series:(k==='L'||k==='R'||k==='N')?'—':f.s,reps:(k==='L'||k==='R'||k==='N')?'—':f.r,
       peso:(reg&&reg.detalle&&reg.detalle[i]&&reg.detalle[i].peso)||'',
       hecho:!!(reg&&reg.detalle&&reg.detalle[i]&&reg.detalle[i].hecho)}))};
+}
+
+/* ---------- actividad principal de un bloque ---------- */
+function hitoDe(b){
+  if(b.hito)return b.hito;
+  if(!b.tareaId)return null;
+  for(const p of D.proyectos)for(const h of p.hitos)
+    if(h.tareas.some(t=>t.id===b.tareaId))return h.nombre;
+  return null;
 }
 /* ============================================================
    INTERFAZ — Panorama y Semana
@@ -901,7 +917,7 @@ function vSemana(){
     for(let i=0;i<7;i++){
       const f=addDays(lun,i);
       const cls=plan.diasOff.includes(f)?'bloq':estadoCelda(i,m,f);
-      h+='<div class="cell '+cls+(m%60===0?' hh':'')+'" style="grid-column:'+(i+2)+';grid-row:'+row+'"></div>';
+      h+='<div class="cell '+cls+(m%60===0?' hh':'')+'" data-d="'+i+'" data-m="'+m+'" style="grid-column:'+(i+2)+';grid-row:'+row+'"></div>';
     }
   }
   plan.bloques.slice().sort((a,b)=>a.ini-b.ini).forEach(b=>{
@@ -910,11 +926,14 @@ function vSemana(){
     const ini=Math.max(b.ini,INI), fin=Math.min(b.fin,FIN);
     const r1=2+Math.round((ini-INI)/30), span=Math.max(1,Math.round((fin-ini)/30));
     const col=b.tipo==='coche'?'var(--coche)':colorDe(b.proyecto);
+    const hi=hitoDe(b);
     const bb=b.tipo==='coche'?'#231f33':'color-mix(in srgb,'+col+' 22%, var(--surface2))';
     h+='<div class="blk'+(b.tipo==='coche'?' coche':'')+(b.estado==='hecho'?' hecho':'')+(b.estado==='anulado'?' anulado':'')+
        '" style="grid-column:'+(i+2)+';grid-row:'+r1+' / span '+Math.round(span)+';--bc:'+col+';--bb:'+bb+'" '+
-       'data-act="blk" data-id="'+b.id+'"><b>'+esc(b.nombre)+'</b>'+
-       (span>=2?'<small>'+hhmm(b.ini)+'–'+hhmm(b.fin)+'</small>':'')+'</div>';
+       'data-act="blk" data-id="'+b.id+'">'+
+       (hi&&span>=2?'<small class="hito">'+esc(hi)+'</small>':'')+
+       '<b>'+esc(b.nombre)+'</b>'+
+       (span>=(hi?4:2)?'<small>'+hhmm(b.ini)+'–'+hhmm(b.fin)+'</small>':'')+'</div>';
   });
   h+='</div></div>';
   h+='<div class="legend">'+activos().map(p=>'<span><i style="background:'+p.color+'"></i>'+esc(p.nombre)+'</span>').join('')+
@@ -951,7 +970,8 @@ function vHoy(){
     const col=b.tipo==='coche'?'var(--coche)':colorDe(b.proyecto);
     h+='<div class="tblk'+(b.estado==='hecho'?' done':'')+'" style="--pc:'+col+';'+(b.estado==='anulado'?'opacity:.4':'')+'">'+
       '<span class="hr">'+hhmm(b.ini)+'<br>'+hhmm(b.fin)+'</span>'+
-      '<span class="nm">'+esc(b.nombre)+'<small>'+esc(nombreDe(b.proyecto))+' · '+fmtH((b.fin-b.ini)/60)+'</small></span>'+
+      '<span class="nm">'+esc(b.nombre)+'<small>'+esc(nombreDe(b.proyecto))+
+      (hitoDe(b)?' · '+esc(hitoDe(b)):'')+' · '+fmtH((b.fin-b.ini)/60)+'</small></span>'+
       '<span class="row" style="gap:6px">'+
       (b.ejercicio?'<button class="btn sm" data-act="ficha" data-id="'+b.id+'">Ficha</button>':'')+
       '<button class="btn sm" data-act="blk" data-id="'+b.id+'">Acciones</button></span></div>';
@@ -1133,13 +1153,16 @@ let offTmp=null;
 function mBloque(id){
   const plan=planActual()||SEM[semanaId(lunesDe(hoyISO()))];
   const b=plan.bloques.find(x=>x.id===id);if(!b)return;
-  let h='<h3>'+esc(b.nombre)+'</h3><div class="mst">'+DIAS[diaSemana(b.fecha)]+' '+esp(b.fecha)+' · '+hhmm(b.ini)+'–'+hhmm(b.fin)+' · '+esc(nombreDe(b.proyecto))+'</div>';
+  const hi=hitoDe(b);
+  let h='<h3>'+esc(b.nombre)+'</h3><div class="mst">'+
+    (hi?'<b style="color:'+colorDe(b.proyecto)+'">'+esc(nombreDe(b.proyecto))+' › '+esc(hi)+'</b><br>':esc(nombreDe(b.proyecto))+'<br>')+
+    DIAS[diaSemana(b.fecha)]+' '+esp(b.fecha)+' · '+hhmm(b.ini)+'–'+hhmm(b.fin)+'</div>';
   if(b.motivo)h+='<div class="tiny muted" style="margin-bottom:12px;padding:9px;border:1px solid var(--line);border-radius:6px">'+esc(b.motivo)+'</div>';
   if(b.ejercicio)h+='<button class="mopt" data-act="ficha" data-id="'+b.id+'">Abrir la ficha del día<small>Ejercicios, series y repeticiones de hoy</small></button>';
   if(b.estado!=='hecho')h+='<button class="mopt" data-act="b-hecho" data-id="'+b.id+'">Marcar hecho<small>Registra '+fmtH((b.fin-b.ini)/60)+' en '+esc(nombreDe(b.proyecto))+'</small></button>';
   else h+='<button class="mopt" data-act="b-deshacer" data-id="'+b.id+'">Deshacer «hecho»</button>';
   if(!b.fijo){
-    h+='<button class="mopt" data-act="b-mover" data-id="'+b.id+'">Mover a otro día<small>Se mantiene la hora si el hueco lo admite</small></button>';
+    h+='<button class="mopt" data-act="b-mover" data-id="'+b.id+'">Mover a otro día<small>O arrástralo directamente por la cuadrícula</small></button>';
     h+='<button class="mopt" data-act="b-anular" data-id="'+b.id+'">Anular este bloque<small>Las horas pasan a deuda</small></button>';
   }
   h+='<div class="row" style="margin-top:6px"><button class="btn ghost" data-act="cerrar">Cerrar</button></div>';
@@ -1370,6 +1393,100 @@ function mConflicto(rem){
   modal(h);
 }
 /* ============================================================
+   ARRASTRAR BLOQUES POR LA CUADRÍCULA
+   Ratón: se arrastra al mover. Táctil: mantener pulsado y arrastrar.
+   ============================================================ */
+var drag=null, ultimoDrag=0;
+
+function limitesDia(){return [toMin(D.config.diaInicio||'08:00'),toMin(D.config.diaFin||'23:00')];}
+function celdaEn(x,y){
+  const e=document.elementFromPoint(x,y);
+  return (e&&e.classList&&e.classList.contains('cell')&&e.dataset.m!==undefined)?e:null;
+}
+function pintaDestino(c){
+  document.querySelectorAll('.cell.destino').forEach(x=>x.classList.remove('destino'));
+  if(c)c.classList.add('destino');
+}
+function franjaLibre(dia,fecha,ini,fin){
+  for(let m=ini;m<fin;m+=30){
+    const e=estadoCelda(dia,m,fecha);
+    if(e==='prot')return 'familia';
+    if(e==='bloq')return 'bloqueado';
+  }
+  return null;
+}
+function iniciarDrag(){
+  if(!drag||drag.activo)return;
+  drag.activo=true;
+  const r=drag.el.getBoundingClientRect();
+  const filas=Math.max(1,Math.round((drag.b.fin-drag.b.ini)/30));
+  drag.offset=Math.min(drag.b.fin-drag.b.ini-30,Math.max(0,Math.floor((drag.y0-r.top)/(r.height/filas))*30));
+  drag.el.classList.add('arrastrando');
+  drag.el.style.pointerEvents='none';
+  if(navigator.vibrate)try{navigator.vibrate(12);}catch(e){}
+}
+function terminarDrag(commit){
+  if(!drag)return;
+  clearTimeout(drag.t);
+  pintaDestino(null);
+  if(drag.activo){
+    drag.el.classList.remove('arrastrando');
+    drag.el.style.pointerEvents='';
+    ultimoDrag=Date.now();
+    if(commit&&drag.prev){
+      const b=drag.b,plan=drag.plan,dur=b.fin-b.ini;
+      const fecha=addDays(plan.lunes,drag.prev.dia);
+      if(fecha!==b.fecha||drag.prev.min!==b.ini){
+        const choque=franjaLibre(drag.prev.dia,fecha,drag.prev.min,drag.prev.min+dur);
+        if(choque==='familia'){toast('Ahí es tiempo de familia. Cámbialo en Ajustes si de verdad quieres usarlo.');render();drag=null;return;}
+        if(choque==='bloqueado'){toast('Esa franja no es tiempo útil.');render();drag=null;return;}
+        const cuota=estadoCelda(drag.prev.dia,drag.prev.min,fecha)==='cuota';
+        b.fecha=fecha;b.ini=drag.prev.min;b.fin=drag.prev.min+dur;
+        b.motivo='Movido a mano el '+esp(hoyISO())+'.';
+        guardarPronto();render();
+        toast(cuota?'Movido al fin de semana: sale del tiempo de familia':'Movido a '+DIAS3[drag.prev.dia]+' '+hhmm(b.ini));
+        drag=null;return;
+      }
+    }
+    render();
+  }
+  drag=null;
+}
+
+document.addEventListener('pointerdown',e=>{
+  if(vista!=='semana')return;
+  const el=e.target.closest('.blk');if(!el)return;
+  const plan=planActual();if(!plan)return;
+  const b=plan.bloques.find(x=>x.id===el.dataset.id);if(!b||b.estado==='anulado')return;
+  drag={el,b,plan,x0:e.clientX,y0:e.clientY,activo:false,tactil:e.pointerType!=='mouse',t:null,prev:null};
+  if(drag.tactil)drag.t=setTimeout(iniciarDrag,240);
+},{passive:true});
+
+document.addEventListener('pointermove',e=>{
+  if(!drag)return;
+  if(!drag.activo){
+    const d=Math.abs(e.clientX-drag.x0)+Math.abs(e.clientY-drag.y0);
+    if(drag.tactil){if(d>12){clearTimeout(drag.t);drag=null;}return;}
+    if(d>4)iniciarDrag();else return;
+  }
+  const c=celdaEn(e.clientX,e.clientY);
+  if(!c)return;
+  const [INI,FIN]=limitesDia(),dur=drag.b.fin-drag.b.ini;
+  let m=Number(c.dataset.m)-drag.offset;
+  m=Math.max(INI,Math.min(m,FIN-dur));
+  const dia=Number(c.dataset.d);
+  drag.prev={dia,min:m};
+  drag.el.style.gridColumn=(dia+2);
+  drag.el.style.gridRow=(2+(m-INI)/30)+' / span '+Math.max(1,Math.round(dur/30));
+  const choque=franjaLibre(dia,addDays(drag.plan.lunes,dia),m,m+dur);
+  drag.el.classList.toggle('nodrop',!!choque);
+  pintaDestino(c);
+},{passive:true});
+
+document.addEventListener('pointerup',()=>terminarDrag(true));
+document.addEventListener('pointercancel',()=>terminarDrag(false));
+document.addEventListener('touchmove',e=>{if(drag&&drag.activo)e.preventDefault();},{passive:false});
+/* ============================================================
    PERSISTENCIA, ACCIONES E INICIO
    ============================================================ */
 let guardando=false;
@@ -1548,7 +1665,7 @@ document.addEventListener('click',e=>{
      else{offTmp.push(f);el.classList.remove('ghost');}break;}
    case 'cap-ok':{const c=Number($('#capin').value||0);replanificar(semanaVista,c,offTmp||[],null);
      cerrar();guardarPronto();render();toast('Plan generado');break;}
-   case 'blk': mBloque(id);break;
+   case 'blk': if(Date.now()-ultimoDrag<350)break; mBloque(id);break;
    case 'ficha': mFicha(id);break;
    case 'b-hecho':{const b=todosBloques().find(x=>x.id===id);b.estado='hecho';registrarSesion(b);
      cerrar();guardarPronto();render();toast('Registrado');break;}
