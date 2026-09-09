@@ -1,0 +1,1706 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F1317">
+<title>Centro de mando</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0F1317; --surface:#171C22; --surface2:#1E252C; --line:#2B333C; --line2:#39434E;
+  --text:#E8ECEF; --muted:#8B98A5; --faint:#5C6874;
+  --coche:#8B7BC0; --prot:#1B2026; --bloq:#141A20;
+  --ok:#4EA98C; --warn:#D9A441; --bad:#C25B4E;
+  --r:6px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;font-variant-numeric:tabular-nums;-webkit-text-size-adjust:100%}
+body{padding-bottom:env(safe-area-inset-bottom)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{background:none;border:none;cursor:pointer}
+a{color:inherit}
+::-webkit-scrollbar{height:8px;width:8px}
+::-webkit-scrollbar-thumb{background:var(--line2);border-radius:4px}
+
+/* ---------- chrome ---------- */
+header.top{position:sticky;top:0;z-index:40;background:rgba(15,19,23,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.topin{max-width:1180px;margin:0 auto;padding:10px 14px;display:flex;align-items:center;gap:14px}
+.brand{font-weight:700;font-size:15px;letter-spacing:-.01em;white-space:nowrap}
+.brand span{color:var(--muted);font-weight:400}
+nav.tabs{display:flex;gap:2px;margin-left:auto;overflow-x:auto}
+nav.tabs button{padding:7px 12px;border-radius:var(--r);color:var(--muted);font-size:14px;font-weight:500;white-space:nowrap}
+nav.tabs button[aria-current="true"]{background:var(--surface2);color:var(--text)}
+nav.tabs button:hover{color:var(--text)}
+.savechip{font-size:12px;color:var(--faint);white-space:nowrap}
+main{max-width:1180px;margin:0 auto;padding:18px 14px 60px}
+h2.vh{font-size:20px;font-weight:600;letter-spacing:-.02em;margin-bottom:2px}
+p.sub{color:var(--muted);font-size:13px;margin-bottom:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.spacer{flex:1}
+.btn{background:var(--surface2);border:1px solid var(--line2);border-radius:var(--r);padding:7px 12px;font-size:13px;font-weight:500}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--text);color:var(--bg);border-color:var(--text);font-weight:600}
+.btn.ghost{background:none;border-color:var(--line)}
+.btn.danger{border-color:#5a2f2a;color:#e8938a}
+.btn.sm{padding:4px 8px;font-size:12px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:12px;color:var(--muted)}
+input,select,textarea{background:var(--bg);border:1px solid var(--line2);border-radius:var(--r);padding:7px 9px;font-size:14px;width:100%}
+input:focus,select,textarea:focus{outline:2px solid var(--muted);outline-offset:-1px}
+:focus-visible{outline:2px solid #7fb7e8;outline-offset:2px}
+.muted{color:var(--muted)}
+.tiny{font-size:12px}
+.warnbox{border-left:3px solid var(--warn);background:#221d12;padding:10px 12px;border-radius:0 var(--r) var(--r) 0;font-size:13px}
+.badbox{border-left:3px solid var(--bad);background:#231715;padding:10px 12px;border-radius:0 var(--r) var(--r) 0;font-size:13px}
+
+/* ---------- panorama ---------- */
+.rings{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.ringcard{background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--pc);border-radius:10px;padding:14px 12px;text-align:center;cursor:pointer}
+.ringcard:hover{border-color:var(--line2)}
+.ringwrap{position:relative;width:112px;height:112px;margin:0 auto 10px}
+.ringwrap svg{transform:rotate(-90deg)}
+.ringnum{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ringnum b{font-size:26px;font-weight:600;letter-spacing:-.03em}
+.ringnum i{font-style:normal;font-size:11px;color:var(--muted)}
+.pname{font-weight:600;font-size:14px}
+.pnext{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.35}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;vertical-align:middle;margin-right:5px}
+.hbars{display:flex;flex-direction:column;gap:8px}
+.hbar{display:grid;grid-template-columns:96px 1fr 74px;gap:10px;align-items:center;font-size:13px}
+.track{height:9px;background:var(--surface2);border-radius:5px;overflow:hidden;position:relative}
+.track i{display:block;height:100%;border-radius:5px}
+.track u{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--muted)}
+
+/* ---------- semana ---------- */
+.wkhead{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:12px;position:sticky;top:52px;z-index:30}
+.counters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.ctr{border:1px solid var(--line2);border-left:3px solid var(--pc);border-radius:var(--r);padding:5px 9px;font-size:13px}
+.ctr b{font-weight:600}
+.ctr span{color:var(--muted);font-size:12px}
+.meters{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.meters b{color:var(--text);font-weight:600}
+.gridscroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.grid{display:grid;grid-template-columns:46px repeat(7,minmax(96px,1fr));grid-auto-rows:19px;min-width:740px;position:relative}
+.gh{grid-row:1;position:sticky;top:0;z-index:6;background:var(--surface);border-bottom:1px solid var(--line2);padding:6px 4px;text-align:center;font-size:12px;font-weight:600}
+.gh small{display:block;color:var(--muted);font-weight:400;font-size:11px}
+.gh.today{color:#8fd0ff}
+.gh input{width:auto;margin-top:3px}
+.hlab{grid-column:1;font-size:11px;color:var(--faint);padding-right:5px;text-align:right;border-right:1px solid var(--line);border-top:1px solid var(--line)}
+.cell{border-top:1px solid rgba(255,255,255,.035);border-right:1px solid rgba(255,255,255,.035)}
+.cell.hh{border-top:1px solid var(--line)}
+.cell.prot{background:var(--prot);background-image:repeating-linear-gradient(135deg,transparent 0 5px,rgba(255,255,255,.02) 5px 10px)}
+.cell.bloq{background:var(--bloq)}
+.cell.exc{background:#12171d}
+.cell.cuota{background:#171d24}
+.blk{border-radius:5px;margin:1px;padding:3px 5px;font-size:11px;line-height:1.25;overflow:hidden;z-index:5;cursor:pointer;border-left:3px solid var(--bc);background:var(--bb);color:var(--text)}
+.blk:hover{filter:brightness(1.25)}
+.blk b{display:block;font-weight:600;font-size:11px}
+.blk small{color:rgba(232,236,239,.66);font-size:10px}
+.blk.hecho{opacity:.45;text-decoration:line-through}
+.blk.anulado{opacity:.3}
+.blk.fijo{cursor:pointer}
+.blk.coche{background:#231f33;border-left-color:var(--coche)}
+.blk.margen{background:transparent;border:1px dashed var(--line2);border-left:1px dashed var(--line2);color:var(--faint)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:10px}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:middle}
+
+/* ---------- hoy ---------- */
+.tblk{display:grid;grid-template-columns:64px 1fr auto;gap:10px;align-items:center;padding:11px 12px;border:1px solid var(--line);border-left:3px solid var(--pc);border-radius:8px;background:var(--surface);margin-bottom:7px}
+.tblk .hr{font-size:13px;color:var(--muted)}
+.tblk .nm{font-size:14px;font-weight:500}
+.tblk .nm small{display:block;color:var(--muted);font-weight:400;font-size:12px}
+.tblk.done .nm{opacity:.5;text-decoration:line-through}
+
+/* ---------- proyectos ---------- */
+.pcard{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--pc);border-radius:10px;padding:14px;margin-bottom:12px}
+.hitorow{display:grid;grid-template-columns:1fr 58px 74px;gap:8px;align-items:center;padding:7px 0;border-top:1px solid var(--line);font-size:13px}
+.hitorow:first-of-type{border-top:none}
+.mini{height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-top:4px}
+.mini i{display:block;height:100%}
+.taskrow{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--muted);padding:3px 0 3px 12px}
+.tag{font-size:10px;border:1px solid var(--line2);border-radius:3px;padding:1px 5px;color:var(--muted)}
+
+/* ---------- modal ---------- */
+.ov{position:fixed;inset:0;background:rgba(6,9,12,.72);z-index:80;display:flex;align-items:flex-end;justify-content:center;padding:0}
+@media(min-width:640px){.ov{align-items:center;padding:20px}}
+.modal{background:var(--surface);border:1px solid var(--line2);border-radius:12px 12px 0 0;padding:16px;width:100%;max-width:480px;max-height:86vh;overflow:auto}
+@media(min-width:640px){.modal{border-radius:12px}}
+.modal h3{font-size:16px;font-weight:600;margin-bottom:3px}
+.modal .mst{font-size:13px;color:var(--muted);margin-bottom:14px}
+.mopt{display:block;width:100%;text-align:left;padding:11px 12px;border:1px solid var(--line);border-radius:8px;margin-bottom:7px;font-size:14px}
+.mopt:hover{border-color:var(--muted);background:var(--surface2)}
+.mopt small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.exrow{display:grid;grid-template-columns:1fr 62px 60px;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line);font-size:13px}
+.chk{width:20px;height:20px;border:1px solid var(--line2);border-radius:4px;display:grid;place-items:center;font-size:12px}
+.chk.on{background:var(--ok);border-color:var(--ok);color:#08110d}
+table.cfg{width:100%;border-collapse:collapse;font-size:13px}
+table.cfg th{text-align:left;color:var(--muted);font-weight:500;font-size:12px;padding:6px 6px 6px 0;border-bottom:1px solid var(--line)}
+table.cfg td{padding:5px 6px 5px 0;border-bottom:1px solid var(--line)}
+table.cfg input,table.cfg select{padding:4px 6px;font-size:12px}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:9px 16px;border-radius:20px;font-size:13px;font-weight:600;z-index:90}
+@media (prefers-reduced-motion:no-preference){.toast{animation:up .18s ease-out}}
+@keyframes up{from{opacity:0;transform:translate(-50%,8px)}}
+</style>
+</head>
+<body>
+<header class="top"><div class="topin">
+  <div class="brand">Centro de mando <span id="wkid"></span></div>
+  <nav class="tabs" id="tabs"></nav>
+  <div class="savechip" id="save"></div>
+</div></header>
+<main id="app"></main>
+<div id="ov"></div>
+<div id="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+/* ============================================================
+   CENTRO DE MANDO — planificador de capacidad
+   Archivo único. Sin dependencias salvo SheetJS (importar .xlsx).
+   Guardado: window.storage si existe (artefacto), si no localStorage.
+   ============================================================ */
+
+/* ---------- 1. Capa de guardado (lo único que cambia entre entornos) ---------- */
+const store = {
+  async get(k){
+    try{
+      if(window.storage&&window.storage.get){const r=await window.storage.get(k);return r?JSON.parse(r.value):null;}
+      const v=localStorage.getItem('cdm:'+k);return v?JSON.parse(v):null;
+    }catch(e){return null;}
+  },
+  async set(k,v){
+    try{
+      if(window.storage&&window.storage.set){await window.storage.set(k,JSON.stringify(v));return true;}
+      localStorage.setItem('cdm:'+k,JSON.stringify(v));return true;
+    }catch(e){console.warn('guardado',e);return false;}
+  },
+  async del(k){
+    try{
+      if(window.storage&&window.storage.delete){await window.storage.delete(k);return;}
+      localStorage.removeItem('cdm:'+k);
+    }catch(e){}
+  }
+};
+const KEYS=['config-y-proyectos','semanas-plan','registro-sesiones','incidencias'];
+
+/* ---------- 2. Utilidades de fecha ---------- */
+const DIAS=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+const DIAS3=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+const MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const pad=n=>String(n).padStart(2,'0');
+function iso(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function parse(s){const[a,b,c]=s.split('-').map(Number);return new Date(a,b-1,c);}
+function esp(s){if(!s)return'—';const d=parse(s);return pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear();}
+function espCorto(s){const d=parse(s);return pad(d.getDate())+' '+MESES[d.getMonth()].slice(0,3);}
+function addDays(s,n){const d=parse(s);d.setDate(d.getDate()+n);return iso(d);}
+function lunesDe(s){const d=parse(s);const w=(d.getDay()+6)%7;d.setDate(d.getDate()-w);return iso(d);}
+function diaSemana(s){return(parse(s).getDay()+6)%7;} // 0=lunes
+function hoyISO(){return iso(new Date());}
+function semanaId(lunes){
+  const d=parse(lunes);const t=new Date(d.getFullYear(),d.getMonth(),d.getDate()+3);
+  const y=t.getFullYear();const e=new Date(y,0,4);
+  const n=1+Math.round(((t-e)/86400000-3+((e.getDay()+6)%7))/7);
+  return y+'-S'+pad(n);
+}
+function mesDe(s){return s.slice(0,7);}
+function diffDias(a,b){return Math.round((parse(b)-parse(a))/86400000);}
+const m2h=m=>m/60;
+function hhmm(m){return pad(Math.floor(m/60))+':'+pad(m%60);}
+function toMin(t){const[h,m]=t.split(':').map(Number);return h*60+m;}
+function fmtH(h){const r=Math.round(h*10)/10;return(Number.isInteger(r)?r:r.toFixed(1))+' h';}
+const uid=p=>p+'_'+Math.random().toString(36).slice(2,8);
+
+/* ---------- 3. Estado ---------- */
+let D={};                 // config + proyectos
+let SEM={};               // semanas-plan  { "2026-S40": {...} }
+let SES=[];               // sesiones
+let INC=[];               // incidencias
+let vista='panorama';
+let semanaVista=null;     // lunes iso
+let sel=new Set();        // días seleccionados en Semana
+
+/* ---------- 4. Configuración por defecto ----------
+   Reglas del calendario (Doc 2 §3, con las correcciones confirmadas:
+   familia L-V desde 17:00, fin de semana desde 9:00).
+   tipo: bloqueado | reservado | protegido | disponible | cuota | excepcional
+   dias: 0=lunes … 6=domingo. maxHoras: tope de horas utilizables del tramo. */
+const REGLAS_DEF=[
+ {id:'r_arranque', nombre:'Arranque del día', tipo:'bloqueado', dias:[0,1,2,3,4,5], ini:'08:00', fin:'09:00'},
+ {id:'r_finanzas', nombre:'Finanzas personales', tipo:'reservado', dias:[6], ini:'08:00', fin:'09:00', proy:'PERSONAL'},
+ {id:'r_ejercicio',nombre:'Ejercicio', tipo:'reservado', dias:[0,1,2,3,4,5,6], ini:'09:00', fin:'10:00', proy:'SALUD'},
+ {id:'r_trabajo', nombre:'Trabajo (1 h extraíble)',tipo:'disponible',dias:[0,1,2,3,4], ini:'10:00', fin:'14:00', maxHoras:1, etiquetas:['comercial','escritorio']},
+ {id:'r_mediodia',nombre:'Libre de mediodía', tipo:'disponible',dias:[0,1,2,3,4], ini:'14:00', fin:'15:00', etiquetas:['escritorio','cita']},
+ {id:'r_comida', nombre:'Comida', tipo:'bloqueado', dias:[0,1,2,3,4,5,6],ini:'15:00', fin:'15:30'},
+ {id:'r_tarde', nombre:'Libre de tarde', tipo:'disponible',dias:[0,1,2,3,4], ini:'15:30', fin:'17:00', etiquetas:['escritorio','cita','luz']},
+ {id:'r_familia', nombre:'Familia', tipo:'protegido', dias:[0,1,2,3,4], ini:'17:00', fin:'21:30'},
+ {id:'r_natacion',nombre:'Natación', tipo:'reservado', dias:[4], ini:'17:30', fin:'18:15', proy:'SALUD'},
+ {id:'r_cena', nombre:'Cena', tipo:'bloqueado', dias:[0,1,2,3,4], ini:'21:30', fin:'22:00'},
+ {id:'r_noche', nombre:'Noche', tipo:'excepcional',dias:[0,1,2,3,4], ini:'22:00', fin:'23:00', activa:false, etiquetas:['escritorio']},
+ {id:'r_bordesab',nombre:'Borde de sábado', tipo:'excepcional',dias:[5], ini:'08:00', fin:'09:00', activa:false, etiquetas:['escritorio']},
+ {id:'r_finde', nombre:'Familia fin de semana',tipo:'cuota', dias:[5,6], ini:'09:00', fin:'21:30'},
+ {id:'r_plan', nombre:'Planificación semanal',tipo:'reservado',dias:[6], ini:'21:30', fin:'22:00', proy:'PERSONAL'},
+ {id:'r_bordenoc',nombre:'Borde nocturno finde',tipo:'excepcional',dias:[5,6], ini:'22:00', fin:'23:00', activa:false, etiquetas:['escritorio']}
+];
+
+const CONFIG_DEF={
+  sync:{url:'',clave:'',activo:false,base:null,dispositivo:''},
+  diaInicio:'08:00', diaFin:'23:00',   // horario visible y planificable de la cuadrícula
+  margenPct:15,
+  costeKm:0.12,
+  kmPorViaje:100,
+  minCoche:50,                 // minutos por trayecto
+  jornadaObra:{salida:'08:00',vueltaFin:'19:00',horasTrabajo:8.5},
+  umbrales:{bajo:8,alto:20},
+  equipamiento:{mancuernas:false,bandas:true,barra:true},
+  inicioPlanSalud:'2026-10-05', // semana 1 del plan de 6 meses
+  ventanaObra:[3,10],           // abril(3) a octubre(9) en índice 0-11 -> [3,9]; se usa mes>=3 && mes<=9
+  autoJornadaObra:true,
+  reglas:REGLAS_DEF,
+  cuotas:{},                    // "2026-10": {jornadas:2, vacaciones:0}
+  cuotaDefecto:2,
+  recurrentes:[
+    {id:'rc_video', proyecto:'VERTIAN',nombre:'Vídeo YouTube', horas:5,cadencia:1,diaPub:4,etiquetas:['escritorio'],fases:['Guion','Grabación','Edición','Publicación']},
+    {id:'rc_art', proyecto:'VERTIAN',nombre:'Artículo Substack (mi turno)',horas:5,cadencia:3,diaPub:3,etiquetas:['escritorio'],fases:['Documentación','Redacción','Maquetación','Publicación']},
+    {id:'rc_prosp',proyecto:'VERTIAN',nombre:'Prospección comercial', horas:1,cadencia:1,diaPub:0,etiquetas:['comercial'],minimo:true}
+  ]
+};
+
+/* ---------- 5. Proyectos de arranque (Docs 2-5). Editables y borrables. ---------- */
+function seedProyectos(){
+ const T=(n,h,ctx,ext={})=>Object.assign({id:uid('t'),nombre:n,horas:h,contexto:ctx,estado:'pendiente',critica:false,bloqueante:false,desplaza:ctx==='obra',etiquetas:ctx==='obra'?['luz','jornadaContinua','fisica']:['escritorio']},ext);
+ return [
+ {id:'CASA',nombre:'Casa',color:'#C0703A',tipo:'finito',prioridad:1,pct:47,minimo:0,activo:true,
+  fechaInicio:'2026-10-01',fechaFin:null,fechaLimite:'2027-10-31',
+  hitos:[
+   {id:'CASA_H1',nombre:'Preparación y acopio',peso:10,horas:24,fecha:'2026-12-15',estado:'pendiente',tareas:[
+     T('Fichas técnicas, replanteo y despiece',12,'escritorio'),
+     T('Presupuestos y pedidos de material',6,'llamadas',{etiquetas:['comercial','escritorio'],bloqueante:true}),
+     T('Acopio y comprobación en obra',6,'obra')]},
+   {id:'CASA_H2',nombre:'Perímetro y nivelación con zahorra',peso:10,horas:40,fecha:'2027-04-15',estado:'pendiente',tareas:[
+     T('Movimiento de tierras y cota definitiva',16,'obra',{bloqueante:true}),
+     T('Extendido y compactado de zahorra',24,'obra')]},
+   {id:'CASA_H3',nombre:'SATE paño 1 (40 m²)',peso:25,horas:115,fecha:'2027-06-30',estado:'pendiente',tareas:[
+     T('Remates previos: alféizares, bajantes, instalaciones',15,'obra'),
+     T('Lonas y mallas de sombreo',7,'obra'),
+     T('Pegado y fijado de placa',48,'obra'),
+     T('Capa base, malla y acabado',45,'obra')]},
+   {id:'CASA_H4',nombre:'SATE paño 2 (40 m²)',peso:25,horas:115,fecha:'2027-08-31',estado:'pendiente',tareas:[
+     T('Remates previos',15,'obra'),T('Lonas y mallas',7,'obra'),
+     T('Pegado y fijado de placa',48,'obra'),T('Capa base, malla y acabado',45,'obra')]},
+   {id:'CASA_H5',nombre:'SATE paño 3 (40 m²)',peso:20,horas:115,fecha:'2027-10-15',estado:'pendiente',tareas:[
+     T('Remates previos',15,'obra'),T('Lonas y mallas',7,'obra'),
+     T('Pegado y fijado de placa',48,'obra'),T('Capa base, malla y acabado',45,'obra')]},
+   {id:'CASA_H6',nombre:'Porche y techo interior',peso:10,horas:51,fecha:'2027-10-31',estado:'pendiente',tareas:[
+     T('Alicatado de porche, 10 m²',26,'obra'),
+     T('Barnizado de techo a dos manos, 50 m²',25,'obra',{etiquetas:['jornadaContinua']})]}
+  ]},
+ {id:'VERTIAN',nombre:'Vertian',color:'#3E86B8',tipo:'continuo',prioridad:1,pct:53,minimo:6,activo:true,
+  fechaInicio:'2026-10-01',fechaFin:null,fechaLimite:null,
+  hitos:[
+   {id:'VER_H1',nombre:'Suscripción premium lanzada',peso:30,horas:60,fecha:'2027-01-31',estado:'pendiente',tareas:[
+     T('Definir propuesta y precio',6,'escritorio'),
+     T('Serie fundacional de tesis',36,'escritorio'),
+     T('Página de venta y secuencia de conversión',18,'escritorio')]},
+   {id:'VER_H2',nombre:'Cartera de patrocinadores recurrentes',peso:30,horas:80,fecha:'2027-06-30',estado:'pendiente',tareas:[
+     T('Media kit y tarifario',10,'escritorio'),
+     T('Contacto y seguimiento de anunciantes',50,'llamadas',{etiquetas:['comercial']}),
+     T('Cierre y facturación de campañas',20,'llamadas',{etiquetas:['comercial']})]},
+   {id:'VER_H3',nombre:'Canal de YouTube con cadencia sostenida',peso:25,horas:120,fecha:'2027-09-30',estado:'pendiente',tareas:[
+     T('Formato, plantillas y flujo de edición',20,'escritorio')]},
+   {id:'VER_H4',nombre:'Certificaciones sistematizadas',peso:15,horas:40,fecha:'2027-03-31',estado:'pendiente',tareas:[
+     T('Plantilla de informe y flujo de trabajo',12,'escritorio'),
+     T('Visitas agrupadas por comarca',28,'cita',{etiquetas:['cita','luz'],desplaza:true})]}
+  ]},
+ {id:'SALUD',nombre:'Salud',color:'#4EA98C',tipo:'habito',prioridad:1,pct:0,minimo:0,activo:true,
+  fechaInicio:'2026-10-01',fechaFin:null,fechaLimite:null,
+  objetivoSesiones:8,hitos:[]}
+ ];
+}
+function nuevaBase(){
+  return {config:JSON.parse(JSON.stringify(CONFIG_DEF)),proyectos:seedProyectos(),deuda:[],version:1};
+}
+/* ============================================================
+   MOTOR DE PLANIFICACIÓN
+   Fase A: construir el tablero (huecos + bloques fijos)
+   Fase B: ordenar la cola (mínimos > bloqueantes > publicación > deuda > reparto)
+   Fase C: colocar cada tarea en un hueco compatible
+   Fase D: lo que no cupo -> deuda (los artículos se pierden y avisan)
+   ============================================================ */
+
+const P=id=>D.proyectos.find(p=>p.id===id);
+const activos=()=>D.proyectos.filter(p=>p.activo&&p.tipo!=='candidato');
+function colorDe(id){const p=P(id);return p?p.color:'#8B98A5';}
+function nombreDe(id){const p=P(id);return p?p.nombre:(id==='PERSONAL'?'Personal':id);}
+
+/* ---------- horas ya registradas ---------- */
+function horasTarea(tid){return SES.filter(s=>s.tareaId===tid).reduce((a,s)=>a+s.horas,0);}
+function horasHito(h){return h.tareas.reduce((a,t)=>a+horasTarea(t.id),0);}
+function horasProyecto(pid){const p=P(pid);if(!p)return 0;return p.hitos.reduce((a,h)=>a+horasHito(h),0);}
+
+/* ---------- Fase A.1 — huecos de la semana ---------- */
+function reglasDe(dia,fecha){
+  const f=fecha||hoyISO();
+  return D.config.reglas.filter(r=>r.dias.includes(dia)&&r.activa!==false
+    &&(!r.vigenteDesde||r.vigenteDesde<=f)&&(!r.vigenteHasta||r.vigenteHasta>=f));
+}
+function migrarReglas(){
+  D.config.reglas.forEach(r=>{
+    if(!r.grupo)r.grupo=r.id;
+    if(!r.vigenteDesde)r.vigenteDesde='2000-01-01';
+    if(r.vigenteHasta===undefined)r.vigenteHasta=null;
+  });
+}
+function versiones(grupo){
+  return D.config.reglas.filter(r=>r.grupo===grupo).sort((a,b)=>a.vigenteDesde<b.vigenteDesde?-1:1);
+}
+function reglaVigente(grupo,fecha){
+  const f=fecha||hoyISO();
+  const v=versiones(grupo);
+  return v.find(r=>r.vigenteDesde<=f&&(!r.vigenteHasta||r.vigenteHasta>=f))||v[v.length-1];
+}
+function huecosSemana(lunes,diasOff){
+  const out=[];
+  for(let i=0;i<7;i++){
+    const f=addDays(lunes,i);
+    if(diasOff.includes(f))continue;
+    reglasDe(i,f).forEach(r=>{
+      if(r.tipo!=='disponible'&&r.tipo!=='excepcional')return;
+      const min=toMin(r.ini),max=toMin(r.fin);
+      const dur=m2h(max-min);
+      out.push({fecha:f,dia:i,min,max,libreMin:min,horas:Math.min(dur,r.maxHoras||dur),
+                etiquetas:r.etiquetas||[],regla:r.id,nombre:r.nombre,usadas:0});
+    });
+  }
+  return out.sort((a,b)=>a.fecha<b.fecha?-1:a.fecha>b.fecha?1:a.min-b.min);
+}
+function capacidadTeorica(lunes){
+  return huecosSemana(lunes,[]).reduce((a,h)=>a+h.horas,0);
+}
+
+/* ---------- Fase A.2 — bloques fijos ---------- */
+function bloquesFijos(lunes,diasOff,jornadas){
+  const out=[];
+  for(let i=0;i<7;i++){
+    const f=addDays(lunes,i);
+    if(diasOff.includes(f))continue;
+    const hayObra=jornadas.some(j=>j.fecha===f);
+    reglasDe(i,f).forEach(r=>{
+      if(r.tipo!=='reservado')return;
+      if(r.id==='r_ejercicio'&&hayObra){
+        out.push({id:uid('b'),fecha:f,ini:toMin(D.config.jornadaObra.salida),fin:toMin(D.config.jornadaObra.salida)+20,tipo:'reservado',
+          proyecto:'SALUD',nombre:'Movilidad antes de salir',estado:'planificado',fijo:true,ejercicio:true,
+          motivo:'Jornada de obra: la sesión baja a movilidad de 20 min (Doc 4 §8).'});
+        return;
+      }
+      out.push({id:uid('b'),fecha:f,ini:toMin(r.ini),fin:toMin(r.fin),tipo:'reservado',
+        proyecto:r.proy||'PERSONAL',nombre:r.nombre,estado:'planificado',fijo:true,
+        ejercicio:r.proy==='SALUD',motivo:'Bloque fijo. Se reserva antes de repartir capacidad.'});
+    });
+  }
+  return out;
+}
+
+/* ---------- Fase A.3 — jornadas de obra con cargo a cuota ---------- */
+function cuotaMes(m){
+  const c=D.config.cuotas[m];
+  return c?c.jornadas:D.config.cuotaDefecto;
+}
+function jornadasUsadas(mes,excluirSemana){
+  let n=0;
+  Object.values(SEM).forEach(s=>{
+    if(s.id===excluirSemana)return;
+    (s.jornadas||[]).forEach(j=>{if(mesDe(j.fecha)===mes)n++;});
+  });
+  return n;
+}
+function tareasObraPendientes(){
+  const c=P('CASA');if(!c||!c.activo)return[];
+  const out=[];
+  c.hitos.forEach(h=>h.tareas.forEach(t=>{
+    const pend=t.horas-horasTarea(t.id);
+    if(t.desplaza&&t.estado!=='completada'&&pend>0.25)out.push({t,h,pend,proyecto:'CASA'});
+  }));
+  return out;
+}
+function proponerJornada(lunes,semId){
+  if(!D.config.autoJornadaObra)return null;
+  const obras=tareasObraPendientes();
+  if(!obras.length)return null;
+  const sab=addDays(lunes,5),dom=addDays(lunes,6);
+  for(const f of [sab,dom]){
+    const mes=mesDe(f);
+    if(jornadasUsadas(mes,semId)>=cuotaMes(mes))continue;
+    if(f<hoyISO())continue;
+    return {fecha:f,mes};
+  }
+  return null;
+}
+function bloquesJornada(j){
+  const cfg=D.config, vc=cfg.minCoche;
+  const sal=toMin(cfg.jornadaObra.salida)+20;          // 20 min de movilidad antes de salir
+  const iniObra=sal+vc;
+  const cIni=toMin('15:00'), cFin=toMin('15:30');
+  const trab=Math.round(cfg.jornadaObra.horasTrabajo*60);
+  // ventanas de trabajo, saltando la comida
+  const v=[];let queda=trab,cur=iniObra;
+  if(cur<cIni){const t=Math.min(queda,cIni-cur);v.push([cur,cur+t]);queda-=t;cur=cFin;}
+  if(queda>0){v.push([Math.max(cur,cFin),Math.max(cur,cFin)+queda]);}
+  const fin=v[v.length-1][1];
+  const b=[
+   {id:uid('b'),fecha:j.fecha,ini:sal,fin:sal+vc,tipo:'coche',proyecto:'CASA',nombre:'Coche a la obra',
+    estado:'planificado',motivo:D.config.kmPorViaje+' km ida y vuelta. Se contabiliza aparte de las horas de trabajo.'},
+   {id:uid('b'),fecha:j.fecha,ini:fin,fin:fin+vc,tipo:'coche',proyecto:'CASA',nombre:'Coche de vuelta',
+    estado:'planificado',motivo:'Vuelta de la obra.'}
+  ];
+  return {bloques:b,ventanas:v};
+}
+
+/* ---------- Fase B — la cola ---------- */
+function recurrentesDeSemana(lunes){
+  const out=[];const n=Math.floor(diffDias('2026-09-28',lunes)/7);
+  D.config.recurrentes.forEach(r=>{
+    const p=P(r.proyecto);if(!p||!p.activo)return;
+    if(r.cadencia>1&&(n%r.cadencia)!==0)return;
+    out.push({id:r.id+'@'+lunes,rid:r.id,proyecto:r.proyecto,nombre:r.nombre,
+      horas:r.horas,pend:r.horas,etiquetas:r.etiquetas,desplaza:false,
+      publica:addDays(lunes,r.diaPub),sinDeuda:!r.minimo,minimo:!!r.minimo,recurrente:true});
+  });
+  return out;
+}
+function tareasDisponibles(){
+  const out=[];
+  activos().forEach(p=>{
+    if(p.tipo==='habito')return;
+    p.hitos.forEach(h=>{
+      if(h.estado==='completado')return;
+      h.tareas.forEach(t=>{
+        const pend=Math.round((t.horas-horasTarea(t.id))*100)/100;
+        if(t.estado==='completada'||pend<=0.25)return;
+        out.push({id:t.id,proyecto:p.id,hito:h.id,nombre:t.nombre,horas:t.horas,pend,
+          etiquetas:t.etiquetas||[],desplaza:!!t.desplaza,critica:!!t.critica,
+          bloqueante:!!t.bloqueante,fecha:h.fecha});
+      });
+    });
+  });
+  return out;
+}
+function construirCola(lunes,capacidad){
+  const cola=[],notas=[];
+  const rec=recurrentesDeSemana(lunes);
+  const tar=tareasDisponibles();
+  const deuda=(D.deuda||[]).slice().sort((a,b)=>a.semanaOrigen<b.semanaOrigen?-1:1);
+  const bajo=capacidad<D.config.umbrales.bajo;
+
+  // 1. mínimos innegociables
+  rec.filter(r=>r.minimo).forEach(r=>cola.push(Object.assign({},r,{prio:1,razon:'Mínimo innegociable'})));
+  activos().forEach(p=>{
+    if(!p.minimo||p.tipo==='habito')return;
+    const cand=tar.filter(t=>t.proyecto===p.id);
+    let queda=p.minimo;
+    cand.forEach(t=>{
+      if(queda<=0.25)return;
+      const h=Math.min(queda,t.pend);queda-=h;
+      cola.push(Object.assign({},t,{pend:h,prio:1,razon:'Mínimo semanal de '+p.nombre}));
+    });
+  });
+  // 2. bloqueantes y críticas con fecha cercana
+  tar.filter(t=>t.bloqueante||t.critica).forEach(t=>{
+    if(cola.some(c=>c.id===t.id))return;
+    cola.push(Object.assign({},t,{prio:2,razon:t.bloqueante?'Bloquea otras tareas':'Tarea crítica'}));
+  });
+  if(bajo){notas.push({t:'aviso',m:'Capacidad por debajo de '+D.config.umbrales.bajo+' h: esta semana solo da para los mínimos y lo que bloquea a otros. No se planifica nada más.'});
+    return {cola,notas};}
+  // 3. recurrentes con fecha de publicación
+  rec.filter(r=>!r.minimo).forEach(r=>cola.push(Object.assign({},r,{prio:3,razon:'Publica el '+DIAS[diaSemana(r.publica)].toLowerCase()})));
+  // 4. deuda, la más antigua primero
+  deuda.forEach(d=>{
+    const t=tar.find(x=>x.id===d.tareaId);
+    cola.push({id:d.tareaId||uid('d'),proyecto:d.proyecto,nombre:d.nombre,pend:d.horas,
+      etiquetas:t?t.etiquetas:['escritorio'],desplaza:t?t.desplaza:false,prio:4,esDeuda:true,deudaId:d.id,
+      razon:'Deuda de '+d.semanaOrigen});
+  });
+  // 5. reparto porcentual ordinario
+  const libres=activos().filter(p=>p.tipo!=='habito');
+  const totalPct=libres.reduce((a,p)=>a+(p.pct||0),0)||100;
+  libres.forEach(p=>{
+    const cuota=capacidad*(p.pct||0)/totalPct;
+    let queda=cuota;
+    tar.filter(t=>t.proyecto===p.id&&!cola.some(c=>c.id===t.id&&!c.esDeuda))
+       .sort((a,b)=>(a.fecha||'9')<(b.fecha||'9')?-1:1)
+       .forEach(t=>{
+         if(queda<=0.25)return;
+         const h=Math.min(queda,t.pend);queda-=h;
+         cola.push(Object.assign({},t,{pend:h,prio:5,razon:'Reparto ordinario ('+p.pct+' % a '+p.nombre+')'}));
+       });
+  });
+  return {cola,notas};
+}
+
+/* ---------- Fase C — colocar ---------- */
+function compatible(item,hueco){
+  const e=item.etiquetas||[];
+  if(item.desplaza)return false;                       // solo jornada completa
+  if(e.includes('jornadaContinua'))return false;
+  if(e.includes('comercial')&&!hueco.etiquetas.includes('comercial'))return false;
+  if(e.includes('cita')&&!hueco.etiquetas.includes('cita'))return false;
+  if(e.includes('luz')&&!hueco.etiquetas.includes('luz'))return false;
+  if(e.includes('fisica')&&hueco.regla==='r_noche')return false;
+  return true;
+}
+const MAXBLK=1.5, MINBLK=0.5;
+
+function generarPlan(lunes,capacidad,diasOff,opts={}){
+  const semId=semanaId(lunes);
+  const cfg=D.config;
+  const margen=capacidad*cfg.margenPct/100;
+  const util=Math.max(0,capacidad-margen);
+  const notas=[];
+  const jornadas=[];
+
+  // jornada de obra (consume cuota y capacidad)
+  const prev=SEM[semId];
+  const jorForzadas=opts.jornadas||(prev?prev.jornadas:null);
+  if(jorForzadas&&jorForzadas.length)jorForzadas.forEach(j=>{if(!diasOff.includes(j.fecha))jornadas.push(j);});
+  else{
+    const j=proponerJornada(lunes,semId);
+    const mins=activos().reduce((a,p)=>a+(p.minimo||0),0);
+    if(j&&!diasOff.includes(j.fecha)&&capacidad>=cfg.jornadaObra.horasTrabajo+mins*0.5)jornadas.push(j);
+  }
+  let bloques=bloquesFijos(lunes,diasOff,jornadas);
+  let usadas=0;
+  const porProyecto={};
+
+  jornadas.forEach(j=>{
+    const jb=bloquesJornada(j);
+    bloques=bloques.concat(jb.bloques);
+    const obras=tareasObraPendientes();
+    let vi=0,cur=jb.ventanas[0][0],idx=0;
+    while(idx<obras.length&&vi<jb.ventanas.length){
+      const o=obras[idx];
+      let pend=o.pend;
+      while(pend>0.25&&vi<jb.ventanas.length){
+        const [a,z]=jb.ventanas[vi];
+        if(cur<a)cur=a;
+        const libre=(z-cur)/60;
+        if(libre<0.5){vi++;if(vi<jb.ventanas.length)cur=jb.ventanas[vi][0];continue;}
+        const h=Math.min(pend,libre);
+        const fin=cur+Math.round(h*60);
+        bloques.push({id:uid('b'),fecha:j.fecha,ini:cur,fin,tipo:'trabajo',proyecto:'CASA',tareaId:o.t.id,
+          nombre:o.t.nombre,estado:'planificado',
+          motivo:'Jornada completa de obra con cargo a la cuota de '+mesDe(j.fecha)+'. Se agrupan tareas para que el viaje se pague una sola vez.'});
+        usadas+=h;porProyecto.CASA=(porProyecto.CASA||0)+h;pend-=h;cur=fin;
+      }
+      idx++;
+    }
+    const mes=mesDe(j.fecha),m=parse(j.fecha).getMonth();
+    if(m<3||m>9)notas.push({t:'aviso',m:'La jornada de obra del '+esp(j.fecha)+' cae fuera de la ventana meteorológica de abril a octubre. Comprueba la previsión antes de confirmarla.'});
+    notas.push({t:'info',m:'Jornada de obra el '+DIAS[diaSemana(j.fecha)].toLowerCase()+' '+esp(j.fecha)+', '+fmtH(D.config.jornadaObra.horasTrabajo)+' de trabajo por '+fmtH(2*D.config.minCoche/60)+' de coche. Cuota de '+mes+': '+(jornadasUsadas(mes,semId)+1)+' de '+cuotaMes(mes)+'.'});
+  });
+
+  // cola y huecos
+  const {cola,notas:n2}=construirCola(lunes,capacidad);
+  n2.forEach(n=>notas.push(n));
+  const huecos=huecosSemana(lunes,diasOff);
+  const cargaDia={};
+  bloques.filter(b=>b.tipo==='trabajo').forEach(b=>{cargaDia[b.fecha]=(cargaDia[b.fecha]||0)+(b.fin-b.ini)/60;});
+  const sinSitio=[];
+  const proyDia={};
+
+  for(const item of cola){
+    if(usadas>=util-0.25){sinSitio.push(item);continue;}
+    let pend=item.pend;
+    if(item.desplaza){sinSitio.push(item);continue;}
+    const orden=item.publica?huecos.slice().sort((a,b)=>a.fecha<b.fecha?-1:a.fecha>b.fecha?1:a.min-b.min)
+      :huecos.slice().sort((a,b)=>((cargaDia[a.fecha]||0)-(cargaDia[b.fecha]||0))||(a.fecha<b.fecha?-1:a.fecha>b.fecha?1:0)||a.min-b.min);
+    for(const hu of orden){
+      if(pend<=0.25)break;
+      if(usadas>=util-0.25)break;
+      const libre=hu.horas-hu.usadas;
+      if(libre<MINBLK)continue;
+      if(!compatible(item,hu))continue;
+      if(item.publica&&hu.fecha>item.publica)continue;
+      const dset=proyDia[hu.fecha]=proyDia[hu.fecha]||new Set();
+      if(dset.size>=2&&!dset.has(item.proyecto)&&capacidad<=D.config.umbrales.alto)continue;
+      const h=Math.min(pend,libre,MAXBLK,util-usadas);
+      if(h<MINBLK)continue;
+      const ini=hu.libreMin, fin=ini+Math.round(h*60);
+      if(fin>hu.max)continue;
+      bloques.push({id:uid('b'),fecha:hu.fecha,ini,fin,tipo:'trabajo',proyecto:item.proyecto,
+        tareaId:item.recurrente?null:item.id,recurrenteId:item.rid||null,nombre:item.nombre,
+        estado:'planificado',deudaId:item.deudaId||null,
+        motivo:item.razon+'. Colocada en «'+hu.nombre+'» porque admite '+(item.etiquetas.join(', ')||'cualquier contexto')+'.'});
+      hu.usadas+=h;hu.libreMin=fin;pend-=h;usadas+=h;dset.add(item.proyecto);
+      cargaDia[hu.fecha]=(cargaDia[hu.fecha]||0)+h;
+      porProyecto[item.proyecto]=(porProyecto[item.proyecto]||0)+h;
+    }
+    if(pend>0.25)sinSitio.push(Object.assign({},item,{pend}));
+  }
+
+  // Fase D
+  sinSitio.forEach(it=>{
+    if(it.sinDeuda){
+      notas.push({t:'alerta',m:'«'+it.nombre+'» publica el '+esp(it.publica)+' y faltan '+fmtH(it.pend)+' sin sitio. Los artículos no admiten deuda: decide ya entre formato corto, aplazar o cederlo al otro socio.'});
+    }else if(it.desplaza){
+      notas.push({t:'info',m:'«'+it.nombre+'» exige desplazamiento: solo cabe en jornada completa de fin de semana o en vacaciones. No se ha programado entre semana.'});
+    }else{
+      notas.push({t:'info',m:'«'+it.nombre+'» no cupo esta semana ('+fmtH(it.pend)+'). Pasa a deuda.'});
+    }
+  });
+
+  const plan={id:semId,lunes,capacidad,diasOff,margen,util,bloques,jornadas,notas,
+    porProyecto,usadas,generado:new Date().toISOString(),sinSitio:sinSitio.filter(s=>!s.sinDeuda&&!s.desplaza).map(s=>({tareaId:s.id,proyecto:s.proyecto,nombre:s.nombre,horas:s.pend}))};
+  return plan;
+}
+
+/* ---------- deuda ---------- */
+function registrarDeuda(plan){
+  D.deuda=D.deuda||[];
+  plan.sinSitio.forEach(s=>{
+    const ya=D.deuda.find(d=>d.tareaId===s.tareaId);
+    if(ya){ya.horas=Math.max(ya.horas,s.horas);return;}
+    D.deuda.push({id:uid('deu'),tareaId:s.tareaId,proyecto:s.proyecto,nombre:s.nombre,
+      horas:s.horas,semanaOrigen:plan.id});
+  });
+}
+function saldarDeuda(deudaId,horas){
+  const d=(D.deuda||[]).find(x=>x.id===deudaId);if(!d)return;
+  d.horas-=horas;
+  if(d.horas<=0.25)D.deuda=D.deuda.filter(x=>x.id!==deudaId);
+}
+function edadDeuda(d){
+  const s=Object.values(SEM).find(s=>s.id===d.semanaOrigen);
+  if(!s)return 0;
+  return Math.max(0,Math.floor(diffDias(s.lunes,hoyISO())/7));
+}
+
+/* ---------- avance ---------- */
+function avanceHito(h){
+  if(h.avanceManual!=null)return h.avanceManual;
+  if(h.estado==='completado')return 100;
+  const est=h.tareas.reduce((a,t)=>a+t.horas,0)||h.horas||1;
+  return Math.min(95,100*horasHito(h)/est);
+}
+function avanceProyecto(p){
+  if(p.tipo==='habito')return adherencia(p,7).pct;
+  if(!p.hitos.length)return 0;
+  const tot=p.hitos.reduce((a,h)=>a+h.peso,0)||100;
+  return p.hitos.reduce((a,h)=>a+h.peso*avanceHito(h),0)/tot;
+}
+function esfuerzoProyecto(p){
+  const est=p.hitos.reduce((a,h)=>a+(h.tareas.reduce((x,t)=>x+t.horas,0)||h.horas),0);
+  return est?100*horasProyecto(p.id)/est:0;
+}
+function adherencia(p,dias){
+  const desde=addDays(hoyISO(),-dias+1);
+  let hechas=0;
+  Object.values(SEM).forEach(s=>s.bloques.forEach(b=>{
+    if(b.proyecto!=='SALUD'||b.fecha<desde||b.fecha>hoyISO())return;
+    if(b.estado==='hecho')hechas++;
+  }));
+  const obj=Math.round((p.objetivoSesiones||8)*dias/7);
+  return {hechas,obj,pct:obj?Math.min(100,100*hechas/obj):0};
+}
+function estadoProyecto(p){
+  if(p.tipo==='habito'){const a=adherencia(p,7);return a.pct>=80?'ok':a.pct>=60?'deuda':'riesgo';}
+  const deu=(D.deuda||[]).filter(d=>d.proyecto===p.id);
+  const av=avanceProyecto(p),es=esfuerzoProyecto(p);
+  if(es-av>15)return 'riesgo';
+  if(deu.length)return 'deuda';
+  return 'ok';
+}
+function viabilidad(p){
+  if(!p.fechaLimite)return null;
+  const est=p.hitos.reduce((a,h)=>a+(h.tareas.reduce((x,t)=>x+t.horas,0)||h.horas),0);
+  const pend=Math.max(0,est-horasProyecto(p.id));
+  const semanas=Math.max(1,Math.round(diffDias(hoyISO(),p.fechaLimite)/7));
+  const hist=Object.values(SEM).filter(s=>s.porProyecto&&s.porProyecto[p.id]).map(s=>s.porProyecto[p.id]);
+  const media=hist.length?hist.reduce((a,b)=>a+b,0)/hist.length:(p.pct/100)*12;
+  const necesarias=pend/semanas;
+  return {pend,semanas,media,necesarias,cabe:media>=necesarias};
+}
+
+/* ---------- ficha de ejercicio (Doc 4) ---------- */
+const EJ={
+ A:{t:'Fuerza A',l:['Dominada asistida o remo invertido','Flexiones (progresión)','Zancada búlgara','Plancha frontal','Face pull con banda']},
+ B:{t:'Fuerza B',l:['Remo con banda a una mano','Fondos en banco o pica al hombro','Peso muerto a una pierna','Pallof press','Puente de glúteo']},
+ C:{t:'Fuerza C',l:['Dominada o remo invertido','Flexiones inclinadas','Sentadilla búlgara','Hollow hold','Elevaciones de escápula']},
+ M:{t:'Movilidad y core',l:['Cat-camel y rotación torácica','Apertura de cadera 90/90','Dislocaciones con banda','Plancha lateral','Dead bug']},
+ L:{t:'Sesión ligera',l:['Caminata o bici suave 25 min','Movilidad de hombro','Estiramiento de cadena posterior']},
+ R:{t:'Movilidad de rescate (20 min)',l:['Rotación torácica','Apertura de cadera','Círculos de hombro con banda','Plancha frontal corta']},
+ N:{t:'Natación',l:['Calentamiento 200 m suave','Técnica de crol por series','Aeróbico continuo','Vuelta a la calma 100 m']}
+};
+const FASES=[{s:2,r:'8-10',n:'Fase 1 · técnica y tolerancia'},{s:3,r:'8-12',n:'Fase 2 · volumen'},
+             {s:3,r:'6-10',n:'Fase 3 · fuerza'},{s:4,r:'6-10',n:'Fase 4 · consolidación'}];
+function faseSalud(fecha){
+  const w=Math.floor(diffDias(D.config.inicioPlanSalud,fecha)/7);
+  return Math.max(0,Math.min(3,Math.floor(w/6)));
+}
+function tipoSesion(fecha,esObra,previoObra){
+  if(esObra)return 'R';
+  const d=diaSemana(fecha);
+  if(previoObra)return 'L';
+  return ['A','M','B','M','C','L','M'][d];
+}
+function fichaEjercicio(fecha,bloque){
+  const esObra=bloque&&bloque.nombre&&bloque.nombre.indexOf('Movilidad antes')===0;
+  const ayer=addDays(fecha,-1);
+  const previoObra=Object.values(SEM).some(s=>(s.jornadas||[]).some(j=>j.fecha===ayer));
+  const esNat=bloque&&bloque.nombre==='Natación';
+  const k=esNat?'N':tipoSesion(fecha,esObra,previoObra);
+  const f=FASES[faseSalud(fecha)];
+  const reg=SES.find(s=>s.tipo==='ejercicio'&&s.fecha===fecha&&s.bloqueId===(bloque&&bloque.id));
+  return {clave:k,titulo:EJ[k].t,fase:f,
+    ejercicios:EJ[k].l.map((n,i)=>({nombre:n,series:(k==='L'||k==='R'||k==='N')?'—':f.s,reps:(k==='L'||k==='R'||k==='N')?'—':f.r,
+      peso:(reg&&reg.detalle&&reg.detalle[i]&&reg.detalle[i].peso)||'',
+      hecho:!!(reg&&reg.detalle&&reg.detalle[i]&&reg.detalle[i].hecho)}))};
+}
+/* ============================================================
+   INTERFAZ — Panorama y Semana
+   ============================================================ */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let toastT;
+function toast(m){const t=$('#toast');t.innerHTML='<div class="toast">'+esc(m)+'</div>';clearTimeout(toastT);toastT=setTimeout(()=>t.innerHTML='',2200);}
+const VISTAS=[['panorama','Panorama'],['hoy','Hoy'],['semana','Semana'],['proyectos','Proyectos'],['config','Ajustes']];
+
+function planActual(){return SEM[semanaId(semanaVista)]||null;}
+function totalCoche(plan){return plan?plan.bloques.filter(b=>b.tipo==='coche'&&b.estado!=='anulado').reduce((a,b)=>a+(b.fin-b.ini)/60,0):0;}
+function viajes(plan){return plan?(plan.jornadas||[]).length:0;}
+
+/* ---------- anillo SVG ---------- */
+function anillo(pct,color,extra){
+  const r=48,c=2*Math.PI*r,off=c*(1-Math.max(0,Math.min(100,pct))/100);
+  return '<svg width="112" height="112" viewBox="0 0 112 112">'+
+   '<circle cx="56" cy="56" r="'+r+'" fill="none" stroke="#1E252C" stroke-width="9"/>'+
+   '<circle cx="56" cy="56" r="'+r+'" fill="none" stroke="'+color+'" stroke-width="9" stroke-linecap="round" stroke-dasharray="'+c+'" stroke-dashoffset="'+off+'"/>'+
+   (extra||'')+'</svg>';
+}
+const SEMAF={ok:['var(--ok)','Al día'],deuda:['var(--warn)','Con deuda'],riesgo:['var(--bad)','En riesgo']};
+
+/* ---------- PANORAMA ---------- */
+function vPanorama(){
+  const plan=SEM[semanaId(lunesDe(hoyISO()))];
+  let h='<h2 class="vh">Panorama</h2><p class="sub">Dónde está cada proyecto ahora mismo.</p>';
+  h+='<div class="rings">';
+  activos().forEach(p=>{
+    const av=avanceProyecto(p),st=estadoProyecto(p);
+    const prox=p.hitos.filter(x=>x.estado!=='completado').sort((a,b)=>(a.fecha||'9')<(b.fecha||'9')?-1:1)[0];
+    let pie;
+    if(p.tipo==='habito'){const a=adherencia(p,7);pie=a.hechas+' de '+a.obj+' sesiones esta semana';}
+    else if(prox){const d=diffDias(hoyISO(),prox.fecha);pie=esc(prox.nombre)+'<br>'+espCorto(prox.fecha)+' · '+(d>=0?d+' días':'vencido');}
+    else pie='Sin hitos pendientes';
+    h+='<div class="ringcard" style="--pc:'+p.color+'" data-act="ver-proyecto" data-id="'+p.id+'">'+
+       '<div class="ringwrap">'+anillo(av,p.color)+'<div class="ringnum"><b>'+Math.round(av)+'%</b>'+
+       '<i>'+(p.tipo==='habito'?'adherencia':'avance')+'</i></div></div>'+
+       '<div class="pname"><span class="dot" style="background:'+SEMAF[st][0]+'"></span>'+esc(p.nombre)+'</div>'+
+       '<div class="pnext">'+pie+'</div></div>';
+  });
+  h+='</div>';
+
+  // horas de la semana en curso
+  h+='<div class="card" style="margin-bottom:12px"><div class="row" style="margin-bottom:10px"><b style="font-size:14px">Esta semana</b>'+
+     '<span class="spacer"></span><span class="tiny muted">'+(plan?fmtH(plan.usadas)+' de '+fmtH(plan.capacidad)+' declaradas':'sin planificar')+'</span></div>';
+  if(plan){
+    h+='<div class="hbars">';
+    activos().forEach(p=>{
+      const prev=(plan.porProyecto[p.id]||0);
+      const real=plan.bloques.filter(b=>b.proyecto===p.id&&b.estado==='hecho'&&b.tipo==='trabajo').reduce((a,b)=>a+(b.fin-b.ini)/60,0);
+      const max=Math.max(prev,real,1);
+      h+='<div class="hbar"><span>'+esc(p.nombre)+'</span>'+
+         '<span class="track"><i style="width:'+(100*real/max)+'%;background:'+p.color+'"></i>'+
+         '<u style="left:'+(100*prev/max)+'%"></u></span>'+
+         '<span class="tiny muted">'+fmtH(real)+' / '+fmtH(prev)+'</span></div>';
+    });
+    const c=totalCoche(plan);
+    if(c>0)h+='<div class="hbar"><span>Coche</span><span class="track"><i style="width:100%;background:var(--coche)"></i></span>'+
+      '<span class="tiny muted">'+fmtH(c)+' · '+(viajes(plan)*D.config.kmPorViaje*D.config.costeKm).toFixed(2)+' €</span></div>';
+    h+='</div>';
+  }else{
+    h+='<p class="tiny muted">Declara la capacidad de la semana para ver el reparto.</p>'+
+       '<div style="margin-top:10px"><button class="btn primary" data-act="ir-semana">Planificar la semana</button></div>';
+  }
+  h+='</div>';
+
+  // avisos
+  const avisos=[];
+  (D.deuda||[]).forEach(d=>{const e=edadDeuda(d);if(e>=3)avisos.push({t:'alerta',m:'«'+d.nombre+'» acumula '+e+' semanas de deuda ('+fmtH(d.horas)+'). Replantéala o elimínala.'});});
+  activos().forEach(p=>{const v=viabilidad(p);
+    if(v&&!v.cabe)avisos.push({t:'alerta',m:p.nombre+': para llegar al '+esp(p.fechaLimite)+' harían falta '+fmtH(v.necesarias)+' a la semana y el ritmo real es de '+fmtH(v.media)+'. Faltan '+fmtH(v.necesarias-v.media)+' semanales.'});
+    else if(v)avisos.push({t:'info',m:p.nombre+': '+esp(p.fechaLimite)+' es alcanzable con '+fmtH(v.necesarias)+' semanales durante '+v.semanas+' semanas.'});});
+  if(plan)plan.notas.filter(n=>n.t!=='info').forEach(n=>avisos.push(n));
+  if(avisos.length){
+    h+='<div class="card"><b style="font-size:14px">Avisos</b><div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">';
+    avisos.forEach(a=>h+='<div class="'+(a.t==='alerta'?'badbox':'warnbox')+'">'+esc(a.m)+'</div>');
+    h+='</div></div>';
+  }
+  return h;
+}
+
+/* ---------- SEMANA ---------- */
+function estadoCelda(dia,min,fecha){
+  const rs=reglasDe(dia,fecha).filter(r=>toMin(r.ini)<=min&&toMin(r.fin)>min);
+  if(!rs.length)return 'bloq';
+  const ord=['reservado','bloqueado','protegido','cuota','disponible','excepcional'];
+  rs.sort((a,b)=>ord.indexOf(a.tipo)-ord.indexOf(b.tipo));
+  const t=rs[0].tipo;
+  return t==='protegido'?'prot':t==='cuota'?'cuota':t==='excepcional'?'exc':t==='disponible'?'':'bloq';
+}
+function vSemana(){
+  const plan=planActual();
+  const lun=semanaVista, dom=addDays(lun,6);
+  let h='<div class="row" style="margin-bottom:12px">'+
+    '<button class="btn sm" data-act="sem" data-d="-1">‹</button>'+
+    '<b style="font-size:15px">'+espCorto(lun)+' – '+espCorto(dom)+'</b>'+
+    '<button class="btn sm" data-act="sem" data-d="1">›</button>'+
+    '<button class="btn sm ghost" data-act="sem-hoy">Semana actual</button><span class="spacer"></span>'+
+    '<button class="btn '+(plan?'':'primary')+'" data-act="declarar">'+(plan?'Replanificar':'Declarar capacidad')+'</button></div>';
+
+  if(!plan){
+    return h+'<div class="card"><b>Esta semana no está planificada.</b><p class="tiny muted" style="margin-top:6px">Declara cuántas horas útiles tienes y el reparto se genera entero. Capacidad teórica del calendario: '+fmtH(capacidadTeorica(lun))+'.</p>'+
+      '<div style="margin-top:12px"><button class="btn primary" data-act="declarar">Declarar capacidad</button></div></div>';
+  }
+
+  // cabecera
+  h+='<div class="wkhead"><div class="counters">';
+  activos().forEach(p=>{
+    const hrs=plan.bloques.filter(b=>b.proyecto===p.id&&b.tipo==='trabajo'&&b.estado!=='anulado').reduce((a,b)=>a+(b.fin-b.ini)/60,0);
+    if(p.tipo==='habito'){const n=plan.bloques.filter(b=>b.proyecto===p.id&&b.estado!=='anulado').length;
+      h+='<span class="ctr" style="--pc:'+p.color+'"><b>'+esc(p.nombre)+'</b> <span>'+n+' sesiones</span></span>';return;}
+    h+='<span class="ctr" style="--pc:'+p.color+'"><b>'+esc(p.nombre)+'</b> <span>'+fmtH(hrs)+'</span></span>';
+  });
+  const c=totalCoche(plan);
+  h+='<span class="ctr" style="--pc:var(--coche)"><b>Coche</b> <span>'+fmtH(c)+' · '+(viajes(plan)*D.config.kmPorViaje*D.config.costeKm).toFixed(2)+' €</span></span>';
+  h+='</div><div class="meters">'+
+    '<span>Capacidad <b>'+fmtH(plan.capacidad)+'</b></span>'+
+    '<span>Asignadas <b>'+fmtH(plan.usadas)+'</b></span>'+
+    '<span>Margen sin asignar <b>'+fmtH(plan.margen)+'</b></span>'+
+    '<span>Sin repartir <b>'+fmtH(Math.max(0,plan.util-plan.usadas))+'</b></span>'+
+    '<span>Cuota de finde <b>'+(cuotaMes(mesDe(lun))-jornadasUsadas(mesDe(lun),null))+' de '+cuotaMes(mesDe(lun))+'</b></span>'+
+    '</div></div>';
+
+  if(sel.size)h+='<div class="row" style="margin-bottom:10px"><span class="tiny">'+sel.size+' día(s) seleccionados</span>'+
+    '<button class="btn sm danger" data-act="anular-sel">Anular esos días</button>'+
+    '<button class="btn sm ghost" data-act="limpiar-sel">Quitar selección</button></div>';
+
+  // cuadrícula
+  h+='<div class="gridscroll"><div class="grid">';
+  h+='<div class="gh" style="grid-column:1"></div>';
+  for(let i=0;i<7;i++){
+    const f=addDays(lun,i);const off=plan.diasOff.includes(f);
+    h+='<div class="gh'+(f===hoyISO()?' today':'')+'" style="grid-column:'+(i+2)+'">'+DIAS3[i]+
+       '<small>'+pad(parse(f).getDate())+(off?' · anulado':'')+'</small>'+
+       '<input type="checkbox" data-act="selday" data-f="'+f+'"'+(sel.has(f)?' checked':'')+'></div>';
+  }
+  const INI=toMin(D.config.diaInicio||'08:00'), FIN=toMin(D.config.diaFin||'23:00');
+  for(let m=INI;m<FIN;m+=30){
+    const row=2+(m-INI)/30;
+    if(m%60===0)h+='<div class="hlab" style="grid-row:'+row+' / span 2">'+hhmm(m)+'</div>';
+    for(let i=0;i<7;i++){
+      const f=addDays(lun,i);
+      const cls=plan.diasOff.includes(f)?'bloq':estadoCelda(i,m,f);
+      h+='<div class="cell '+cls+(m%60===0?' hh':'')+'" style="grid-column:'+(i+2)+';grid-row:'+row+'"></div>';
+    }
+  }
+  plan.bloques.slice().sort((a,b)=>a.ini-b.ini).forEach(b=>{
+    const i=diffDias(lun,b.fecha);if(i<0||i>6)return;
+    if(b.fin<=INI||b.ini>=FIN)return;
+    const ini=Math.max(b.ini,INI), fin=Math.min(b.fin,FIN);
+    const r1=2+Math.round((ini-INI)/30), span=Math.max(1,Math.round((fin-ini)/30));
+    const col=b.tipo==='coche'?'var(--coche)':colorDe(b.proyecto);
+    const bb=b.tipo==='coche'?'#231f33':'color-mix(in srgb,'+col+' 22%, var(--surface2))';
+    h+='<div class="blk'+(b.tipo==='coche'?' coche':'')+(b.estado==='hecho'?' hecho':'')+(b.estado==='anulado'?' anulado':'')+
+       '" style="grid-column:'+(i+2)+';grid-row:'+r1+' / span '+Math.round(span)+';--bc:'+col+';--bb:'+bb+'" '+
+       'data-act="blk" data-id="'+b.id+'"><b>'+esc(b.nombre)+'</b>'+
+       (span>=2?'<small>'+hhmm(b.ini)+'–'+hhmm(b.fin)+'</small>':'')+'</div>';
+  });
+  h+='</div></div>';
+  h+='<div class="legend">'+activos().map(p=>'<span><i style="background:'+p.color+'"></i>'+esc(p.nombre)+'</span>').join('')+
+     '<span><i style="background:var(--coche)"></i>Coche</span>'+
+     '<span><i style="background:var(--prot);outline:1px solid var(--line2)"></i>Familia y bloques protegidos</span>'+
+     '<span><i style="background:var(--bloq);outline:1px solid var(--line2)"></i>No disponible</span></div>';
+
+  if(plan.notas.length){
+    h+='<div class="card" style="margin-top:14px"><b style="font-size:14px">Por qué el plan es este</b>'+
+       '<div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">';
+    plan.notas.forEach(n=>h+='<div class="'+(n.t==='alerta'?'badbox':n.t==='aviso'?'warnbox':'tiny muted')+'">'+esc(n.m)+'</div>');
+    h+='</div></div>';
+  }
+  if((D.deuda||[]).length){
+    h+='<div class="card" style="margin-top:12px"><b style="font-size:14px">Deuda acumulada</b><div style="margin-top:8px">';
+    D.deuda.forEach(d=>h+='<div class="row tiny" style="padding:5px 0;border-top:1px solid var(--line)"><span class="dot" style="background:'+colorDe(d.proyecto)+'"></span>'+
+      esc(d.nombre)+'<span class="spacer"></span><span class="muted">'+fmtH(d.horas)+' · '+edadDeuda(d)+' sem</span>'+
+      '<button class="btn sm ghost" data-act="deuda-del" data-id="'+d.id+'">Descartar</button></div>');
+    h+='</div></div>';
+  }
+  return h;
+}
+/* ============================================================
+   INTERFAZ — Hoy, Proyectos, Ajustes
+   ============================================================ */
+function vHoy(){
+  const f=hoyISO(),lun=lunesDe(f),plan=SEM[semanaId(lun)];
+  let h='<h2 class="vh">'+DIAS[diaSemana(f)]+' '+esp(f)+'</h2><p class="sub">Lo que toca hoy.</p>';
+  if(!plan)return h+'<div class="card"><b>La semana no está planificada.</b><p class="tiny muted" style="margin-top:6px">Declara la capacidad y se genera el plan.</p><div style="margin-top:12px"><button class="btn primary" data-act="ir-semana">Ir a Semana</button></div></div>';
+  const bs=plan.bloques.filter(b=>b.fecha===f).sort((a,b)=>a.ini-b.ini);
+  if(plan.diasOff.includes(f))h+='<div class="warnbox" style="margin-bottom:12px">Día anulado. <button class="btn sm ghost" data-act="recuperar-dia" data-f="'+f+'">Recuperar día</button></div>';
+  if(!bs.length)h+='<div class="card">Hoy no hay nada planificado.</div>';
+  bs.forEach(b=>{
+    const col=b.tipo==='coche'?'var(--coche)':colorDe(b.proyecto);
+    h+='<div class="tblk'+(b.estado==='hecho'?' done':'')+'" style="--pc:'+col+';'+(b.estado==='anulado'?'opacity:.4':'')+'">'+
+      '<span class="hr">'+hhmm(b.ini)+'<br>'+hhmm(b.fin)+'</span>'+
+      '<span class="nm">'+esc(b.nombre)+'<small>'+esc(nombreDe(b.proyecto))+' · '+fmtH((b.fin-b.ini)/60)+'</small></span>'+
+      '<span class="row" style="gap:6px">'+
+      (b.ejercicio?'<button class="btn sm" data-act="ficha" data-id="'+b.id+'">Ficha</button>':'')+
+      '<button class="btn sm" data-act="blk" data-id="'+b.id+'">Acciones</button></span></div>';
+  });
+  h+='<div class="row" style="margin-top:14px"><button class="btn danger" data-act="anular-dia" data-f="'+f+'">Se me ha caído el día</button>'+
+     '<button class="btn ghost" data-act="ir-semana">Ver la semana</button></div>';
+  return h;
+}
+
+function vProyectos(){
+  let h='<div class="row" style="margin-bottom:14px"><h2 class="vh">Proyectos</h2><span class="spacer"></span>'+
+        '<button class="btn primary" data-act="proj-new">Nuevo proyecto</button></div>';
+  D.proyectos.forEach(p=>{
+    const av=avanceProyecto(p),es=esfuerzoProyecto(p),st=estadoProyecto(p);
+    const deu=(D.deuda||[]).filter(d=>d.proyecto===p.id);
+    h+='<div class="pcard" style="--pc:'+p.color+'">';
+    h+='<div class="row"><b style="font-size:16px">'+esc(p.nombre)+'</b>'+
+       '<span class="tag">'+p.tipo+'</span>'+
+       '<span class="tag" style="border-color:'+SEMAF[st][0]+';color:'+SEMAF[st][0]+'">'+SEMAF[st][1]+'</span>'+
+       '<span class="spacer"></span>'+
+       '<button class="btn sm '+(p.activo?'':'ghost')+'" data-act="proj-toggle" data-id="'+p.id+'">'+(p.activo?'Activo':'Desactivado')+'</button>'+
+       '<button class="btn sm ghost" data-act="proj-edit" data-id="'+p.id+'">Editar</button></div>';
+    h+='<div class="row tiny muted" style="margin-top:8px;gap:16px"><span>Avance <b style="color:var(--text)">'+Math.round(av)+' %</b></span>'+
+       (p.tipo!=='habito'?'<span>Esfuerzo <b style="color:var(--text)">'+Math.round(es)+' %</b></span>':'')+
+       '<span>Horas registradas <b style="color:var(--text)">'+fmtH(horasProyecto(p.id))+'</b></span>'+
+       (p.pct?'<span>Reparto <b style="color:var(--text)">'+p.pct+' %</b></span>':'')+
+       (p.fechaLimite?'<span>Límite deseado <b style="color:var(--text)">'+esp(p.fechaLimite)+'</b></span>':'')+'</div>';
+    if(p.tipo!=='habito'&&es-av>15)h+='<div class="warnbox" style="margin-top:10px">El esfuerzo va '+Math.round(es-av)+' puntos por delante del avance. O las estimaciones son cortas o el hito está mal definido.</div>';
+    if(p.tipo==='habito'){
+      [7,30,90].forEach(d=>{const a=adherencia(p,d);
+        h+='<div class="hbar" style="margin-top:8px"><span class="tiny muted">'+d+' días</span>'+
+           '<span class="track"><i style="width:'+a.pct+'%;background:'+p.color+'"></i></span>'+
+           '<span class="tiny muted">'+a.hechas+'/'+a.obj+'</span></div>';});
+    }
+    p.hitos.forEach(hi=>{
+      const a=avanceHito(hi);
+      h+='<div class="hitorow"><span>'+esc(hi.nombre)+
+         '<span class="mini"><i style="width:'+a+'%;background:'+p.color+'"></i></span></span>'+
+         '<span class="tiny muted">'+Math.round(a)+' %</span>'+
+         '<span class="row" style="gap:4px;justify-content:flex-end"><span class="tiny muted">'+esc(hi.peso)+'</span>'+
+         '<button class="btn sm ghost" data-act="hito-edit" data-p="'+p.id+'" data-h="'+hi.id+'">···</button></span></div>';
+      hi.tareas.forEach(t=>{
+        const hr=horasTarea(t.id),pend=t.horas-hr;
+        h+='<div class="taskrow"><span class="dot" style="background:'+(pend<=0.25?'var(--ok)':'var(--line2)')+'"></span>'+
+          esc(t.nombre)+'<span class="spacer"></span>'+
+          (t.desplaza?'<span class="tag">obra</span>':'')+(t.bloqueante?'<span class="tag">bloqueante</span>':'')+
+          '<span>'+fmtH(hr)+' / '+fmtH(t.horas)+'</span>'+
+          '<button class="btn sm ghost" data-act="tarea-edit" data-p="'+p.id+'" data-h="'+hi.id+'" data-t="'+t.id+'">···</button></div>';
+      });
+    });
+    if(p.tipo!=='habito')h+='<div class="row" style="margin-top:10px"><button class="btn sm ghost" data-act="hito-new" data-p="'+p.id+'">Añadir hito</button></div>';
+    if(deu.length)h+='<div class="warnbox" style="margin-top:10px">Deuda: '+deu.map(d=>esc(d.nombre)+' ('+fmtH(d.horas)+')').join(', ')+'</div>';
+    h+='</div>';
+  });
+  return h;
+}
+
+function vConfig(){
+  const c=D.config;
+  let h='<h2 class="vh">Ajustes</h2><p class="sub">Aquí se cambian las reglas. El uso diario está en las otras vistas.</p>';
+  h+='<div class="card" style="margin-bottom:12px">'+
+     '<div class="row"><b style="font-size:14px">Horario de la cuadrícula</b></div>'+
+     '<p class="tiny muted" style="margin:4px 0 10px">El tramo del día que se ve y se puede planificar. Fuera de él no se propone nada.</p>'+
+     '<div class="row"><div class="field" style="width:130px"><label>Empieza</label>'+
+     '<input type="time" value="'+(c.diaInicio||'08:00')+'" data-act="cfgt" data-k="diaInicio"></div>'+
+     '<div class="field" style="width:130px"><label>Termina</label>'+
+     '<input type="time" value="'+(c.diaFin||'23:00')+'" data-act="cfgt" data-k="diaFin"></div></div></div>';
+
+  const hoy=hoyISO();
+  const grupos=[];c.reglas.forEach(r=>{if(!grupos.includes(r.grupo||r.id))grupos.push(r.grupo||r.id);});
+  h+='<div class="card" style="margin-bottom:12px">'+
+     '<div class="row"><b style="font-size:14px">Franjas del día</b><span class="spacer"></span>'+
+     '<button class="btn sm" data-act="regla-new">Añadir franja</button></div>'+
+     '<p class="tiny muted" style="margin:4px 0 10px">Cada cambio se guarda con una fecha desde la que entra en vigor. Las semanas ya planificadas no se tocan.</p>'+
+     '<div style="overflow-x:auto"><table class="cfg"><tr><th>Franja</th><th>Días</th><th>Horario</th><th>Estado</th><th></th></tr>';
+  grupos.forEach(g=>{
+    const vs=versiones(g);if(!vs.length)return;
+    const act=reglaVigente(g,hoy);
+    const fut=vs.find(r=>r.vigenteDesde>hoy);
+    const caduca=act&&act.vigenteHasta&&act.vigenteHasta<hoy;
+    if(caduca&&!fut)return;
+    const r=act||vs[vs.length-1];
+    h+='<tr><td>'+esc(r.nombre)+(r.activa===false?' <span class="tag">off</span>':'')+
+       (fut?'<br><span class="tiny muted">cambia el '+esp(fut.vigenteDesde)+'</span>':'')+'</td>'+
+       '<td class="tiny muted">'+r.dias.map(d=>DIAS3[d]).join(' ')+'</td>'+
+       '<td class="tiny">'+r.ini+'–'+r.fin+(r.maxHoras?' <span class="muted">('+r.maxHoras+' h útil)</span>':'')+'</td>'+
+       '<td class="tiny muted">'+r.tipo+'</td>'+
+       '<td><button class="btn sm ghost" data-act="regla-edit" data-g="'+g+'">Editar</button></td></tr>';
+  });
+  h+='</table></div></div>';
+
+  h+='<div class="card" style="margin-bottom:12px"><b style="font-size:14px">Cuota de fin de semana, mes a mes</b>'+
+     '<p class="tiny muted" style="margin:4px 0 10px">Jornadas completas de obra que aceptas ceder del tiempo de familia en cada mes.</p>'+
+     '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px">';
+  const base=lunesDe(hoyISO());
+  for(let i=0;i<12;i++){
+    const d=parse(base);d.setMonth(d.getMonth()+i);const m=iso(d).slice(0,7);
+    h+='<div class="field"><label>'+MESES[d.getMonth()].slice(0,3)+' '+d.getFullYear()+'</label>'+
+       '<input type="number" min="0" max="8" value="'+cuotaMes(m)+'" data-act="cuota" data-m="'+m+'"></div>';
+  }
+  h+='</div></div>';
+
+  h+='<div class="card" style="margin-bottom:12px"><b style="font-size:14px">Reparto y desplazamiento</b>'+
+     '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:10px">';
+  D.proyectos.filter(p=>p.tipo!=='habito').forEach(p=>{
+    h+='<div class="field"><label>'+esc(p.nombre)+' (% reparto)</label><input type="number" min="0" max="100" value="'+p.pct+'" data-act="pct" data-id="'+p.id+'"></div>'+
+       '<div class="field"><label>'+esc(p.nombre)+' (mínimo h/sem)</label><input type="number" min="0" step="0.5" value="'+p.minimo+'" data-act="min" data-id="'+p.id+'"></div>';
+  });
+  h+='<div class="field"><label>Margen sin asignar (%)</label><input type="number" min="0" max="50" value="'+c.margenPct+'" data-act="cfg" data-k="margenPct"></div>'+
+     '<div class="field"><label>Coste por km (€)</label><input type="number" step="0.01" value="'+c.costeKm+'" data-act="cfg" data-k="costeKm"></div>'+
+     '<div class="field"><label>Km por viaje</label><input type="number" value="'+c.kmPorViaje+'" data-act="cfg" data-k="kmPorViaje"></div>'+
+     '<div class="field"><label>Minutos por trayecto</label><input type="number" value="'+c.minCoche+'" data-act="cfg" data-k="minCoche"></div>'+
+     '</div></div>';
+
+  h+='<div class="card" style="margin-bottom:12px"><b style="font-size:14px">Tareas recurrentes</b>'+
+     '<div style="overflow-x:auto;margin-top:8px"><table class="cfg"><tr><th>Pieza</th><th>Horas</th><th>Cada</th><th>Publica</th></tr>';
+  c.recurrentes.forEach(r=>{
+    h+='<tr><td>'+esc(r.nombre)+'</td>'+
+      '<td><input style="width:64px" type="number" step="0.5" value="'+r.horas+'" data-act="rec" data-id="'+r.id+'" data-k="horas"></td>'+
+      '<td><input style="width:64px" type="number" min="1" value="'+r.cadencia+'" data-act="rec" data-id="'+r.id+'" data-k="cadencia"></td>'+
+      '<td class="tiny muted">'+DIAS3[r.diaPub]+'</td></tr>';
+  });
+  h+='</table></div></div>';
+
+  h+='<div class="card" style="margin-bottom:12px"><b style="font-size:14px">Equipamiento de entrenamiento</b>'+
+     '<div class="row" style="margin-top:10px">'+
+     Object.keys(c.equipamiento).map(k=>'<button class="btn sm '+(c.equipamiento[k]?'':'ghost')+'" data-act="equip" data-k="'+k+'">'+k+'</button>').join('')+
+     '</div><p class="tiny muted" style="margin-top:8px">Mientras no haya mancuernas, las fichas solo proponen peso corporal y bandas.</p></div>';
+
+  const sy=D.config.sync||{};
+  h+='<div class="card" style="margin-bottom:12px"><b style="font-size:14px">Sincronizar entre el móvil y el ordenador</b>'+
+     '<p class="tiny muted" style="margin:4px 0 10px">Con una hoja de Google como almacén central, los dos dispositivos ven lo mismo. Sin esto, cada navegador guarda su propia copia.</p>'+
+     '<div class="field" style="margin-bottom:9px"><label>Dirección de la aplicación web</label>'+
+     '<input placeholder="https://script.google.com/macros/s/…/exec" value="'+esc(sy.url||'')+'" data-act="syncf" data-k="url"></div>'+
+     '<div class="row" style="margin-bottom:10px">'+
+     '<div class="field" style="flex:1"><label>Clave</label><input type="password" value="'+esc(sy.clave||'')+'" data-act="syncf" data-k="clave"></div>'+
+     '<div class="field" style="width:130px"><label>Este dispositivo</label><input value="'+esc(sy.dispositivo||'')+'" data-act="syncf" data-k="dispositivo"></div></div>'+
+     '<div class="row"><button class="btn" data-act="sync-probar">Probar conexión</button>'+
+     '<button class="btn '+(sy.activo?'':'primary')+'" data-act="sync-toggle">'+(sy.activo?'Sincronización activada':'Activar sincronización')+'</button>'+
+     (sy.activo?'<button class="btn ghost" data-act="sync-ahora">Sincronizar ahora</button>':'')+'</div>'+
+     (sy.activo?'<p class="tiny muted" style="margin-top:9px">Se sincroniza sola al abrir la app, al volver a ella y unos segundos después de cada cambio.</p>':'')+
+     '</div>';
+
+  h+='<div class="card"><b style="font-size:14px">Datos</b>'+
+     '<div class="row" style="margin-top:10px">'+
+     '<button class="btn" data-act="export">Exportar JSON</button>'+
+     '<label class="btn" style="display:inline-block">Importar JSON<input type="file" accept=".json" style="display:none" data-act="import-json"></label>'+
+     '<label class="btn" style="display:inline-block">Importar plantilla .xlsx<input type="file" accept=".xlsx,.csv" style="display:none" data-act="import-xlsx"></label>'+
+     '<span class="spacer"></span><button class="btn danger" data-act="reset">Empezar de cero</button></div>'+
+     '<p class="tiny muted" style="margin-top:10px">'+(sy.activo?'Los datos se guardan en este navegador y se copian a tu hoja de Google. Aun así, exporta el JSON de vez en cuando.':'Los datos viven solo en este navegador. Exporta el JSON de vez en cuando: es tu única copia.')+'</p></div>';
+  return h;
+}
+
+/* ============================================================
+   MODALES Y ACCIONES
+   ============================================================ */
+function modal(html){$('#ov').innerHTML='<div class="ov" data-act="cerrar-ov"><div class="modal" data-stop>'+html+'</div></div>';}
+function cerrar(){$('#ov').innerHTML='';}
+
+function mDeclarar(){
+  const lun=semanaVista,plan=planActual();
+  const teor=capacidadTeorica(lun);
+  const cap=plan?plan.capacidad:Math.round(teor*10)/10;
+  let h='<h3>Capacidad de la semana</h3><div class="mst">'+espCorto(lun)+' – '+espCorto(addDays(lun,6))+
+    '. El calendario da '+fmtH(teor)+' teóricas.</div>';
+  h+='<div class="row" style="margin-bottom:12px">'+
+    '<button class="btn sm" data-act="cap-quick" data-v="'+(teor*0.5).toFixed(1)+'">Floja</button>'+
+    '<button class="btn sm" data-act="cap-quick" data-v="'+teor.toFixed(1)+'">Normal</button>'+
+    '<button class="btn sm" data-act="cap-quick" data-v="'+(teor*1.6).toFixed(1)+'">Fuerte</button></div>';
+  h+='<div class="field" style="margin-bottom:12px"><label>Horas útiles</label><input id="capin" type="number" step="0.5" min="0" value="'+cap+'"></div>';
+  h+='<div class="field" style="margin-bottom:14px"><label>Días completos no disponibles</label><div class="row">';
+  for(let i=0;i<7;i++){const f=addDays(lun,i);const on=plan&&plan.diasOff.includes(f);
+    h+='<button class="btn sm '+(on?'':'ghost')+'" data-act="off-toggle" data-f="'+f+'">'+DIAS3[i]+'</button>';}
+  h+='</div></div>';
+  h+='<div class="row"><button class="btn primary" data-act="cap-ok">Generar el plan</button><button class="btn ghost" data-act="cerrar">Cancelar</button></div>';
+  modal(h);
+}
+let offTmp=null;
+function mBloque(id){
+  const plan=planActual()||SEM[semanaId(lunesDe(hoyISO()))];
+  const b=plan.bloques.find(x=>x.id===id);if(!b)return;
+  let h='<h3>'+esc(b.nombre)+'</h3><div class="mst">'+DIAS[diaSemana(b.fecha)]+' '+esp(b.fecha)+' · '+hhmm(b.ini)+'–'+hhmm(b.fin)+' · '+esc(nombreDe(b.proyecto))+'</div>';
+  if(b.motivo)h+='<div class="tiny muted" style="margin-bottom:12px;padding:9px;border:1px solid var(--line);border-radius:6px">'+esc(b.motivo)+'</div>';
+  if(b.ejercicio)h+='<button class="mopt" data-act="ficha" data-id="'+b.id+'">Abrir la ficha del día<small>Ejercicios, series y repeticiones de hoy</small></button>';
+  if(b.estado!=='hecho')h+='<button class="mopt" data-act="b-hecho" data-id="'+b.id+'">Marcar hecho<small>Registra '+fmtH((b.fin-b.ini)/60)+' en '+esc(nombreDe(b.proyecto))+'</small></button>';
+  else h+='<button class="mopt" data-act="b-deshacer" data-id="'+b.id+'">Deshacer «hecho»</button>';
+  if(!b.fijo){
+    h+='<button class="mopt" data-act="b-mover" data-id="'+b.id+'">Mover a otro día<small>Se mantiene la hora si el hueco lo admite</small></button>';
+    h+='<button class="mopt" data-act="b-anular" data-id="'+b.id+'">Anular este bloque<small>Las horas pasan a deuda</small></button>';
+  }
+  h+='<div class="row" style="margin-top:6px"><button class="btn ghost" data-act="cerrar">Cerrar</button></div>';
+  modal(h);
+}
+function mMover(id){
+  const plan=planActual();const b=plan.bloques.find(x=>x.id===id);
+  let h='<h3>Mover «'+esc(b.nombre)+'»</h3><div class="mst">Elige el día.</div>';
+  for(let i=0;i<7;i++){const f=addDays(plan.lunes,i);
+    h+='<button class="mopt" data-act="b-mover-ok" data-id="'+id+'" data-f="'+f+'">'+DIAS[i]+' '+esp(f)+'</button>';}
+  h+='<div class="row"><button class="btn ghost" data-act="cerrar">Cancelar</button></div>';
+  modal(h);
+}
+function mAnularDia(fechas){
+  const n=fechas.length;
+  let h='<h3>Anular '+(n>1?n+' días':'el día')+'</h3><div class="mst">'+fechas.map(esp).join(', ')+'</div>';
+  h+='<button class="mopt" data-act="anular-ok" data-modo="deuda" data-f="'+fechas.join(',')+'">Dejar el hueco vacío<small>Lo anulado pasa a deuda y reaparece la semana siguiente</small></button>';
+  h+='<button class="mopt" data-act="anular-ok" data-modo="replan" data-f="'+fechas.join(',')+'">Reasignar dentro de esta semana<small>Se replanifica con la capacidad que queda</small></button>';
+  h+='<button class="mopt" data-act="anular-ok" data-modo="obra" data-f="'+fechas.join(',')+'">Anular solo lo que exige ir a la obra<small>El resto del día se mantiene</small></button>';
+  h+='<div class="row"><button class="btn ghost" data-act="cerrar">Cancelar</button></div>';
+  modal(h);
+}
+function mFicha(id){
+  const plan=planActual()||SEM[semanaId(lunesDe(hoyISO()))];
+  const b=plan.bloques.find(x=>x.id===id);if(!b)return;
+  const f=fichaEjercicio(b.fecha,b);
+  let h='<h3>'+esc(f.titulo)+'</h3><div class="mst">'+esp(b.fecha)+' · '+esc(f.fase.n)+
+    (D.config.equipamiento.mancuernas?'':' · sin mancuernas: peso corporal y bandas')+'</div>';
+  h+='<div>';
+  f.ejercicios.forEach((e,i)=>{
+    h+='<div class="exrow"><span>'+esc(e.nombre)+'<br><span class="tiny muted">'+e.series+' × '+e.reps+'</span></span>'+
+      '<input placeholder="peso" value="'+esc(e.peso)+'" data-act="ej-peso" data-id="'+b.id+'" data-i="'+i+'">'+
+      '<button class="chk'+(e.hecho?' on':'')+'" data-act="ej-ok" data-id="'+b.id+'" data-i="'+i+'">'+(e.hecho?'✓':'')+'</button></div>';
+  });
+  h+='</div><div class="row" style="margin-top:14px"><button class="btn primary" data-act="b-hecho" data-id="'+b.id+'">Sesión completa</button>'+
+     '<button class="btn ghost" data-act="cerrar">Cerrar</button></div>';
+  modal(h);
+}
+function mProyecto(id){
+  const p=id?P(id):{id:'',nombre:'',color:'#7FB7E8',tipo:'finito',pct:10,minimo:0,fechaInicio:hoyISO(),fechaFin:'',fechaLimite:'',prioridad:3,activo:true,hitos:[]};
+  let h='<h3>'+(id?'Editar':'Nuevo')+' proyecto</h3><div class="mst">'+(id?esc(p.nombre):'Entra en el reparto desde su primera semana.')+'</div>';
+  h+='<div class="field" style="margin-bottom:9px"><label>Nombre</label><input id="pn" value="'+esc(p.nombre)+'"></div>';
+  h+='<div class="row" style="margin-bottom:9px"><div class="field" style="flex:1"><label>Tipo</label><select id="pt">'+
+     ['finito','continuo','habito','candidato'].map(t=>'<option'+(p.tipo===t?' selected':'')+'>'+t+'</option>').join('')+'</select></div>'+
+     '<div class="field" style="flex:1"><label>Color</label><input id="pc" type="color" value="'+p.color+'"></div></div>';
+  h+='<div class="row" style="margin-bottom:9px"><div class="field" style="flex:1"><label>Inicio</label><input id="pi" type="date" value="'+(p.fechaInicio||'')+'"></div>'+
+     '<div class="field" style="flex:1"><label>Fin (opcional)</label><input id="pf" type="date" value="'+(p.fechaFin||'')+'"></div></div>';
+  h+='<div class="row" style="margin-bottom:9px"><div class="field" style="flex:1"><label>Fecha límite deseada</label><input id="pl" type="date" value="'+(p.fechaLimite||'')+'"></div>'+
+     '<div class="field" style="flex:1"><label>% de reparto</label><input id="pp" type="number" value="'+p.pct+'"></div></div>';
+  h+='<div class="row"><button class="btn primary" data-act="proj-save" data-id="'+(id||'')+'">Guardar</button>'+
+     '<button class="btn ghost" data-act="cerrar">Cancelar</button><span class="spacer"></span>'+
+     (id?'<button class="btn danger" data-act="proj-del" data-id="'+id+'">Eliminar</button>':'')+'</div>';
+  modal(h);
+}
+function mHito(pid,hid){
+  const p=P(pid);const hi=hid?p.hitos.find(x=>x.id===hid):{id:'',nombre:'',peso:10,horas:10,fecha:'',estado:'pendiente',tareas:[]};
+  let h='<h3>'+(hid?'Editar hito':'Nuevo hito')+'</h3><div class="mst">'+esc(p.nombre)+'</div>';
+  h+='<div class="field" style="margin-bottom:9px"><label>Nombre</label><input id="hn" value="'+esc(hi.nombre)+'"></div>';
+  h+='<div class="row" style="margin-bottom:9px"><div class="field" style="flex:1"><label>Peso (suman 100)</label><input id="hp" type="number" value="'+hi.peso+'"></div>'+
+     '<div class="field" style="flex:1"><label>Fecha objetivo</label><input id="hf" type="date" value="'+(hi.fecha||'')+'"></div></div>';
+  h+='<div class="field" style="margin-bottom:12px"><label>Estado</label><select id="he">'+
+     ['pendiente','en_curso','completado'].map(s=>'<option'+(hi.estado===s?' selected':'')+'>'+s+'</option>').join('')+'</select></div>';
+  const suma=p.hitos.reduce((a,x)=>a+(x.id===hid?0:x.peso),0);
+  h+='<p class="tiny muted" style="margin-bottom:12px">El resto de hitos suma '+suma+'.</p>';
+  h+='<div class="row"><button class="btn primary" data-act="hito-save" data-p="'+pid+'" data-h="'+(hid||'')+'">Guardar</button>'+
+     '<button class="btn ghost" data-act="cerrar">Cancelar</button><span class="spacer"></span>'+
+     (hid?'<button class="btn sm" data-act="tarea-new" data-p="'+pid+'" data-h="'+hid+'">Añadir tarea</button>'+
+          '<button class="btn danger sm" data-act="hito-del" data-p="'+pid+'" data-h="'+hid+'">Eliminar</button>':'')+'</div>';
+  modal(h);
+}
+function mTarea(pid,hid,tid){
+  const p=P(pid),hi=p.hitos.find(x=>x.id===hid);
+  const t=tid?hi.tareas.find(x=>x.id===tid):{id:'',nombre:'',horas:2,contexto:'escritorio',desplaza:false,critica:false,bloqueante:false,estado:'pendiente',etiquetas:['escritorio']};
+  const reg=tid?horasTarea(tid):0;
+  let h='<h3>'+(tid?'Editar tarea':'Nueva tarea')+'</h3><div class="mst">'+esc(hi.nombre)+'</div>';
+  h+='<div class="field" style="margin-bottom:9px"><label>Nombre</label><input id="tn" value="'+esc(t.nombre)+'"></div>';
+  h+='<div class="row" style="margin-bottom:9px"><div class="field" style="flex:1"><label>Horas estimadas</label><input id="th" type="number" step="0.5" value="'+t.horas+'"></div>'+
+     '<div class="field" style="flex:1"><label>Contexto</label><select id="tc">'+
+     ['escritorio','llamadas','obra','cita','gimnasio'].map(c=>'<option'+(t.contexto===c?' selected':'')+'>'+c+'</option>').join('')+'</select></div></div>';
+  h+='<div class="row" style="margin-bottom:12px">'+
+     '<button class="btn sm '+(t.desplaza?'':'ghost')+'" data-act="tf" data-k="desplaza">Exige desplazamiento</button>'+
+     '<button class="btn sm '+(t.critica?'':'ghost')+'" data-act="tf" data-k="critica">Crítica</button>'+
+     '<button class="btn sm '+(t.bloqueante?'':'ghost')+'" data-act="tf" data-k="bloqueante">Bloqueante</button></div>';
+  if(tid&&reg>0)h+='<p class="tiny muted" style="margin-bottom:12px">Ya hay '+fmtH(reg)+' registradas. Cambiar la estimación afecta solo a lo que queda por planificar; el historial no se toca.</p>';
+  h+='<div class="row"><button class="btn primary" data-act="tarea-save" data-p="'+pid+'" data-h="'+hid+'" data-t="'+(tid||'')+'">Guardar</button>'+
+     '<button class="btn ghost" data-act="cerrar">Cancelar</button><span class="spacer"></span>'+
+     (tid?'<button class="btn danger sm" data-act="tarea-del" data-p="'+pid+'" data-h="'+hid+'" data-t="'+tid+'">Eliminar</button>':'')+'</div>';
+  modal(h);
+}
+let flags={};
+
+const TIPOS=[['disponible','Disponible: se puede planificar trabajo'],
+             ['reservado','Reservado: bloque fijo propio (ejercicio, finanzas…)'],
+             ['protegido','Protegido: nunca se propone nada (familia)'],
+             ['bloqueado','Bloqueado: no existe como tiempo útil'],
+             ['cuota','Con cuota: solo con cargo a las jornadas del mes'],
+             ['excepcional','Excepcional: solo si lo activas a mano']];
+const TAGS=[['escritorio','Escritorio'],['comercial','Horario comercial'],['cita','Admite salir a una cita'],['luz','Con luz natural']];
+function mRegla(g){
+  const nueva=!g;
+  const r=nueva?{grupo:'',nombre:'',tipo:'disponible',dias:[0,1,2,3,4],ini:'19:00',fin:'20:00',etiquetas:['escritorio'],activa:true,maxHoras:null,proy:null}
+               :reglaVigente(g,hoyISO());
+  const prox=addDays(lunesDe(hoyISO()),7);
+  let h='<h3>'+(nueva?'Nueva franja':'Editar franja')+'</h3>'+
+        '<div class="mst">'+(nueva?'Se añade al calendario base de todas las semanas.':'El cambio entra en vigor en la fecha que elijas; lo anterior queda como historial.')+'</div>';
+  h+='<div class="field" style="margin-bottom:9px"><label>Nombre</label><input id="rn" value="'+esc(r.nombre)+'"></div>';
+  h+='<div class="field" style="margin-bottom:9px"><label>Qué es</label><select id="rt">'+
+     TIPOS.map(t=>'<option value="'+t[0]+'"'+(r.tipo===t[0]?' selected':'')+'>'+t[1]+'</option>').join('')+'</select></div>';
+  h+='<div class="field" style="margin-bottom:9px"><label>Días</label><div class="row">'+
+     DIAS3.map((d,i)=>'<button class="btn sm '+(r.dias.includes(i)?'':'ghost')+'" data-act="regla-dia" data-d="'+i+'">'+d+'</button>').join('')+'</div></div>';
+  h+='<div class="row" style="margin-bottom:9px">'+
+     '<div class="field" style="flex:1"><label>Desde</label><input id="ri" type="time" value="'+r.ini+'"></div>'+
+     '<div class="field" style="flex:1"><label>Hasta</label><input id="rf" type="time" value="'+r.fin+'"></div></div>';
+  h+='<div class="row" style="margin-bottom:9px">'+
+     '<div class="field" style="flex:1"><label>Horas realmente utilizables</label><input id="rm" type="number" step="0.5" min="0" placeholder="todas" value="'+(r.maxHoras||'')+'"></div>'+
+     '<div class="field" style="flex:1"><label>En vigor desde</label><input id="rv" type="date" value="'+(nueva?hoyISO():prox)+'"></div></div>';
+  h+='<div class="field" style="margin-bottom:9px"><label>Qué admite esta franja</label><div class="row">'+
+     TAGS.map(t=>'<button class="btn sm '+((r.etiquetas||[]).includes(t[0])?'':'ghost')+'" data-act="regla-tag" data-k="'+t[0]+'">'+t[1]+'</button>').join('')+'</div></div>';
+  h+='<div class="field" style="margin-bottom:12px"><label>Proyecto dueño del bloque (solo si es reservado)</label><select id="rp">'+
+     '<option value="">—</option><option value="PERSONAL"'+(r.proy==='PERSONAL'?' selected':'')+'>Personal</option>'+
+     D.proyectos.map(p=>'<option value="'+p.id+'"'+(r.proy===p.id?' selected':'')+'>'+esc(p.nombre)+'</option>').join('')+'</select></div>';
+  h+='<div class="row"><button class="btn primary" data-act="regla-save" data-g="'+(g||'')+'">Guardar</button>'+
+     '<button class="btn ghost" data-act="cerrar">Cancelar</button><span class="spacer"></span>'+
+     (nueva?'':'<button class="btn sm '+(r.activa===false?'ghost':'')+'" data-act="regla-on" data-g="'+g+'">'+(r.activa===false?'Desactivada':'Activa')+'</button>'+
+            '<button class="btn danger sm" data-act="regla-del" data-g="'+g+'">Eliminar</button>')+'</div>';
+  modal(h);
+}
+/* ============================================================
+   SINCRONIZACIÓN CON GOOGLE SHEETS
+   El navegador guarda siempre en local. Además, si hay hoja
+   configurada, empuja y trae los cambios para que móvil y
+   ordenador vean lo mismo.
+   ============================================================ */
+var sucio=false, syncEstado='off', syncUltima=null, syncT=null, syncOcupado=false;
+
+function syncCfg(){
+  D.config.sync=D.config.sync||{url:'',clave:'',activo:false,base:null,dispositivo:''};
+  if(!D.config.sync.dispositivo)D.config.sync.dispositivo=/Mobi|Android|iPhone/i.test(navigator.userAgent)?'Móvil':'Ordenador';
+  return D.config.sync;
+}
+function pintarEstado(){
+  const e=$('#save');if(!e)return;
+  const s=syncCfg();
+  const txt={off:guardando?'Guardando…':'Guardado en este dispositivo',
+    sync:'Sincronizando…',ok:'Sincronizado'+(syncUltima?' '+syncUltima:''),
+    pend:'Cambios sin subir',error:'Sin conexión con la hoja'}[syncEstado]||'';
+  e.innerHTML=s.activo?'<button data-act="sync-ahora" style="color:'+
+    (syncEstado==='error'?'var(--bad)':syncEstado==='pend'?'var(--warn)':'var(--faint)')+'">'+esc(txt)+'</button>':esc(txt);
+}
+function marcarSucio(){sucio=true;if(syncCfg().activo){syncEstado='pend';pintarEstado();programarSync();}}
+function programarSync(){clearTimeout(syncT);syncT=setTimeout(()=>sincronizar(false),2500);}
+
+async function syncLlamar(accion,payload){
+  const s=syncCfg();
+  if(!s.url)throw new Error('sin dirección');
+  const r=await fetch(s.url,{method:'POST',redirect:'follow',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({clave:s.clave,accion,payload})});
+  const txt=await r.text();
+  let j;try{j=JSON.parse(txt);}catch(e){throw new Error('respuesta inesperada: revisa que el acceso sea «cualquier persona»');}
+  if(j.error)throw new Error(j.error);
+  return j;
+}
+function paquete(){
+  const copia=JSON.parse(JSON.stringify(D));
+  delete copia.config.sync;                       // la clave no viaja a la hoja
+  return {datos:copia,semanas:SEM,sesiones:SES,incidencias:INC,
+    actualizado:new Date().toISOString(),dispositivo:syncCfg().dispositivo};
+}
+function horaCorta(iso){const d=new Date(iso);return pad(d.getHours())+':'+pad(d.getMinutes());}
+
+async function syncSubir(){
+  const p=paquete();
+  await syncLlamar('guardar',p);
+  const s=syncCfg();s.base=p.actualizado;
+  sucio=false;syncEstado='ok';syncUltima=horaCorta(p.actualizado);
+  await guardar(false);pintarEstado();
+}
+function adoptar(rem){
+  const s=syncCfg();
+  const mio={url:s.url,clave:s.clave,activo:s.activo,dispositivo:s.dispositivo,base:rem.actualizado};
+  D=rem.datos;D.deuda=D.deuda||[];
+  D.config=Object.assign({},CONFIG_DEF,D.config||{});
+  D.config.sync=mio;
+  migrarReglas();
+  SEM=rem.semanas||{};SES=rem.sesiones||[];INC=rem.incidencias||[];
+  sucio=false;syncEstado='ok';syncUltima=horaCorta(rem.actualizado);
+}
+
+async function sincronizar(manual){
+  const s=syncCfg();
+  if(!s.activo||!s.url){syncEstado='off';pintarEstado();return;}
+  if(syncOcupado)return;
+  syncOcupado=true;syncEstado='sync';pintarEstado();
+  try{
+    const j=await syncLlamar('leer');
+    const rem=j.payload;
+    if(!rem||!rem.datos){await syncSubir();if(manual)toast('Hoja inicializada con tus datos');}
+    else if(rem.actualizado===s.base){
+      if(sucio)await syncSubir();
+      else{syncEstado='ok';syncUltima=horaCorta(rem.actualizado);}
+    }
+    else if(!sucio){
+      adoptar(rem);await guardar(false);render();
+      if(manual)toast('Traído lo último de '+(rem.dispositivo||'la hoja'));
+    }
+    else{
+      syncOcupado=false;syncEstado='pend';pintarEstado();mConflicto(rem);return;
+    }
+  }catch(err){
+    syncEstado='error';console.warn('sync',err);
+    if(manual)toast('No he podido conectar: '+err.message);
+  }
+  syncOcupado=false;pintarEstado();
+}
+
+function mConflicto(rem){
+  window.__rem=rem;
+  const s=syncCfg();
+  let h='<h3>Hay cambios en los dos sitios</h3>'+
+    '<div class="mst">Has tocado cosas en este dispositivo y en la hoja hay una versión más nueva de '+
+    esc(rem.dispositivo||'otro dispositivo')+' ('+esp(rem.actualizado.slice(0,10))+' a las '+horaCorta(rem.actualizado)+'). Elige con cuál te quedas.</div>';
+  h+='<button class="mopt" data-act="conf-local">Quedarme con lo de este '+esc(s.dispositivo.toLowerCase())+
+     '<small>Se sube y sustituye lo de la hoja</small></button>';
+  h+='<button class="mopt" data-act="conf-remoto">Traer lo de la hoja<small>Se descarta lo que has cambiado aquí sin subir</small></button>';
+  h+='<button class="mopt" data-act="export">Descargar antes una copia de lo de aquí<small>Se guarda el JSON y luego decides</small></button>';
+  h+='<div class="row"><button class="btn ghost" data-act="cerrar">Ahora no</button></div>';
+  modal(h);
+}
+/* ============================================================
+   PERSISTENCIA, ACCIONES E INICIO
+   ============================================================ */
+let guardando=false;
+async function guardar(marcar){
+  guardando=true;pintarEstado();
+  const ok1=await store.set('config-y-proyectos',D);
+  const ok2=await store.set('semanas-plan',SEM);
+  const ok3=await store.set('registro-sesiones',SES);
+  const ok4=await store.set('incidencias',INC);
+  guardando=false;
+  pintarSave((ok1&&ok2&&ok3&&ok4)?'Guardado':'No se pudo guardar');
+}
+function pintarSave(t){const e=$('#save');if(e)e.textContent=t;}
+let debT;
+function guardarPronto(){clearTimeout(debT);debT=setTimeout(()=>guardar(true),350);}
+
+function replanificar(lun,cap,off,jor){
+  const plan=generarPlan(lun,cap,off,{jornadas:jor});
+  const prev=SEM[plan.id];
+  if(prev){ // conservar lo ya hecho
+    prev.bloques.filter(b=>b.estado==='hecho').forEach(b=>{
+      const eq=plan.bloques.find(x=>x.fecha===b.fecha&&x.ini===b.ini&&x.nombre===b.nombre);
+      if(eq)eq.estado='hecho';else plan.bloques.push(b);
+    });
+  }
+  SEM[plan.id]=plan;
+  registrarDeuda(plan);
+  return plan;
+}
+
+function registrarSesion(b){
+  const horas=(b.fin-b.ini)/60;
+  if(b.tipo==='trabajo'&&b.tareaId)SES.push({id:uid('s'),tareaId:b.tareaId,proyecto:b.proyecto,fecha:b.fecha,horas,bloqueId:b.id});
+  else if(b.ejercicio)SES.push({id:uid('s'),tipo:'ejercicio',proyecto:'SALUD',fecha:b.fecha,horas,bloqueId:b.id,detalle:[]});
+  if(b.deudaId)saldarDeuda(b.deudaId,horas);
+}
+
+function anularDias(fechas,modo){
+  const plan=planActual();if(!plan)return;
+  fechas.forEach(f=>{
+    plan.bloques.forEach(b=>{
+      if(b.fecha!==f||b.estado==='hecho')return;
+      if(modo==='obra'&&!(b.proyecto==='CASA'&&(b.tipo==='coche'||b.tareaId)))return;
+      b.estado='anulado';
+      if(b.tipo==='trabajo'&&b.tareaId){
+        D.deuda=D.deuda||[];
+        const ya=D.deuda.find(d=>d.tareaId===b.tareaId);
+        const hs=(b.fin-b.ini)/60;
+        if(ya)ya.horas+=hs;else D.deuda.push({id:uid('deu'),tareaId:b.tareaId,proyecto:b.proyecto,nombre:b.nombre,horas:hs,semanaOrigen:plan.id});
+      }
+    });
+    if(modo!=='obra'&&!plan.diasOff.includes(f))plan.diasOff.push(f);
+    if(modo==='obra')plan.jornadas=(plan.jornadas||[]).filter(j=>j.fecha!==f);
+    INC.push({id:uid('inc'),fecha:f,tipo:modo==='obra'?'meteorología':'imprevisto',alcance:modo,motivo:''});
+  });
+  if(modo==='replan'){
+    const restante=Math.max(0,plan.capacidad-plan.usadas*0.5);
+    replanificar(plan.lunes,restante,plan.diasOff,plan.jornadas);
+  }
+  guardarPronto();
+}
+
+/* ---------- importación ---------- */
+function importarLibro(wb){
+  const hoja=n=>wb.Sheets[Object.keys(wb.Sheets).find(k=>k.toLowerCase().startsWith(n))];
+  const rows=s=>s?XLSX.utils.sheet_to_json(s,{defval:''}):[];
+  const pr=rows(hoja('proyecto')),hi=rows(hoja('hito')),ta=rows(hoja('tarea'));
+  if(!pr.length)return toast('No encuentro la hoja Proyecto');
+  const errores=[];const creados=[];
+  pr.forEach((r,i)=>{
+    const id=String(r.id_proyecto||'').trim();
+    if(!id)return errores.push('Proyecto fila '+(i+2)+': falta id_proyecto');
+    const hs=hi.filter(x=>String(x.id_proyecto).trim()===id);
+    const suma=hs.reduce((a,x)=>a+Number(x.peso_1_a_100||0),0);
+    if(hs.length&&Math.round(suma)!==100)errores.push('Proyecto '+id+': los pesos de los hitos suman '+suma+', no 100');
+    creados.push({id,nombre:r.nombre||id,hitos:hs.length,tareas:ta.filter(x=>String(x.id_proyecto).trim()===id).length,raw:r,hs});
+  });
+  let h='<h3>Vista previa de la importación</h3><div class="mst">Nada se aplica hasta que confirmes.</div>';
+  creados.forEach(c=>{const ex=P(c.id);
+    h+='<div class="mopt" style="cursor:default"><b>'+esc(c.nombre)+'</b> — '+(ex?'actualizar el proyecto existente':'crear proyecto nuevo')+
+       '<small>'+c.hitos+' hitos · '+c.tareas+' tareas</small></div>';});
+  if(errores.length)h+='<div class="badbox" style="margin:10px 0">'+errores.map(esc).join('<br>')+'</div>';
+  h+='<div class="row" style="margin-top:12px">'+(errores.length?'':'<button class="btn primary" data-act="import-ok">Aplicar</button>')+
+     '<button class="btn ghost" data-act="cerrar">Cancelar</button></div>';
+  window.__imp={pr,hi,ta};
+  modal(h);
+}
+function aplicarImport(){
+  const {pr,hi,ta}=window.__imp;
+  pr.forEach(r=>{
+    const id=String(r.id_proyecto).trim();
+    let p=P(id);
+    const base={id,nombre:r.nombre||id,color:'#'+String(r.color_hex||'7FB7E8').replace('#',''),
+      tipo:(r.tipo||'finito').trim(),fechaInicio:fechaDe(r.fecha_inicio)||hoyISO(),
+      fechaFin:fechaDe(r.fecha_fin),fechaLimite:fechaDe(r.fecha_limite_deseada),
+      prioridad:Number(r.prioridad_1_a_5||3),pct:Number(r.porcentaje_reparto||10),
+      minimo:Number(r.minimo_semanal_horas||0),activo:String(r.activo||'SI').toUpperCase()!=='NO'};
+    if(!p){p=Object.assign(base,{hitos:[]});D.proyectos.push(p);}
+    else Object.assign(p,base);
+    hi.filter(x=>String(x.id_proyecto).trim()===id).forEach(x=>{
+      const hid=String(x.id_hito).trim();
+      let hh=p.hitos.find(y=>y.id===hid);
+      const b={id:hid,nombre:x.nombre_hito,peso:Number(x.peso_1_a_100||0),horas:Number(x.horas_estimadas||0),
+        fecha:fechaDe(x.fecha_objetivo),estado:(x.estado||'pendiente').trim(),dependeDe:x.depende_de_id_hito||null};
+      if(!hh){hh=Object.assign(b,{tareas:[]});p.hitos.push(hh);}else Object.assign(hh,b);
+      ta.filter(y=>String(y.id_hito).trim()===hid).forEach(y=>{
+        const tid=String(y.id_tarea).trim();
+        const dz=String(y.requiere_desplazamiento||'NO').toUpperCase()==='SI';
+        const tb={id:tid,nombre:y.nombre_tarea,horas:Number(y.horas_estimadas||0),contexto:y.contexto||'escritorio',
+          critica:String(y.critica||'NO').toUpperCase()==='SI',bloqueante:String(y.bloqueante||'NO').toUpperCase()==='SI',
+          desplaza:dz,estado:'pendiente',etiquetas:dz?['luz','jornadaContinua','fisica']:['escritorio']};
+        const ex=hh.tareas.find(z=>z.id===tid);
+        if(ex)Object.assign(ex,tb);else hh.tareas.push(tb);
+      });
+    });
+  });
+  guardarPronto();cerrar();render();toast('Importado');
+}
+function fechaDe(v){
+  if(!v)return null;
+  if(typeof v==='number'){const d=new Date(Date.UTC(1899,11,30+v));return iso(d);}
+  const s=String(v).trim();
+  if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.slice(0,10);
+  const m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if(m)return m[3]+'-'+pad(+m[2])+'-'+pad(+m[1]);
+  return null;
+}
+
+/* ---------- eventos ---------- */
+document.addEventListener('change',e=>{
+  const el=e.target.closest('[data-act]');if(!el)return;
+  const a=el.dataset.act;
+  if(a==='selday'){el.checked?sel.add(el.dataset.f):sel.delete(el.dataset.f);render();}
+  if(a==='cuota'){D.config.cuotas[el.dataset.m]={jornadas:Number(el.value)};guardarPronto();}
+  if(a==='pct'){P(el.dataset.id).pct=Number(el.value);guardarPronto();}
+  if(a==='min'){P(el.dataset.id).minimo=Number(el.value);guardarPronto();}
+  if(a==='cfg'){D.config[el.dataset.k]=Number(el.value);guardarPronto();}
+  if(a==='cfgt'){D.config[el.dataset.k]=el.value;guardarPronto();render();}
+  if(a==='syncf'){syncCfg()[el.dataset.k]=el.value.trim();guardar(false);}
+  if(a==='rec'){const r=D.config.recurrentes.find(x=>x.id===el.dataset.id);r[el.dataset.k]=Number(el.value);guardarPronto();}
+  if(a==='ej-peso'){
+    const b=todosBloques().find(x=>x.id===el.dataset.id);
+    let s=SES.find(x=>x.tipo==='ejercicio'&&x.bloqueId===b.id);
+    if(!s){s={id:uid('s'),tipo:'ejercicio',proyecto:'SALUD',fecha:b.fecha,horas:0,bloqueId:b.id,detalle:[]};SES.push(s);}
+    s.detalle[el.dataset.i]=Object.assign(s.detalle[el.dataset.i]||{},{peso:el.value});guardarPronto();
+  }
+  if(a==='import-json'){const f=el.files[0];if(!f)return;
+    const rd=new FileReader();rd.onload=()=>{try{
+      const j=JSON.parse(rd.result);
+      D=j.datos||j.D||D;SEM=j.semanas||SEM;SES=j.sesiones||SES;INC=j.incidencias||INC;
+      guardar();render();toast('Datos importados');
+    }catch(err){toast('El archivo no es válido');}};rd.readAsText(f);}
+  if(a==='import-xlsx'){const f=el.files[0];if(!f)return;
+    if(typeof XLSX==='undefined')return toast('Sin conexión: la lectura de .xlsx no está disponible');
+    const rd=new FileReader();rd.onload=()=>{try{importarLibro(XLSX.read(rd.result,{type:'array'}));}
+      catch(err){toast('No he podido leer el archivo');}};rd.readAsArrayBuffer(f);}
+});
+function todosBloques(){return Object.values(SEM).flatMap(s=>s.bloques);}
+
+document.addEventListener('click',e=>{
+  const el=e.target.closest('[data-act]');
+  if(!el){return;}
+  const a=el.dataset.act,id=el.dataset.id;
+  if(a==='cerrar-ov'&&e.target.closest('[data-stop]'))return;
+  switch(a){
+   case 'tab': vista=el.dataset.v;sel.clear();render();break;
+   case 'cerrar': case 'cerrar-ov': cerrar();break;
+   case 'ir-semana': vista='semana';semanaVista=lunesDe(hoyISO());render();break;
+   case 'ver-proyecto': vista='proyectos';render();break;
+   case 'sem': semanaVista=addDays(semanaVista,7*Number(el.dataset.d));sel.clear();render();break;
+   case 'sem-hoy': semanaVista=lunesDe(hoyISO());render();break;
+   case 'declarar': offTmp=(planActual()?planActual().diasOff.slice():[]);mDeclarar();break;
+   case 'cap-quick': $('#capin').value=el.dataset.v;break;
+   case 'off-toggle':{const f=el.dataset.f;
+     if(offTmp.includes(f)){offTmp=offTmp.filter(x=>x!==f);el.classList.add('ghost');}
+     else{offTmp.push(f);el.classList.remove('ghost');}break;}
+   case 'cap-ok':{const c=Number($('#capin').value||0);replanificar(semanaVista,c,offTmp||[],null);
+     cerrar();guardarPronto();render();toast('Plan generado');break;}
+   case 'blk': mBloque(id);break;
+   case 'ficha': mFicha(id);break;
+   case 'b-hecho':{const b=todosBloques().find(x=>x.id===id);b.estado='hecho';registrarSesion(b);
+     cerrar();guardarPronto();render();toast('Registrado');break;}
+   case 'b-deshacer':{const b=todosBloques().find(x=>x.id===id);b.estado='planificado';
+     SES=SES.filter(s=>s.bloqueId!==id);cerrar();guardarPronto();render();break;}
+   case 'b-mover': mMover(id);break;
+   case 'b-mover-ok':{const plan=planActual();const b=plan.bloques.find(x=>x.id===id);
+     b.fecha=el.dataset.f;b.motivo='Movido a mano.';cerrar();guardarPronto();render();break;}
+   case 'b-anular':{const plan=planActual();const b=plan.bloques.find(x=>x.id===id);
+     b.estado='anulado';
+     if(b.tareaId){D.deuda=D.deuda||[];D.deuda.push({id:uid('deu'),tareaId:b.tareaId,proyecto:b.proyecto,nombre:b.nombre,horas:(b.fin-b.ini)/60,semanaOrigen:plan.id});}
+     cerrar();guardarPronto();render();toast('Anulado. Pasa a deuda.');break;}
+   case 'anular-dia': mAnularDia([el.dataset.f]);break;
+   case 'anular-sel': mAnularDia([...sel]);break;
+   case 'limpiar-sel': sel.clear();render();break;
+   case 'anular-ok': anularDias(el.dataset.f.split(','),el.dataset.modo);sel.clear();cerrar();render();break;
+   case 'recuperar-dia':{const plan=planActual()||SEM[semanaId(lunesDe(hoyISO()))];
+     plan.diasOff=plan.diasOff.filter(x=>x!==el.dataset.f);
+     plan.bloques.forEach(b=>{if(b.fecha===el.dataset.f&&b.estado==='anulado')b.estado='planificado';});
+     guardarPronto();render();break;}
+   case 'deuda-del': D.deuda=D.deuda.filter(d=>d.id!==id);guardarPronto();render();break;
+   case 'proj-toggle':{const p=P(id);p.activo=!p.activo;guardarPronto();render();
+     toast(p.activo?p.nombre+' activado':p.nombre+' desactivado. Sus bloques futuros desaparecen.');break;}
+   case 'proj-new': mProyecto(null);break;
+   case 'proj-edit': mProyecto(id);break;
+   case 'proj-save':{
+     const n=$('#pn').value.trim();if(!n)return toast('Ponle nombre');
+     const o={nombre:n,tipo:$('#pt').value,color:$('#pc').value,fechaInicio:$('#pi').value,
+       fechaFin:$('#pf').value||null,fechaLimite:$('#pl').value||null,pct:Number($('#pp').value||0)};
+     if(id)Object.assign(P(id),o);
+     else D.proyectos.push(Object.assign({id:n.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,10)||uid('P'),
+       activo:true,prioridad:3,minimo:0,hitos:[]},o));
+     cerrar();guardarPronto();render();break;}
+   case 'proj-del':{
+     if(!el.dataset.conf){el.dataset.conf='1';el.textContent='Es irreversible. Pulsa otra vez';return;}
+     D.proyectos=D.proyectos.filter(p=>p.id!==id);cerrar();guardarPronto();render();toast('Proyecto eliminado');break;}
+   case 'hito-new': mHito(el.dataset.p,null);break;
+   case 'hito-edit': mHito(el.dataset.p,el.dataset.h);break;
+   case 'hito-save':{const p=P(el.dataset.p);const hid=el.dataset.h;
+     const o={nombre:$('#hn').value.trim(),peso:Number($('#hp').value||0),fecha:$('#hf').value||null,estado:$('#he').value};
+     if(hid)Object.assign(p.hitos.find(x=>x.id===hid),o);
+     else p.hitos.push(Object.assign({id:uid('H'),horas:0,tareas:[]},o));
+     const s=p.hitos.reduce((a,x)=>a+x.peso,0);
+     cerrar();guardarPronto();render();
+     if(s!==100)toast('Los pesos suman '+s+', no 100');
+     break;}
+   case 'hito-del':{const p=P(el.dataset.p);p.hitos=p.hitos.filter(x=>x.id!==el.dataset.h);
+     cerrar();guardarPronto();render();break;}
+   case 'tarea-new': mTarea(el.dataset.p,el.dataset.h,null);break;
+   case 'tarea-edit': mTarea(el.dataset.p,el.dataset.h,el.dataset.t);break;
+   case 'tf': el.classList.toggle('ghost');break;
+   case 'tarea-save':{
+     const p=P(el.dataset.p),hi=p.hitos.find(x=>x.id===el.dataset.h),tid=el.dataset.t;
+     const on=k=>{const b=document.querySelector('[data-act="tf"][data-k="'+k+'"]');return b&&!b.classList.contains('ghost');};
+     const dz=on('desplaza');
+     const o={nombre:$('#tn').value.trim(),horas:Number($('#th').value||0),contexto:$('#tc').value,
+       desplaza:dz,critica:on('critica'),bloqueante:on('bloqueante'),
+       etiquetas:dz?['luz','jornadaContinua','fisica']:[$('#tc').value==='llamadas'?'comercial':$('#tc').value==='cita'?'cita':'escritorio']};
+     if(tid)Object.assign(hi.tareas.find(x=>x.id===tid),o);
+     else hi.tareas.push(Object.assign({id:uid('T'),estado:'pendiente'},o));
+     cerrar();guardarPronto();render();break;}
+   case 'tarea-del':{const p=P(el.dataset.p),hi=p.hitos.find(x=>x.id===el.dataset.h);
+     hi.tareas=hi.tareas.filter(x=>x.id!==el.dataset.t);cerrar();guardarPronto();render();break;}
+   case 'ej-ok':{const b=todosBloques().find(x=>x.id===id);
+     let s=SES.find(x=>x.tipo==='ejercicio'&&x.bloqueId===b.id);
+     if(!s){s={id:uid('s'),tipo:'ejercicio',proyecto:'SALUD',fecha:b.fecha,horas:0,bloqueId:b.id,detalle:[]};SES.push(s);}
+     const i=el.dataset.i;s.detalle[i]=Object.assign(s.detalle[i]||{},{hecho:!(s.detalle[i]&&s.detalle[i].hecho)});
+     guardarPronto();mFicha(id);break;}
+   case 'sync-ahora': sincronizar(true);break;
+   case 'sync-toggle':{const sy=syncCfg();
+     if(!sy.url)return toast('Pega antes la dirección de la aplicación web');
+     sy.activo=!sy.activo;syncEstado=sy.activo?'pend':'off';
+     guardar(false);render();if(sy.activo)sincronizar(true);break;}
+   case 'sync-probar':{
+     (async()=>{try{const j=await syncLlamar('ping');toast('Conectado con «'+(j.hoja||'la hoja')+'»');}
+      catch(err){toast('No conecta: '+err.message);}})();break;}
+   case 'conf-local': cerrar();(async()=>{try{await syncSubir();render();toast('Subido lo de este dispositivo');}catch(e){toast('No se pudo subir');}})();break;
+   case 'conf-remoto':{const rem=window.__rem;cerrar();adoptar(rem);guardar(false);render();toast('Traído lo de la hoja');break;}
+   case 'regla-new': mRegla(null);break;
+   case 'regla-edit': mRegla(el.dataset.g);break;
+   case 'regla-dia': case 'regla-tag': el.classList.toggle('ghost');break;
+   case 'regla-on':{const g=el.dataset.g;const r=reglaVigente(g,hoyISO());r.activa=r.activa===false;
+     el.textContent=r.activa===false?'Desactivada':'Activa';el.classList.toggle('ghost',r.activa===false);
+     guardarPronto();break;}
+   case 'regla-save':{
+     const g=el.dataset.g;
+     const nombre=$('#rn').value.trim();if(!nombre)return toast('Ponle nombre a la franja');
+     const ini=$('#ri').value,fin=$('#rf').value;
+     if(!ini||!fin||toMin(fin)<=toMin(ini))return toast('La hora de fin debe ser posterior a la de inicio');
+     const dias=[];document.querySelectorAll('[data-act="regla-dia"]').forEach(b=>{if(!b.classList.contains('ghost'))dias.push(Number(b.dataset.d));});
+     if(!dias.length)return toast('Elige al menos un día');
+     const etiquetas=[];document.querySelectorAll('[data-act="regla-tag"]').forEach(b=>{if(!b.classList.contains('ghost'))etiquetas.push(b.dataset.k);});
+     const desde=$('#rv').value||hoyISO();
+     const mh=Number($('#rm').value||0);
+     const ant=g?reglaVigente(g,hoyISO()):null;
+     const nueva={id:uid('r'),grupo:g||uid('g'),nombre,tipo:$('#rt').value,dias,ini,fin,
+       etiquetas,vigenteDesde:desde,vigenteHasta:null,activa:ant?ant.activa!==false:true,
+       maxHoras:mh>0?mh:null,proy:$('#rp').value||null};
+     if(g){
+       D.config.reglas.forEach(r=>{if(r.grupo===g&&r.vigenteDesde<desde)r.vigenteHasta=addDays(desde,-1);});
+       D.config.reglas=D.config.reglas.filter(r=>!(r.grupo===g&&r.vigenteDesde>=desde));
+     }
+     D.config.reglas.push(nueva);
+     cerrar();guardarPronto();render();
+     toast(desde<=hoyISO()?'Franja actualizada':'En vigor desde el '+esp(desde));
+     break;}
+   case 'regla-del':{
+     if(!el.dataset.conf){el.dataset.conf='1';el.textContent='Confirmar';return;}
+     const g=el.dataset.g,desde=$('#rv').value||hoyISO();
+     D.config.reglas.forEach(r=>{if(r.grupo===g&&r.vigenteDesde<desde)r.vigenteHasta=addDays(desde,-1);});
+     D.config.reglas=D.config.reglas.filter(r=>!(r.grupo===g&&r.vigenteDesde>=desde));
+     cerrar();guardarPronto();render();toast('Franja retirada desde el '+esp(desde));break;}
+   case 'equip': D.config.equipamiento[el.dataset.k]=!D.config.equipamiento[el.dataset.k];guardarPronto();render();break;
+   case 'export':{
+     const blob=new Blob([JSON.stringify({datos:D,semanas:SEM,sesiones:SES,incidencias:INC,exportado:new Date().toISOString()},null,1)],{type:'application/json'});
+     const u=URL.createObjectURL(blob),a2=document.createElement('a');
+     a2.href=u;a2.download='centro-de-mando-'+hoyISO()+'.json';a2.click();URL.revokeObjectURL(u);break;}
+   case 'import-ok': aplicarImport();break;
+   case 'reset':{
+     if(!el.dataset.conf){el.dataset.conf='1';el.textContent='Borra todo. Pulsa otra vez';return;}
+     KEYS.forEach(k=>store.del(k));D=nuevaBase();SEM={};SES=[];INC=[];guardar();render();toast('Todo reiniciado');break;}
+  }
+});
+
+/* ---------- render ---------- */
+function render(){
+  $('#tabs').innerHTML=VISTAS.map(([k,n])=>'<button data-act="tab" data-v="'+k+'" aria-current="'+(vista===k)+'">'+n+'</button>').join('');
+  $('#wkid').textContent=semanaId(lunesDe(hoyISO())).replace('-',' · ');
+  const m={panorama:vPanorama,hoy:vHoy,semana:vSemana,proyectos:vProyectos,config:vConfig};
+  $('#app').innerHTML=(m[vista]||vPanorama)();
+}
+
+/* ---------- inicio ---------- */
+(async function init(){
+  semanaVista=lunesDe(hoyISO());
+  const cfg=await store.get('config-y-proyectos');
+  D=cfg||nuevaBase();
+  D.deuda=D.deuda||[];
+  D.config=Object.assign({},CONFIG_DEF,D.config||{});
+  migrarReglas();
+  SEM=(await store.get('semanas-plan'))||{};
+  SES=(await store.get('registro-sesiones'))||[];
+  INC=(await store.get('incidencias'))||[];
+  syncCfg();
+  if(!cfg)await guardar(false);
+  syncEstado=syncCfg().activo?'pend':'off';
+  render();pintarEstado();
+  sincronizar(false);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)sincronizar(false);});
+  window.addEventListener('online',()=>sincronizar(false));
+})();
+
+</script>
+</body>
+</html>
