@@ -235,6 +235,13 @@ body.ordenando{cursor:grabbing;user-select:none;-webkit-user-select:none}
 .rango input[type=range]::-moz-range-thumb{width:18px;height:18px;border:none;border-radius:50%;background:var(--text);cursor:grab}
 .rango input[type=range]:active::-webkit-slider-thumb{cursor:grabbing}
 .rlbl{font-size:13px;font-weight:600;min-width:88px;text-align:right;white-space:nowrap}
+
+.quien{color:#8fc4e8;font-weight:500}
+.tag.quien{border-color:#8fc4e8;color:#8fc4e8}
+.blk .quien{font-size:9.5px}
+
+.gh.pasado{opacity:.45}
+.cell.pasado{opacity:.4}
 </style>
 </head>
 <body>
@@ -253,6 +260,9 @@ body.ordenando{cursor:grabbing;user-select:none;-webkit-user-select:none}
    Archivo único. Sin dependencias salvo SheetJS (importar .xlsx).
    Guardado: window.storage si existe (artefacto), si no localStorage.
    ============================================================ */
+
+/* ---------- 0. Edición del archivo ---------- */
+var EDICION='personal';   // 'personal' o 'compartida'
 
 /* ---------- 1. Capa de guardado (lo único que cambia entre entornos) ---------- */
 const store = {
@@ -336,6 +346,15 @@ const REGLAS_DEF=[
  {id:'r_bordenoc',nombre:'Borde nocturno finde',tipo:'excepcional',dias:[5,6], ini:'22:00', fin:'23:00', activa:false, etiquetas:['escritorio']}
 ];
 
+const REGLAS_NEUTRAS=[
+ {id:'n_manana', nombre:'Mañana', tipo:'disponible',dias:[0,1,2,3,4],ini:'09:00',fin:'14:00',maxHoras:2,etiquetas:['comercial','escritorio']},
+ {id:'n_comida', nombre:'Comida', tipo:'bloqueado', dias:[0,1,2,3,4,5,6],ini:'14:00',fin:'15:00'},
+ {id:'n_tarde', nombre:'Tarde', tipo:'disponible',dias:[0,1,2,3,4],ini:'15:00',fin:'19:00',maxHoras:2,etiquetas:['comercial','escritorio','cita','luz']},
+ {id:'n_noche', nombre:'Noche', tipo:'protegido', dias:[0,1,2,3,4],ini:'19:00',fin:'23:00'},
+ {id:'n_finde', nombre:'Fin de semana', tipo:'protegido', dias:[5,6],ini:'09:00',fin:'23:00'},
+ {id:'n_findexc',nombre:'Fin de semana (excepcional)',tipo:'excepcional',dias:[5,6],ini:'09:00',fin:'14:00',activa:false,etiquetas:['escritorio']}
+];
+
 const CONFIG_DEF={
   sync:{url:'',clave:'',activo:false,base:null,dispositivo:''},
   diaInicio:'08:00', diaFin:'23:00',   // horario visible y planificable de la cuadrícula
@@ -348,11 +367,11 @@ const CONFIG_DEF={
   equipamiento:{mancuernas:false,bandas:true,barra:true},
   inicioPlanSalud:'2026-10-05', // semana 1 del plan de 6 meses
   ventanaObra:[3,10],           // abril(3) a octubre(9) en índice 0-11 -> [3,9]; se usa mes>=3 && mes<=9
-  autoJornadaObra:true,
-  reglas:REGLAS_DEF,
+  autoJornadaObra:EDICION==='personal',
+  reglas:EDICION==='personal'?REGLAS_DEF:REGLAS_NEUTRAS,
   cuotas:{},                    // "2026-10": {jornadas:2, vacaciones:0}
   cuotaDefecto:2,
-  recurrentes:[
+  recurrentes:EDICION!=='personal'?[]:[
     {id:'rc_video', proyecto:'VERTIAN',nombre:'Vídeo YouTube', horas:5,cadencia:1,diaPub:4,etiquetas:['escritorio'],fases:['Guion','Grabación','Edición','Publicación']},
     {id:'rc_art', proyecto:'VERTIAN',nombre:'Artículo Substack (mi turno)',horas:5,cadencia:3,diaPub:3,etiquetas:['escritorio'],fases:['Documentación','Redacción','Maquetación','Publicación']},
     {id:'rc_prosp',proyecto:'VERTIAN',nombre:'Prospección comercial', horas:1,cadencia:1,diaPub:0,etiquetas:['comercial'],minimo:true}
@@ -361,6 +380,7 @@ const CONFIG_DEF={
 
 /* ---------- 5. Proyectos de arranque (Docs 2-5). Editables y borrables. ---------- */
 function seedProyectos(){
+ if(EDICION!=='personal')return [];   // la edición compartida arranca vacía
  const T=(n,h,ctx,ext={})=>Object.assign({id:uid('t'),nombre:n,horas:h,contexto:ctx,estado:'pendiente',critica:false,bloqueante:false,desplaza:ctx==='obra',etiquetas:ctx==='obra'?['luz','jornadaContinua','fisica']:['escritorio']},ext);
  return [
  {id:'CASA',nombre:'Casa',color:'#C0703A',tipo:'finito',prioridad:1,pct:40,minimo:0,activo:true,
@@ -452,11 +472,12 @@ function reglaVigente(grupo,fecha){
   const v=versiones(grupo);
   return v.find(r=>r.vigenteDesde<=f&&(!r.vigenteHasta||r.vigenteHasta>=f))||v[v.length-1];
 }
+function esPasado(f){return f<hoyISO();}
 function huecosSemana(lunes,diasOff){
   const out=[];
   for(let i=0;i<7;i++){
     const f=addDays(lunes,i);
-    if(diasOff.includes(f))continue;
+    if(diasOff.includes(f)||esPasado(f))continue;      // el pasado no se planifica
     reglasDe(i,f).forEach(r=>{
       if(r.tipo!=='disponible'&&r.tipo!=='excepcional')return;
       const min=toMin(r.ini),max=toMin(r.fin);
@@ -476,7 +497,7 @@ function bloquesFijos(lunes,diasOff,jornadas){
   const out=[];
   for(let i=0;i<7;i++){
     const f=addDays(lunes,i);
-    if(diasOff.includes(f))continue;
+    if(diasOff.includes(f)||esPasado(f))continue;
     const hayObra=jornadas.some(j=>j.fecha===f);
     reglasDe(i,f).forEach(r=>{
       if(r.tipo!=='reservado')return;
@@ -512,6 +533,7 @@ function tareasObraPendientes(){
   const out=[];
   c.hitos.forEach(h=>h.tareas.forEach(t=>{
     const pend=t.horas-horasTarea(t.id);
+    if(t.asignado&&t.asignado!==autorNombre())return;
     if(t.desplaza&&t.estado!=='completada'&&pend>0.25)out.push({t,h,pend,proyecto:'CASA'});
   }));
   return out;
@@ -573,10 +595,11 @@ function tareasRecurrentes(lunes){
   const out=[];
   activos().forEach(p=>p.hitos.forEach(h=>h.tareas.forEach(t=>{
     if(!t.rec||t.rec.activo===false)return;
+    if(t.asignado&&t.asignado!==autorNombre())return;
     if(!tocaEstaSemana(t.rec,lunes))return;
     const r=t.rec;
     out.push({id:t.id,proyecto:p.id,hito:h.id,hitoNombre:h.nombre,nombre:t.nombre,
-      horas:r.horas||t.horas,pend:r.horas||t.horas,etiquetas:t.etiquetas||['escritorio'],
+      horas:r.horas||t.horas,pend:r.horas||t.horas,etiquetas:t.etiquetas||['escritorio'],asignado:t.asignado||null,
       desplaza:!!t.desplaza,dia:(r.dia===undefined?null:r.dia),hora:r.hora||null,
       cada:Math.max(1,r.cada||1),recurrente:true,sinDeuda:true,
       publica:r.dia!=null?addDays(lunes,r.dia):addDays(lunes,6)});
@@ -591,9 +614,10 @@ function tareasDisponibles(){
       if(h.estado==='completado')return;
       h.tareas.forEach(t=>{
         if(t.rec)return;                                   // las recurrentes van por su cuenta
+        if(t.asignado&&t.asignado!==autorNombre())return;  // asignada a otra persona
         const pend=Math.round((t.horas-horasTarea(t.id))*100)/100;
         if(t.estado==='completada'||pend<=0.25)return;
-        out.push({id:t.id,proyecto:p.id,hito:h.id,hitoNombre:h.nombre,nombre:t.nombre,horas:t.horas,pend,
+        out.push({id:t.id,proyecto:p.id,hito:h.id,hitoNombre:h.nombre,nombre:t.nombre,horas:t.horas,pend,asignado:t.asignado||null,
           etiquetas:t.etiquetas||[],desplaza:!!t.desplaza,critica:!!t.critica,
           bloqueante:!!t.bloqueante,fecha:h.fecha});
       });
@@ -697,7 +721,7 @@ function generarPlan(lunes,capacidad,diasOff,opts={}){
   const porProyecto={};
   tareasRecurrentes(lunes).filter(r=>r.hora).forEach(r=>{
     const f=addDays(lunes,r.dia==null?0:r.dia);
-    if(diasOff.includes(f))return;
+    if(diasOff.includes(f)||esPasado(f))return;
     const ini=toMin(r.hora),dur=Math.round((r.pend||0.25)*60);
     bloques.push({id:uid('b'),fecha:f,ini,fin:ini+dur,tipo:'trabajo',proyecto:r.proyecto,
       tareaId:r.id,hito:r.hitoNombre,nombre:r.nombre,estado:'planificado',recFijo:true,
@@ -765,7 +789,7 @@ function generarPlan(lunes,capacidad,diasOff,opts={}){
       if(fin>hu.max)continue;
       bloques.push({id:uid('b'),fecha:hu.fecha,ini,fin,tipo:'trabajo',proyecto:item.proyecto,
         tareaId:item.recurrente?null:item.id,recurrenteId:item.rid||null,nombre:item.nombre,
-        hito:item.hitoNombre||null,
+        hito:item.hitoNombre||null,quien:item.asignado||null,
         estado:'planificado',deudaId:item.deudaId||null,
         motivo:item.razon+'. Colocada en «'+hu.nombre+'» porque admite '+(item.etiquetas.join(', ')||'cualquier contexto')+'.'});
       hu.usadas+=h;hu.libreMin=fin;pend-=h;usadas+=h;dset.add(item.proyecto);
@@ -944,6 +968,15 @@ function migrarReparto(){
   }
   D.config.repartoMigrado=true;
 }
+
+/* ---------- persona asignada a un bloque ---------- */
+function quienDe(b){
+  if(b.quien)return b.quien;
+  if(!b.tareaId)return null;
+  for(const p of D.proyectos)for(const h of p.hitos)
+    for(const t of h.tareas)if(t.id===b.tareaId)return t.asignado||null;
+  return null;
+}
 /* ============================================================
    INTERFAZ — Panorama y Semana
    ============================================================ */
@@ -971,6 +1004,12 @@ const SEMAF={ok:['var(--ok)','Al día'],deuda:['var(--warn)','Con deuda'],riesgo
 function vPanorama(){
   const plan=SEM[semanaId(lunesDe(hoyISO()))];
   let h='<h2 class="vh">Panorama</h2><p class="sub">Dónde está cada proyecto ahora mismo.</p>';
+  if(!D.proyectos.length){
+    return h+'<div class="card"><b style="font-size:15px">Todavía no hay ningún proyecto.</b>'+
+      '<p class="tiny muted" style="margin:8px 0 0;line-height:1.6">Si te han pasado un proyecto compartido: ve a Proyectos, crea uno con el nombre que quieras, ábrelo con el botón Compartir, pega la dirección y la clave del canal, y pulsa «Unirme al de mi socio». Se rellenará solo.<br><br>Después, en Ajustes, revisa las franjas del día para que el calendario se parezca al tuyo.</p>'+
+      '<div class="row" style="margin-top:12px"><button class="btn primary" data-act="ver-proyecto">Ir a Proyectos</button>'+
+      '<button class="btn ghost" data-act="tab" data-v="config">Ajustes</button></div></div>';
+  }
   h+='<div class="rings">';
   activos().forEach(p=>{
     const av=avanceProyecto(p),st=estadoProyecto(p);
@@ -1086,8 +1125,8 @@ function vSemana(){
   h+='<div class="gh" style="grid-column:1"></div>';
   for(let i=0;i<7;i++){
     const f=addDays(lun,i);const off=plan.diasOff.includes(f);
-    h+='<div class="gh'+(f===hoyISO()?' today':'')+'" style="grid-column:'+(i+2)+'">'+DIAS3[i]+
-       '<small>'+pad(parse(f).getDate())+(off?' · anulado':'')+'</small>'+
+    h+='<div class="gh'+(f===hoyISO()?' today':'')+(esPasado(f)?' pasado':'')+'" style="grid-column:'+(i+2)+'">'+DIAS3[i]+
+       '<small>'+pad(parse(f).getDate())+(off?' · anulado':esPasado(f)?' · pasado':'')+'</small>'+
        '<input type="checkbox" data-act="selday" data-f="'+f+'"'+(sel.has(f)?' checked':'')+'></div>';
   }
   const INI=toMin(D.config.diaInicio||'08:00'), FIN=toMin(D.config.diaFin||'23:00');
@@ -1096,7 +1135,7 @@ function vSemana(){
     if(m%60===0)h+='<div class="hlab" style="grid-row:'+row+' / span 2">'+hhmm(m)+'</div>';
     for(let i=0;i<7;i++){
       const f=addDays(lun,i);
-      const cls=plan.diasOff.includes(f)?'bloq':estadoCelda(i,m,f);
+      const cls=(plan.diasOff.includes(f)?'bloq':estadoCelda(i,m,f))+(esPasado(f)?' pasado':'');
       h+='<div class="cell '+cls+(m%60===0?' hh':'')+'" data-act="celda" data-f="'+f+'" data-d="'+i+'" data-m="'+m+'" style="grid-column:'+(i+2)+';grid-row:'+row+'"></div>';
     }
   }
@@ -1107,20 +1146,21 @@ function vSemana(){
     const r1=2+Math.round((ini-INI)/30), span=Math.max(1,Math.round((fin-ini)/30));
     const col=b.tipo==='coche'?'var(--coche)':colorDe(b.proyecto);
     const hi=hitoDe(b);
+    const qn=quienDe(b);
     const bb=b.tipo==='coche'?'#231f33':'color-mix(in srgb,'+col+' 22%, var(--surface2))';
     const cab='<div class="blk'+(b.tipo==='coche'?' coche':'')+(b.nota?' connota':'')+(span===1?' mini':'')+
       (b.estado==='hecho'?' hecho':'')+(b.estado==='anulado'?' anulado':'')+
       '" style="grid-column:'+(i+2)+';grid-row:'+r1+' / span '+span+';--bc:'+col+';--bb:'+bb+'" '+
-      'data-act="blk" data-id="'+b.id+'" title="'+esc((hi?hi+' › ':'')+b.nombre+(b.nota?'\n\n'+b.nota:''))+'">';
+      'data-act="blk" data-id="'+b.id+'" title="'+esc((qn?qn+' · ':'')+(hi?hi+' › ':'')+b.nombre+(b.nota?'\n\n'+b.nota:''))+'">';
     if(span===1){
       // media hora: hito y tarea comprimidos en un renglón, la nota en el siguiente
-      h+=cab+'<b class="uni">'+esc((hi?hi+' › ':'')+b.nombre)+'</b>'+
+      h+=cab+'<b class="uni">'+(qn?'<span class="quien">'+esc(qn)+'</span> ':'')+esc((hi?hi+' › ':'')+b.nombre)+'</b>'+
          (b.nota?'<small class="nb" style="-webkit-line-clamp:1">'+esc(b.nota)+'</small>':'')+'</div>';
       return;
     }
     const cn=b.nota?(span>=4?2:1):(span>=3?3:2);   // líneas para el nombre
     h+=cab+
-       (hi?'<small class="hito">'+esc(hi)+'</small>':'')+
+       (hi||qn?'<small class="hito">'+(qn?'<span class="quien">'+esc(qn)+'</span> ':'')+esc(hi||'')+'</small>':'')+
        '<b style="-webkit-line-clamp:'+cn+'">'+esc(b.nombre)+'</b>'+
        (span>=(hi?4:2)&&!b.nota?'<small>'+hhmm(b.ini)+'–'+hhmm(b.fin)+'</small>':'')+
        (b.nota?'<small class="nb" style="-webkit-line-clamp:'+(span>=4?2:1)+'">'+esc(b.nota)+'</small>':'')+'</div>';
@@ -1161,7 +1201,8 @@ function vHoy(){
     const col=b.tipo==='coche'?'var(--coche)':colorDe(b.proyecto);
     h+='<div class="tblk'+(b.estado==='hecho'?' done':'')+'" style="--pc:'+col+';'+(b.estado==='anulado'?'opacity:.4':'')+'">'+
       '<span class="hr">'+hhmm(b.ini)+'<br>'+hhmm(b.fin)+'</span>'+
-      '<span class="nm">'+esc(b.nombre)+'<small>'+esc(nombreDe(b.proyecto))+
+      '<span class="nm">'+esc(b.nombre)+'<small>'+
+      (quienDe(b)?'<span class="quien">'+esc(quienDe(b))+'</span> · ':'')+esc(nombreDe(b.proyecto))+
       (hitoDe(b)?' · '+esc(hitoDe(b)):'')+' · '+fmtH((b.fin-b.ini)/60)+'</small>'+
       (b.nota?'<small class="nota">'+esc(b.nota)+'</small>':'')+'</span>'+
       '<span class="row" style="gap:6px">'+
@@ -1176,6 +1217,8 @@ function vHoy(){
 
 function vProyectos(){
   let h='<div class="row" style="margin-bottom:6px"><h2 class="vh">Proyectos</h2><span class="spacer"></span>'+
+        '<label class="btn ghost" style="display:inline-block">Importar .xlsx'+
+        '<input type="file" accept=".xlsx,.csv" style="display:none" data-act="import-xlsx"></label>'+
         '<button class="btn primary" data-act="proj-new">Nuevo proyecto</button></div>'+
         repartoResumen()+
         '<p class="sub">Los proyectos se mueven con las flechas; los hitos y las subtareas, arrastrando por el asa. Lo de arriba se planifica antes.</p>'+
@@ -1235,7 +1278,8 @@ function vProyectos(){
           '<span class="dot" style="background:'+(pend<=0.25?'var(--ok)':'var(--line2)')+'"></span>'+
           esc(t.nombre)+'<span class="spacer"></span>'+
           (t.desplaza?'<span class="tag">obra</span>':'')+(t.bloqueante?'<span class="tag">bloqueante</span>':'')+
-          (t.rec?'<span class="tag rec">'+(t.rec.cada>1?'cada '+t.rec.cada+' sem':'semanal')+
+          (t.asignado?'<span class="tag quien">'+esc(t.asignado)+'</span>':'')+
+        (t.rec?'<span class="tag rec">'+(t.rec.cada>1?'cada '+t.rec.cada+' sem':'semanal')+
            (t.rec.dia!=null?' · '+DIAS3[t.rec.dia]:'')+(t.rec.hora?' '+t.rec.hora:'')+'</span>':'')+
         '<span>'+(t.rec?fmtH(t.rec.horas)+'/sem':fmtH(hr)+' / '+fmtH(t.horas))+'</span>'+
           '<button class="btn sm ghost" data-act="tarea-edit" data-p="'+p.id+'" data-h="'+hi.id+'" data-t="'+t.id+'">···</button></div>';
@@ -1357,6 +1401,13 @@ function cerrar(){$('#ov').innerHTML='';}
 
 function mDeclarar(){
   const lun=semanaVista,plan=planActual();
+  if(esPasado(addDays(lun,6))){
+    modal('<h3>Semana pasada</h3><div class="mst">Del '+espCorto(lun)+' al '+espCorto(addDays(lun,6))+
+      '. No se planifica hacia atrás: lo que quedó sin hacer ya está en la deuda y volverá a proponerse.</div>'+
+      '<div class="row"><button class="btn ghost" data-act="cerrar">Cerrar</button>'+
+      '<button class="btn primary" data-act="sem-hoy">Ir a la semana actual</button></div>');
+    return;
+  }
   const teor=capacidadTeorica(lun);
   const cap=plan?plan.capacidad:Math.round(teor*10)/10;
   let h='<h3>Capacidad de la semana</h3><div class="mst">'+espCorto(lun)+' – '+espCorto(addDays(lun,6))+
@@ -1382,6 +1433,7 @@ function mBloque(id){
   const hi=hitoDe(b);
   let h='<h3>'+esc(b.nombre)+'</h3><div class="mst">'+
     (hi?'<b style="color:'+colorDe(b.proyecto)+'">'+esc(nombreDe(b.proyecto))+' › '+esc(hi)+'</b><br>':esc(nombreDe(b.proyecto))+'<br>')+
+    (quienDe(b)?'<span class="quien">'+esc(quienDe(b))+'</span><br>':'')+
     DIAS[diaSemana(b.fecha)]+' '+esp(b.fecha)+' · '+hhmm(b.ini)+'–'+hhmm(b.fin)+'</div>';
   if(b.motivo)h+='<div class="tiny muted" style="margin-bottom:12px;padding:9px;border:1px solid var(--line);border-radius:6px">'+esc(b.motivo)+'</div>';
   if(b.nota)h+='<div class="warnbox" style="margin-bottom:12px">'+esc(b.nota)+'</div>';
@@ -1399,8 +1451,12 @@ function mBloque(id){
 function mMover(id){
   const plan=planActual();const b=plan.bloques.find(x=>x.id===id);
   let h='<h3>Mover «'+esc(b.nombre)+'»</h3><div class="mst">Elige el día.</div>';
+  let hay=false;
   for(let i=0;i<7;i++){const f=addDays(plan.lunes,i);
+    if(esPasado(f))continue;
+    hay=true;
     h+='<button class="mopt" data-act="b-mover-ok" data-id="'+id+'" data-f="'+f+'">'+DIAS[i]+' '+esp(f)+'</button>';}
+  if(!hay)h+='<p class="tiny muted" style="padding:8px 0">Esta semana ya ha pasado entera: no hay a dónde moverlo.</p>';
   h+='<div class="row"><button class="btn ghost" data-act="cerrar">Cancelar</button></div>';
   modal(h);
 }
@@ -1443,6 +1499,12 @@ function mProyecto(id){
   h+='<div class="row"><button class="btn primary" data-act="proj-save" data-id="'+(id||'')+'">Guardar</button>'+
      '<button class="btn ghost" data-act="cerrar">Cancelar</button><span class="spacer"></span>'+
      (id?'<button class="btn danger" data-act="proj-del" data-id="'+id+'">Eliminar</button>':'')+'</div>';
+  if(!id){
+    h+='<div style="border-top:1px solid var(--line);margin-top:14px;padding-top:12px">'+
+       '<label class="btn" style="display:inline-block">Importar desde plantilla .xlsx'+
+       '<input type="file" accept=".xlsx,.csv" style="display:none" data-act="import-xlsx"></label>'+
+       '<p class="tiny muted" style="margin-top:8px">Con hitos y subtareas ya escritos en la plantilla. Verás una vista previa antes de aplicar nada, y no hace falta rellenar este formulario.</p></div>';
+  }
   modal(h);
 }
 function mHito(pid,hid){
@@ -1472,6 +1534,14 @@ function mTarea(pid,hid,tid){
   h+='<div class="row" style="margin-bottom:9px"><div class="field" style="flex:1"><label>'+(on?'Horas totales (informativo)':'Horas estimadas')+'</label><input id="th" type="number" step="0.5" value="'+t.horas+'"></div>'+
      '<div class="field" style="flex:1"><label>Contexto</label><select id="tc">'+
      ['escritorio','llamadas','obra','cita','gimnasio'].map(c=>'<option'+(t.contexto===c?' selected':'')+'>'+c+'</option>').join('')+'</select></div></div>';
+  if(esCompartido(pid)){
+    const ms=miembrosDe(pid);
+    h+='<div class="field" style="margin-bottom:12px"><label>Asignada a</label><select id="tasg">'+
+       '<option value="">— sin asignar, la coge quien pueda —</option>'+
+       ms.map(m=>'<option value="'+esc(m)+'"'+(t.asignado===m?' selected':'')+'>'+esc(m)+'</option>').join('')+
+       (t.asignado&&!ms.includes(t.asignado)?'<option value="'+esc(t.asignado)+'" selected>'+esc(t.asignado)+'</option>':'')+
+       '</select><p class="tiny muted" style="margin-top:5px">Si la asignas a otra persona, deja de aparecer en tu planificación pero sigues viéndola aquí.</p></div>';
+  }
   h+='<div class="row" style="margin-bottom:12px">'+
      '<button class="btn sm '+(t.desplaza?'':'ghost')+'" data-act="tf" data-k="desplaza">Exige desplazamiento</button>'+
      '<button class="btn sm '+(t.critica?'':'ghost')+'" data-act="tf" data-k="critica">Crítica</button>'+
@@ -1699,6 +1769,8 @@ function terminarDrag(commit){
     if(commit&&drag.prev){
       const b=drag.b,plan=drag.plan,dur=b.fin-b.ini;
       const fecha=addDays(plan.lunes,drag.prev.dia);
+      if(fecha!==b.fecha&&esPasado(fecha)){
+        toast('No se pueden mover actividades a días pasados');render();drag=null;return;}
       if(fecha!==b.fecha||drag.prev.min!==b.ini){
         const choque=franjaLibre(drag.prev.dia,fecha,drag.prev.min,drag.prev.min+dur);
         if(choque==='familia'){toast('Ahí es tiempo de familia. Cámbialo en Ajustes si de verdad quieres usarlo.');render();drag=null;return;}
@@ -1795,7 +1867,7 @@ function mEvento(){
   else if(estado==='cuota')h+='<div class="warnbox" style="margin-bottom:12px">Fin de semana: esto sale del tiempo con la familia y consume cuota del mes.</div>';
 
   h+='<div class="row" style="margin-bottom:9px">'+
-    '<div class="field" style="flex:1.3"><label>Día</label><input id="ef" type="date" value="'+e.fecha+'" data-act="ev-campo"></div>'+
+    '<div class="field" style="flex:1.3"><label>Día</label><input id="ef" type="date" min="'+(e.fecha<hoyISO()?e.fecha:hoyISO())+'" value="'+e.fecha+'" data-act="ev-campo"></div>'+
     '<div class="field" style="flex:1"><label>Empieza</label><input id="eh" type="time" step="1800" value="'+hhmm(e.ini)+'" data-act="ev-campo"></div>'+
     '<div class="field" style="flex:1"><label>Duración</label><select id="ed" data-act="ev-campo">'+
     durs.map(d=>'<option value="'+d+'"'+(Math.abs(d-e.dur/60)<0.01?' selected':'')+'>'+fmtH(d)+'</option>').join('')+'</select></div></div>';
@@ -1836,6 +1908,9 @@ function guardarEvento(){
   if(!plan){toast('Esa semana no está planificada todavía');return;}
   const [INI,FIN]=limitesDia();
   if(e.ini<INI||e.ini+e.dur>FIN){toast('Se sale del horario visible de la cuadrícula');return;}
+  const previo=e.id?plan.bloques.find(b=>b.id===e.id):null;
+  if(esPasado(e.fecha)&&(!previo||previo.fecha!==e.fecha)){
+    toast('No se pueden colocar actividades en días pasados');return;}
 
   let tareaId=e.tareaId,nombre=e.nombre.trim(),hitoNombre=null;
   const p=P(e.proyecto),hi=p?p.hitos.find(x=>x.id===e.hitoId):null;
@@ -1852,7 +1927,7 @@ function guardarEvento(){
     nombre=t?t.nombre:nombre;
   }else if(!nombre){toast('Ponle nombre al bloque');return;}
 
-  const viejo=e.id?plan.bloques.find(b=>b.id===e.id):null;
+  const viejo=previo;
   const b=viejo||{id:uid('b'),tipo:'trabajo',estado:'planificado'};
   const antes=viejo?{fecha:viejo.fecha,ini:viejo.ini}:null;
   b.fecha=e.fecha;b.ini=e.ini;b.fin=e.ini+e.dur;
@@ -2211,6 +2286,56 @@ function vAnalisis(){
       '<td style="color:'+col+'">'+(pc==null?(f.rec?'recurrente':'sin estimación'):pc+' % de '+fmtH(f.est))+'</td></tr>';
   });
   h+='</table></div></div>';
+
+  // ---------- reparto por persona en los proyectos compartidos ----------
+  D.proyectos.filter(p=>esCompartido(p.id)).forEach(p=>{
+    const gente=miembrosDe(p.id);
+    const filasC=[];
+    p.hitos.forEach(hh=>{
+      const fila={hito:hh.nombre,tareas:[],tot:{}};
+      hh.tareas.forEach(t=>{
+        const por={};let hay=false;
+        SES.forEach(s=>{
+          if(s.tareaId!==t.id||s.fecha<desde||s.fecha>hasta)return;
+          const a=s.autor||'—';por[a]=(por[a]||0)+s.horas;
+          fila.tot[a]=(fila.tot[a]||0)+s.horas;hay=true;
+        });
+        if(hay)fila.tareas.push({nombre:t.nombre,asignado:t.asignado,por});
+      });
+      if(fila.tareas.length)filasC.push(fila);
+    });
+    const totP={};gente.forEach(g=>totP[g]=0);
+    filasC.forEach(f=>Object.keys(f.tot).forEach(a=>totP[a]=(totP[a]||0)+f.tot[a]));
+    const granTot=Object.values(totP).reduce((a,b)=>a+b,0);
+    h+='<div class="card" style="margin-top:12px"><b style="font-size:14px">'+esc(p.nombre)+' · quién ha hecho qué</b>'+
+       '<p class="tiny muted" style="margin:3px 0 10px">Horas registradas por cada persona en el periodo elegido.</p>';
+    if(!granTot)h+='<p class="tiny muted">Nadie ha registrado horas en este proyecto durante el periodo.</p>';
+    else{
+      const cols=Object.keys(totP).filter(g=>totP[g]>0||gente.includes(g));
+      h+='<div class="hbars" style="margin-bottom:12px">';
+      cols.forEach(g=>h+='<div class="hbar"><span>'+esc(g)+'</span>'+
+        '<span class="track"><i style="width:'+(granTot?100*(totP[g]||0)/granTot:0)+'%;background:'+p.color+'"></i></span>'+
+        '<span class="tiny muted">'+fmtH(totP[g]||0)+' · '+(granTot?Math.round(100*(totP[g]||0)/granTot):0)+' %</span></div>');
+      h+='</div>';
+      h+='<div style="overflow-x:auto"><table class="cfg"><tr><th>Hito y subtarea</th><th>Asignada</th>'+
+         cols.map(g=>'<th>'+esc(g)+'</th>').join('')+'<th>Total</th></tr>';
+      filasC.forEach(f=>{
+        h+='<tr><td colspan="'+(cols.length+3)+'" style="padding-top:10px"><b>'+esc(f.hito)+'</b></td></tr>';
+        f.tareas.forEach(t=>{
+          const tot=cols.reduce((a,g)=>a+(t.por[g]||0),0);
+          h+='<tr><td style="padding-left:14px">'+esc(t.nombre)+'</td>'+
+            '<td class="tiny">'+(t.asignado?'<span class="quien">'+esc(t.asignado)+'</span>':'<span class="muted">—</span>')+'</td>'+
+            cols.map(g=>'<td'+(t.por[g]?'':' class="muted"')+'>'+(t.por[g]?fmtH(t.por[g]):'·')+'</td>').join('')+
+            '<td>'+fmtH(tot)+'</td></tr>';
+        });
+        h+='<tr><td style="padding-left:14px" class="tiny muted">subtotal del hito</td><td></td>'+
+          cols.map(g=>'<td class="tiny muted">'+(f.tot[g]?fmtH(f.tot[g]):'·')+'</td>').join('')+
+          '<td class="tiny muted">'+fmtH(Object.values(f.tot).reduce((a,b)=>a+b,0))+'</td></tr>';
+      });
+      h+='</table></div>';
+    }
+    h+='</div>';
+  });
   return h;
 }
 /* ============================================================
@@ -2229,6 +2354,18 @@ function tocar(o){o.actualizado=AHORA();return o;}
 function borrados(){D.borrados=D.borrados||[];return D.borrados;}
 function anotarBorrado(id){borrados().push({id,ts:AHORA()});if(borrados().length>800)D.borrados=borrados().slice(-500);}
 
+/* ---------- quién trabaja en el proyecto ---------- */
+function miembrosDe(pid){
+  const c=compartidos().find(x=>x.proyectoId===pid);
+  const set=new Set((c&&c.miembros)||[]);
+  set.add(autorNombre());
+  SES.forEach(s=>{if(s.proyecto===pid&&s.autor)set.add(s.autor);});
+  const p=P(pid);
+  if(p)p.hitos.forEach(h=>h.tareas.forEach(t=>{if(t.asignado)set.add(t.asignado);}));
+  return [...set].filter(Boolean).sort();
+}
+function esCompartido(pid){return !!canalDe(pid);}
+
 /* ---------- empaquetar ---------- */
 function proyectoPaquete(pid){
   const p=P(pid);if(!p)return null;
@@ -2240,7 +2377,8 @@ function proyectoPaquete(pid){
   const ses=SES.filter(s=>s.proyecto===pid).map(s=>Object.assign({},s,{autor:s.autor||autorNombre()}));
   return {proyecto:{id:p.id,nombre:p.nombre,color:p.color,tipo:p.tipo,fechaLimite:p.fechaLimite,
             actualizado:p.actualizado||VIEJO},
-          hitos,tareas,sesiones:ses,borrados:borrados(),actualizado:AHORA(),autor:autorNombre()};
+          hitos,tareas,sesiones:ses,borrados:borrados(),miembros:miembrosDe(pid),
+          actualizado:AHORA(),autor:autorNombre()};
 }
 
 /* ---------- fusionar: gana la edición más reciente de cada pieza ---------- */
@@ -2345,10 +2483,12 @@ async function sincronizarCanal(c,manual,unirse){
     if(!rem||!rem.proyecto){if(manual)toast('El canal está vacío: que la otra persona pulse antes «Compartir el mío»');return null;}
     const a=adoptarProyecto(c.proyectoId,rem);
     c.base=rem.actualizado;c.ultima=AHORA();
+    c.miembros=[...new Set([...(rem.miembros||[]),autorNombre()])];
     if(manual)toast('Te has unido: '+a.hitos+' hitos y '+a.tareas+' subtareas');
     return a;
   }
   if(rem&&rem.actualizado!==c.base)res=fusionarProyecto(c.proyectoId,rem);
+  if(rem&&rem.miembros)c.miembros=[...new Set([...(c.miembros||[]),...rem.miembros,autorNombre()])];
   const p=proyectoPaquete(c.proyectoId);
   await llamarCanal(c,'guardarProyecto',p);
   c.base=p.actualizado;c.ultima=AHORA();
@@ -2477,9 +2617,13 @@ function importarLibro(wb){
   const pr=rows(hoja('proyecto')),hi=rows(hoja('hito')),ta=rows(hoja('tarea'));
   if(!pr.length)return toast('No encuentro la hoja Proyecto');
   const errores=[];const creados=[];
+  const idValido=v=>{const x=String(v||'').trim();return x&&!/\s/.test(x)&&x.length<=24;};
   pr.forEach((r,i)=>{
     const id=String(r.id_proyecto||'').trim();
-    if(!id)return errores.push('Proyecto fila '+(i+2)+': falta id_proyecto');
+    if(!idValido(id)){                       // notas al pie y filas sueltas: se ignoran
+      if(id&&String(r.nombre||'').trim())errores.push('Fila '+(i+2)+': «'+id.slice(0,30)+'» no vale como id_proyecto (sin espacios, hasta 24 caracteres)');
+      return;
+    }
     const hs=hi.filter(x=>String(x.id_proyecto).trim()===id);
     const suma=hs.reduce((a,x)=>a+Number(x.peso_1_a_100||0),0);
     if(hs.length&&Math.round(suma)!==100)errores.push('Proyecto '+id+': los pesos de los hitos suman '+suma+', no 100');
@@ -2497,8 +2641,10 @@ function importarLibro(wb){
 }
 function aplicarImport(){
   const {pr,hi,ta}=window.__imp;
+  const idValido=v=>{const x=String(v||'').trim();return x&&!/\s/.test(x)&&x.length<=24;};
   pr.forEach(r=>{
     const id=String(r.id_proyecto).trim();
+    if(!idValido(id))return;
     let p=P(id);
     const base={id,nombre:r.nombre||id,color:'#'+String(r.color_hex||'7FB7E8').replace('#',''),
       tipo:(r.tipo||'finito').trim(),fechaInicio:fechaDe(r.fecha_inicio)||hoyISO(),
@@ -2507,13 +2653,13 @@ function aplicarImport(){
       minimo:Number(r.minimo_semanal_horas||0),activo:String(r.activo||'SI').toUpperCase()!=='NO'};
     if(!p){p=Object.assign(base,{hitos:[]});D.proyectos.push(p);}
     else Object.assign(p,base);
-    hi.filter(x=>String(x.id_proyecto).trim()===id).forEach(x=>{
+    hi.filter(x=>String(x.id_proyecto).trim()===id&&idValido(x.id_hito)).forEach(x=>{
       const hid=String(x.id_hito).trim();
       let hh=p.hitos.find(y=>y.id===hid);
       const b={id:hid,nombre:x.nombre_hito,peso:Number(x.peso_1_a_100||0),horas:Number(x.horas_estimadas||0),
         fecha:fechaDe(x.fecha_objetivo),estado:(x.estado||'pendiente').trim(),dependeDe:x.depende_de_id_hito||null};
       if(!hh){hh=Object.assign(b,{tareas:[]});p.hitos.push(hh);}else Object.assign(hh,b);
-      ta.filter(y=>String(y.id_hito).trim()===hid).forEach(y=>{
+      ta.filter(y=>String(y.id_hito).trim()===hid&&idValido(y.id_tarea)).forEach(y=>{
         const tid=String(y.id_tarea).trim();
         const dz=String(y.requiere_desplazamiento||'NO').toUpperCase()==='SI';
         const tb={id:tid,nombre:y.nombre_tarea,horas:Number(y.horas_estimadas||0),contexto:y.contexto||'escritorio',
@@ -2524,7 +2670,7 @@ function aplicarImport(){
       });
     });
   });
-  guardarPronto();cerrar();render();toast('Importado');
+  guardarPronto();cerrar();vista='proyectos';render();toast('Importado');
 }
 function fechaDe(v){
   if(!v)return null;
@@ -2623,6 +2769,7 @@ document.addEventListener('click',e=>{
    case 'blk': if(Date.now()-ultimoDrag<350)break; mBloque(id);break;
    case 'celda':{
      const f=el.dataset.f,m=Number(el.dataset.m||600);
+     if(esPasado(f)){toast('No se pueden añadir actividades en días pasados');break;}
      const plan=SEM[semanaId(lunesDe(f))];
      if(!plan){toast('Declara antes la capacidad de esa semana');break;}
      window.__ev=evNuevo(f,m);mEvento();break;}
@@ -2643,6 +2790,7 @@ document.addEventListener('click',e=>{
      SES=SES.filter(s=>s.bloqueId!==id);cerrar();guardarPronto();render();break;}
    case 'b-mover': mMover(id);break;
    case 'b-mover-ok':{const plan=planActual();const b=plan.bloques.find(x=>x.id===id);
+     if(esPasado(el.dataset.f)){toast('No se pueden mover actividades a días pasados');break;}
      b.fecha=el.dataset.f;b.motivo='Movido a mano.';cerrar();guardarPronto();render();break;}
    case 'b-anular':{const plan=planActual();const b=plan.bloques.find(x=>x.id===id);
      b.estado='anulado';
@@ -2747,6 +2895,7 @@ document.addEventListener('click',e=>{
        hasta:gv('rhasta')||null}:null;
      const o={nombre:$('#tn').value.trim(),horas:Number($('#th').value||0),contexto:$('#tc').value,
        desplaza:dz,critica:on('critica'),bloqueante:on('bloqueante'),rec,
+       asignado:(document.getElementById('tasg')?document.getElementById('tasg').value:(tid&&hi.tareas.find(x=>x.id===tid)?hi.tareas.find(x=>x.id===tid).asignado:''))||null,
        etiquetas:dz?['luz','jornadaContinua','fisica']:[$('#tc').value==='llamadas'?'comercial':$('#tc').value==='cita'?'cita':'escritorio']};
      if(tid)tocar(Object.assign(hi.tareas.find(x=>x.id===tid),o));
      else hi.tareas.push(tocar(Object.assign({id:uid('T'),estado:'pendiente'},o)));
