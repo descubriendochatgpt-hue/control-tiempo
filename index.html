@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0F1317">
 <title>Centro de mando</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icono-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -15,6 +20,7 @@
   --coche:#8B7BC0; --prot:#1B2026; --bloq:#141A20;
   --ok:#4EA98C; --warn:#D9A441; --bad:#C25B4E;
   --r:6px;
+  --cab:52px;          /* alto de la cabecera, para lo que queda pegajoso debajo */
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{background:var(--bg);color:var(--text);font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;font-variant-numeric:tabular-nums;-webkit-text-size-adjust:100%}
@@ -76,7 +82,7 @@ input:focus,select,textarea:focus{outline:2px solid var(--muted);outline-offset:
 .track u{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--muted)}
 
 /* ---------- semana ---------- */
-.wkhead{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:12px;position:sticky;top:52px;z-index:30}
+.wkhead{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:12px;position:sticky;top:var(--cab);z-index:30}
 .counters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
 .ctr{border:1px solid var(--line2);border-left:3px solid var(--pc);border-radius:var(--r);padding:5px 9px;font-size:13px}
 .ctr b{font-weight:600}
@@ -242,6 +248,90 @@ body.ordenando{cursor:grabbing;user-select:none;-webkit-user-select:none}
 
 .gh.pasado{opacity:.45}
 .cell.pasado{opacity:.4}
+
+.avisoNuevo{max-width:1180px;margin:10px auto 0;padding:9px 14px;background:#1d2a20;border:1px solid #2f5a3c;
+  border-radius:8px;font-size:13px;display:flex;align-items:center;gap:12px}
+.avisoNuevo button{margin-left:auto;background:var(--text);color:var(--bg);border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600}
+.toast button{margin-left:12px;background:none;color:var(--bg);font-weight:700;text-decoration:underline}
+.confrow{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:13px}
+.confrow .opt{display:grid;grid-template-columns:96px 1fr auto;gap:8px;align-items:center;margin-top:8px;font-size:12px}
+.copiarow{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:13px}
+.copiarow .q{display:block;color:var(--muted);font-size:11px}
+.copiarow button{margin-left:auto}
+
+.tira{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);
+  border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:13px}
+.tira b{margin-left:auto}
+.cierrefila{display:grid;grid-template-columns:28px 1fr 78px;gap:9px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.cierrefila .q{display:block;color:var(--muted);font-size:11px}
+.cierrefila input{padding:4px 6px;font-size:12px;text-align:right}
+.familia{text-align:center;padding:56px 20px}
+.familia .fh{font-size:22px;font-weight:600;letter-spacing:-.02em;margin-bottom:20px}
+.familia .fp{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;
+  margin:0 auto 20px;max-width:380px;line-height:1.5}
+.familia .fp b{display:block;margin-top:4px;font-size:15px}
+.familia p{margin-bottom:22px}
+.energia .ebtn{width:44px;height:44px;border:1px solid var(--line2);border-radius:10px;font-size:16px;font-weight:600;color:var(--muted)}
+.energia .ebtn.on{background:var(--ok);border-color:var(--ok);color:#08110d}
+.energia .ebtn:hover{color:var(--text)}
+
+.coment{border-left:3px solid var(--line2);padding:8px 10px;margin-bottom:8px;font-size:13px;line-height:1.5}
+.coment.mio{border-left-color:#3E86B8}
+.coment .ca{display:block;font-size:11px;color:var(--muted);margin-bottom:3px}
+.actrow{display:grid;grid-template-columns:92px 1fr;gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:13px}
+.cell.externo{background:#241f1c;background-image:repeating-linear-gradient(135deg,transparent 0 4px,rgba(255,255,255,.04) 4px 8px)}
+
+.semaf{display:block;width:100%;height:4px;border-radius:2px;margin:3px 0 1px;border:none;cursor:pointer}
+.pt{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.panorow{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:13px}
+.panorow .q{display:block;color:var(--muted);font-size:11px}
+.panorow span:last-child{margin-left:auto;text-align:right}
+
+/* ---------- pantallas estrechas ---------- */
+@media (max-width:760px){
+  :root{--cab:94px}
+  .topin{flex-wrap:wrap;gap:6px 10px;padding:8px 12px}
+  .brand{font-size:14px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+  .brand span{display:none}
+  .savechip{font-size:11px;max-width:46%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  nav.tabs{order:3;flex-basis:100%;margin-left:0;gap:4px;overflow-x:auto;scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;padding-bottom:2px}
+  nav.tabs::-webkit-scrollbar{display:none}
+  nav.tabs button{padding:8px 11px;font-size:13px;flex:0 0 auto}
+  /* difuminado en el borde derecho: avisa de que hay más pestañas */
+  nav.tabs{-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 26px),transparent);
+           mask-image:linear-gradient(to right,#000 calc(100% - 26px),transparent)}
+  nav.tabs.finTabs{-webkit-mask-image:none;mask-image:none}
+  main{padding:14px 12px 70px}
+  h2.vh{font-size:18px}
+  .rings{grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:8px}
+  .ringwrap{width:96px;height:96px}
+  .ringwrap svg{width:96px;height:96px}
+  .ringnum b{font-size:22px}
+  .hbar{grid-template-columns:78px 1fr 64px;gap:8px;font-size:12px}
+  .pctrow{grid-template-columns:auto 62px 12px 1fr;row-gap:4px}
+  .pctrow span:last-child{grid-column:1/-1;text-align:right}
+  .cierrefila{grid-template-columns:26px 1fr 64px;gap:7px}
+  .confrow .opt{grid-template-columns:1fr;gap:4px}
+  .confrow .opt button{justify-self:start}
+  .actrow{grid-template-columns:1fr;gap:2px}
+  .notarow{grid-template-columns:64px 1fr}
+  .colarow{grid-template-columns:18px 1fr;row-gap:6px}
+  .colarow .colabtns{grid-column:1/-1;justify-content:flex-end}
+  .panorow{flex-wrap:wrap;gap:4px}
+  .panorow span:last-child{margin-left:0;text-align:left;flex-basis:100%}
+  .kpi b{font-size:17px}
+  .tira{flex-wrap:wrap;gap:4px 10px}
+  .tira b{margin-left:auto}
+  .modal{padding:14px 13px}
+  .familia{padding:40px 16px}
+  .familia .fh{font-size:19px}
+}
+@media (max-width:420px){
+  nav.tabs button{padding:8px 9px;font-size:12.5px}
+  .brand{font-size:13px}
+  .rings{grid-template-columns:1fr 1fr}
+}
 </style>
 </head>
 <body>
@@ -250,6 +340,7 @@ body.ordenando{cursor:grabbing;user-select:none;-webkit-user-select:none}
   <nav class="tabs" id="tabs"></nav>
   <div class="savechip" id="save"></div>
 </div></header>
+<div id="aviso-version"></div>
 <main id="app"></main>
 <div id="ov"></div>
 <div id="toast"></div>
@@ -522,7 +613,7 @@ function cuotaMes(m){
 }
 function jornadasUsadas(mes,excluirSemana){
   let n=0;
-  Object.values(SEM).forEach(s=>{
+  Object.values(todasSemanas()).forEach(s=>{
     if(s.id===excluirSemana)return;
     (s.jornadas||[]).forEach(j=>{if(mesDe(j.fecha)===mes)n++;});
   });
@@ -787,6 +878,7 @@ function generarPlan(lunes,capacidad,diasOff,opts={}){
       if(h<MINBLK)continue;
       const ini=hu.libreMin, fin=ini+Math.round(h*60);
       if(fin>hu.max)continue;
+      if(typeof chocaExterno==='function'&&chocaExterno(hu.fecha,ini,fin))continue;
       bloques.push({id:uid('b'),fecha:hu.fecha,ini,fin,tipo:'trabajo',proyecto:item.proyecto,
         tareaId:item.recurrente?null:item.id,recurrenteId:item.rid||null,nombre:item.nombre,
         hito:item.hitoNombre||null,quien:item.asignado||null,
@@ -815,7 +907,9 @@ function generarPlan(lunes,capacidad,diasOff,opts={}){
     if(!P(b.proyecto))return;                       // Personal no es proyecto
     porProyecto[b.proyecto]=(porProyecto[b.proyecto]||0)+(b.fin-b.ini)/60;
   });
-  const plan={id:semId,lunes,capacidad,diasOff,margen,util,bloques,jornadas,notas,
+  const ahora=AHORA();
+  bloques.forEach(b=>{if(!b.actualizado)b.actualizado=ahora;});
+  const plan={id:semId,lunes,actualizado:ahora,capacidad,diasOff,margen,util,bloques,jornadas,notas,
     porProyecto,usadas,generado:new Date().toISOString(),sinSitio:sinSitio.filter(s=>!s.sinDeuda&&!s.desplaza).map(s=>({tareaId:s.id,proyecto:s.proyecto,nombre:s.nombre,horas:s.pend}))};
   return plan;
 }
@@ -836,7 +930,7 @@ function saldarDeuda(deudaId,horas){
   if(d.horas<=0.25)D.deuda=D.deuda.filter(x=>x.id!==deudaId);
 }
 function edadDeuda(d){
-  const s=Object.values(SEM).find(s=>s.id===d.semanaOrigen);
+  const s=Object.values(todasSemanas()).find(s=>s.id===d.semanaOrigen);
   if(!s)return 0;
   return Math.max(0,Math.floor(diffDias(s.lunes,hoyISO())/7));
 }
@@ -861,7 +955,7 @@ function esfuerzoProyecto(p){
 function adherencia(p,dias){
   const desde=addDays(hoyISO(),-dias+1);
   let hechas=0;
-  Object.values(SEM).forEach(s=>s.bloques.forEach(b=>{
+  Object.values(todasSemanas()).forEach(s=>s.bloques.forEach(b=>{
     if(b.proyecto!=='SALUD'||b.fecha<desde||b.fecha>hoyISO())return;
     if(b.estado==='hecho')hechas++;
   }));
@@ -881,7 +975,7 @@ function viabilidad(p){
   const est=p.hitos.reduce((a,h)=>a+(h.tareas.reduce((x,t)=>x+t.horas,0)||h.horas),0);
   const pend=Math.max(0,est-horasProyecto(p.id));
   const semanas=Math.max(1,Math.round(diffDias(hoyISO(),p.fechaLimite)/7));
-  const hist=Object.values(SEM).filter(s=>s.porProyecto&&s.porProyecto[p.id]).map(s=>s.porProyecto[p.id]);
+  const hist=Object.values(todasSemanas()).filter(s=>s.porProyecto&&s.porProyecto[p.id]).map(s=>s.porProyecto[p.id]);
   const media=hist.length?hist.reduce((a,b)=>a+b,0)/hist.length:(p.pct/100)*12;
   const necesarias=pend/semanas;
   return {pend,semanas,media,necesarias,cabe:media>=necesarias};
@@ -889,13 +983,54 @@ function viabilidad(p){
 
 /* ---------- ficha de ejercicio (Doc 4) ---------- */
 const EJ={
- A:{t:'Fuerza A',l:['Dominada asistida o remo invertido','Flexiones (progresión)','Zancada búlgara','Plancha frontal','Face pull con banda']},
- B:{t:'Fuerza B',l:['Remo con banda a una mano','Fondos en banco o pica al hombro','Peso muerto a una pierna','Pallof press','Puente de glúteo']},
- C:{t:'Fuerza C',l:['Dominada o remo invertido','Flexiones inclinadas','Sentadilla búlgara','Hollow hold','Elevaciones de escápula']},
- M:{t:'Movilidad y core',l:['Cat-camel y rotación torácica','Apertura de cadera 90/90','Dislocaciones con banda','Plancha lateral','Dead bug']},
- L:{t:'Sesión ligera',l:['Caminata o bici suave 25 min','Movilidad de hombro','Estiramiento de cadena posterior']},
- R:{t:'Movilidad de rescate (20 min)',l:['Rotación torácica','Apertura de cadera','Círculos de hombro con banda','Plancha frontal corta']},
- N:{t:'Natación',l:['Calentamiento 200 m suave','Técnica de crol por series','Aeróbico continuo','Vuelta a la calma 100 m']}
+ A:{t:'Fuerza A',l:[
+   {n:'Dominada asistida o remo invertido',g:'traccionV'},
+   {n:'Flexiones (progresión)',g:'empujeH'},
+   {n:'Zancada búlgara',g:'pierna',ax:true},
+   {n:'Plancha frontal',g:'core'},
+   {n:'Face pull con banda',g:'escapula'},
+   {n:'Press de hombro con banda',g:'empujeV'}]},
+ B:{t:'Fuerza B',l:[
+   {n:'Remo con banda a una mano',g:'traccionH'},
+   {n:'Fondos en banco',g:'empujeH'},
+   {n:'Peso muerto a una pierna',g:'pierna',ax:true},
+   {n:'Pallof press',g:'core'},
+   {n:'Puente de glúteo',g:'pierna'},
+   {n:'Pica al hombro',g:'empujeV'}]},
+ C:{t:'Fuerza C',l:[
+   {n:'Dominada o remo invertido',g:'traccionV'},
+   {n:'Flexiones inclinadas',g:'empujeH'},
+   {n:'Sentadilla búlgara',g:'pierna',ax:true},
+   {n:'Hollow hold',g:'core'},
+   {n:'Elevaciones de escápula',g:'escapula'}]},
+ M:{t:'Movilidad y core',l:[
+   {n:'Cat-camel y rotación torácica',g:'movilidad'},
+   {n:'Apertura de cadera 90/90',g:'movilidad'},
+   {n:'Dislocaciones con banda',g:'movilidad'},
+   {n:'Plancha lateral',g:'core'},
+   {n:'Dead bug',g:'core'}]},
+ L:{t:'Sesión ligera',l:[
+   {n:'Caminata o bici suave 25 min',g:'cardio'},
+   {n:'Movilidad de hombro',g:'movilidad'},
+   {n:'Estiramiento de cadena posterior',g:'movilidad'}]},
+ R:{t:'Movilidad de rescate (20 min)',l:[
+   {n:'Rotación torácica',g:'movilidad'},
+   {n:'Apertura de cadera',g:'movilidad'},
+   {n:'Círculos de hombro con banda',g:'movilidad'},
+   {n:'Plancha frontal corta',g:'core'}]},
+ N:{t:'Natación',l:[
+   {n:'Calentamiento 200 m suave',g:'cardio'},
+   {n:'Técnica de crol por series',g:'cardio'},
+   {n:'Aeróbico continuo',g:'cardio'},
+   {n:'Vuelta a la calma 100 m',g:'cardio'}]}
+};
+/* sustituciones cuando hay molestia (Documento 4) */
+const SUSTITUTOS={
+  hombro:{empujeV:{n:'Remo invertido a ritmo lento',g:'traccionH'},
+          empujeH:{n:'Tracción horizontal con banda',g:'traccionH'},
+          traccionV:{n:'Retracción escapular colgado',g:'escapula'}},
+  lumbar:{pierna:{n:'Puente de glúteo a una pierna',g:'pierna'},
+          core:{n:'Dead bug (antiextensión)',g:'core'}}
 };
 const FASES=[{s:2,r:'8-10',n:'Fase 1 · técnica y tolerancia'},{s:3,r:'8-12',n:'Fase 2 · volumen'},
              {s:3,r:'6-10',n:'Fase 3 · fuerza'},{s:4,r:'6-10',n:'Fase 4 · consolidación'}];
@@ -909,18 +1044,57 @@ function tipoSesion(fecha,esObra,previoObra){
   if(previoObra)return 'L';
   return ['A','M','B','M','C','L','M'][d];
 }
-function fichaEjercicio(fecha,bloque){
+function molestiasDe(fecha){
+  const d=(D.diario||{})[fecha];
+  const ayer=(D.diario||{})[addDays(fecha,-1)];
+  const m=new Set();
+  ((d&&d.molestias)||[]).forEach(x=>m.add(x));
+  ((ayer&&ayer.molestias)||[]).forEach(x=>m.add(x));   // también el día siguiente
+  return [...m];
+}
+function energiaDe(fecha){const d=(D.diario||{})[fecha];return d?d.energia:null;}
+
+function fichaEjercicio(fecha,bloque,forzarCorta){
   const esObra=bloque&&bloque.nombre&&bloque.nombre.indexOf('Movilidad antes')===0;
   const ayer=addDays(fecha,-1);
-  const previoObra=Object.values(SEM).some(s=>(s.jornadas||[]).some(j=>j.fecha===ayer));
+  const previoObra=Object.values(todasSemanas()).some(s=>(s.jornadas||[]).some(j=>j.fecha===ayer));
   const esNat=bloque&&bloque.nombre==='Natación';
   const k=esNat?'N':tipoSesion(fecha,esObra,previoObra);
   const f=FASES[faseSalud(fecha)];
   const reg=SES.find(s=>s.tipo==='ejercicio'&&s.fecha===fecha&&s.bloqueId===(bloque&&bloque.id));
-  return {clave:k,titulo:EJ[k].t,fase:f,
-    ejercicios:EJ[k].l.map((n,i)=>({nombre:n,series:(k==='L'||k==='R'||k==='N')?'—':f.s,reps:(k==='L'||k==='R'||k==='N')?'—':f.r,
+  const mol=molestiasDe(fecha);
+  const en=energiaDe(fecha);
+  const hayObra=Object.values(todasSemanas()).some(s=>(s.jornadas||[]).some(j=>j.fecha===fecha));
+  // la natación no se toca
+  const corta=esNat?false:(forzarCorta!==undefined?forzarCorta
+    :(hayObra||k==='R'||(en&&en<=2)||capacidadApretada()));
+  let lista=EJ[k].l.map(x=>Object.assign({},x));
+  const cambios=[];
+  if(!esNat)mol.forEach(m=>{
+    const tabla=SUSTITUTOS[m];if(!tabla)return;
+    lista=lista.map(e=>{
+      const sus=tabla[e.g];
+      if(!sus)return e;
+      cambios.push(e.n+' → '+sus.n);
+      return Object.assign({},sus);
+    });
+    if(m==='lumbar')lista=lista.filter(e=>!e.ax);
+  });
+  // quitar duplicados que puedan salir de la sustitución
+  const vistos={};lista=lista.filter(e=>vistos[e.n]?false:(vistos[e.n]=true));
+  const suave=(k==='L'||k==='R'||esNat);
+  const tope=suave?lista.length:(corta?3:5);
+  lista=lista.slice(0,tope);
+  return {clave:k,titulo:EJ[k].t,fase:f,corta,minutos:esNat?45:(corta?30:45),
+    molestias:mol,cambios,energia:en,
+    ejercicios:lista.map((e,i)=>({nombre:e.n,grupo:e.g,
+      series:suave?'—':(corta?Math.max(2,f.s-1):f.s),reps:suave?'—':f.r,
       peso:(reg&&reg.detalle&&reg.detalle[i]&&reg.detalle[i].peso)||'',
       hecho:!!(reg&&reg.detalle&&reg.detalle[i]&&reg.detalle[i].hecho)}))};
+}
+function capacidadApretada(){
+  const plan=SEM[semanaId(lunesDe(hoyISO()))];
+  return !!(plan&&plan.capacidad<D.config.umbrales.bajo);
 }
 
 /* ---------- actividad principal de un bloque ---------- */
@@ -983,7 +1157,11 @@ function quienDe(b){
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let toastT;
-function toast(m){const t=$('#toast');t.innerHTML='<div class="toast">'+esc(m)+'</div>';clearTimeout(toastT);toastT=setTimeout(()=>t.innerHTML='',2200);}
+function toast(m,etq,act){
+  const t=$('#toast');if(!t)return;
+  t.innerHTML='<div class="toast">'+esc(m)+(etq?'<button data-act="'+act+'">'+esc(etq)+'</button>':'')+'</div>';
+  clearTimeout(toastT);toastT=setTimeout(()=>t.innerHTML='',etq?6000:2200);
+}
 const VISTAS=[['panorama','Panorama'],['hoy','Hoy'],['semana','Semana'],['analisis','Análisis'],['proyectos','Proyectos'],['config','Ajustes']];
 
 function planActual(){return SEM[semanaId(semanaVista)]||null;}
@@ -1050,6 +1228,24 @@ function vPanorama(){
   }
   h+='</div>';
 
+  const mesAct=hoyISO().slice(0,7);
+  const restan=cuotaMes(mesAct)-jornadasUsadas(mesAct,null);
+  h+='<div class="tira"><span>Cuota de fin de semana de '+MESES[Number(mesAct.slice(5))-1]+'</span>'+
+     '<b style="color:'+(restan>0?'var(--ok)':'var(--warn)')+'">'+(restan>0?restan+' jornada'+(restan===1?'':'s')+' libre'+(restan===1?'':'s'):'agotada')+'</b>'+
+     '<span class="tiny muted">de '+cuotaMes(mesAct)+'</span></div>';
+  const fis=fiscalesProximas(30);
+  if(fis.length){
+    h+='<div class="card" style="margin-bottom:12px"><b style="font-size:14px">Vencimientos cercanos</b><div style="margin-top:8px">';
+    fis.slice(0,5).forEach(f=>{
+      const urg=f.dias<=f.aviso;
+      h+='<div class="row tiny" style="padding:5px 0;border-top:1px solid var(--line)">'+
+        '<span class="dot" style="background:'+f.color+'"></span>'+esc(f.nombre)+
+        '<span class="spacer"></span><span style="color:'+(urg?'var(--bad)':'var(--muted)')+'">'+
+        espCorto(f.vence)+' · '+(f.dias===0?'hoy':'en '+f.dias+' días')+'</span></div>';
+    });
+    h+='</div></div>';
+  }
+
   const nts=notasSemana(lunesDe(hoyISO()));
   if(nts.length){
     h+='<div class="card" style="margin-bottom:12px"><b style="font-size:14px">Notas de la semana</b><div style="margin-top:8px">';
@@ -1066,6 +1262,7 @@ function vPanorama(){
     if(v&&!v.cabe)avisos.push({t:'alerta',m:p.nombre+': para llegar al '+esp(p.fechaLimite)+' harían falta '+fmtH(v.necesarias)+' a la semana y el ritmo real es de '+fmtH(v.media)+'. Faltan '+fmtH(v.necesarias-v.media)+' semanales.'});
     else if(v)avisos.push({t:'info',m:p.nombre+': '+esp(p.fechaLimite)+' es alcanzable con '+fmtH(v.necesarias)+' semanales durante '+v.semanas+' semanas.'});});
   if(plan)plan.notas.filter(n=>n.t!=='info').forEach(n=>avisos.push(n));
+  h+='<p class="tiny muted" style="margin-top:14px;text-align:center">Centro de mando '+esc(VERSION_APP)+'</p>';
   if(avisos.length){
     h+='<div class="card"><b style="font-size:14px">Avisos</b><div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">';
     avisos.forEach(a=>h+='<div class="'+(a.t==='alerta'?'badbox':'warnbox')+'">'+esc(a.m)+'</div>');
@@ -1125,7 +1322,9 @@ function vSemana(){
   h+='<div class="gh" style="grid-column:1"></div>';
   for(let i=0;i<7;i++){
     const f=addDays(lun,i);const off=plan.diasOff.includes(f);
+    const ev=(typeof evaluarDia==='function'&&cfgObra().activo)?evaluarDia(f):null;
     h+='<div class="gh'+(f===hoyISO()?' today':'')+(esPasado(f)?' pasado':'')+'" style="grid-column:'+(i+2)+'">'+DIAS3[i]+
+       (ev?'<button class="semaf" data-act="meteo-dia" data-f="'+f+'" title="'+esc((ev.motivos.concat(ev.avisos)).join(' · ')||'buen día')+'" style="background:'+COLOR_EST[ev.estado]+'"></button>':'')+
        '<small>'+pad(parse(f).getDate())+(off?' · anulado':esPasado(f)?' · pasado':'')+'</small>'+
        '<input type="checkbox" data-act="selday" data-f="'+f+'"'+(sel.has(f)?' checked':'')+'></div>';
   }
@@ -1135,8 +1334,11 @@ function vSemana(){
     if(m%60===0)h+='<div class="hlab" style="grid-row:'+row+' / span 2">'+hhmm(m)+'</div>';
     for(let i=0;i<7;i++){
       const f=addDays(lun,i);
-      const cls=(plan.diasOff.includes(f)?'bloq':estadoCelda(i,m,f))+(esPasado(f)?' pasado':'');
-      h+='<div class="cell '+cls+(m%60===0?' hh':'')+'" data-act="celda" data-f="'+f+'" data-d="'+i+'" data-m="'+m+'" style="grid-column:'+(i+2)+';grid-row:'+row+'"></div>';
+      let cls=(plan.diasOff.includes(f)?'bloq':estadoCelda(i,m,f))+(esPasado(f)?' pasado':'');
+      const ex=(typeof chocaExterno==='function')&&chocaExterno(f,m,m+30);
+      if(ex)cls+=' externo';
+      const exT=ex?(externosDe(f).find(x=>x.ini<m+30&&x.fin>m)||{}).titulo:'';
+      h+='<div class="cell '+cls+(m%60===0?' hh':'')+'"'+(exT?' title="'+esc(exT)+'"':'')+' data-act="celda" data-f="'+f+'" data-d="'+i+'" data-m="'+m+'" style="grid-column:'+(i+2)+';grid-row:'+row+'"></div>';
     }
   }
   plan.bloques.slice().sort((a,b)=>a.ini-b.ini).forEach(b=>{
@@ -1192,7 +1394,15 @@ function vSemana(){
    ============================================================ */
 function vHoy(){
   const f=hoyISO(),lun=lunesDe(f),plan=SEM[semanaId(lun)];
+  if(enModoFamilia())return vistaFamilia();
   let h='<h2 class="vh">'+DIAS[diaSemana(f)]+' '+esp(f)+'</h2><p class="sub">Lo que toca hoy.</p>';
+  if(pideEnergia())h+=panelEnergia();
+  const hc=horaCierre(f);
+  if(cfgCierre().activo&&hc!==null&&!diario(f).cerrado)
+    h+='<div class="row" style="margin-bottom:12px"><button class="btn '+(tocaCerrar()?'primary':'ghost')+'" data-act="cierre">'+
+       (tocaCerrar()?'Cerrar el día':'Cierre del día a las '+hhmm(hc))+'</button></div>';
+  const dh=diario(f);
+  if(dh.primero&&!dh.cerrado)h+='<div class="warnbox" style="margin-bottom:12px">Lo primero de hoy: '+esc(dh.primero)+'</div>';
   if(!plan)return h+'<div class="card"><b>La semana no está planificada.</b><p class="tiny muted" style="margin-top:6px">Declara la capacidad y se genera el plan.</p><div style="margin-top:12px"><button class="btn primary" data-act="ir-semana">Ir a Semana</button></div></div>';
   const bs=plan.bloques.filter(b=>b.fecha===f).sort((a,b)=>a.ini-b.ini);
   if(plan.diasOff.includes(f))h+='<div class="warnbox" style="margin-bottom:12px">Día anulado. <button class="btn sm ghost" data-act="recuperar-dia" data-f="'+f+'">Recuperar día</button></div>';
@@ -1219,6 +1429,7 @@ function vProyectos(){
   let h='<div class="row" style="margin-bottom:6px"><h2 class="vh">Proyectos</h2><span class="spacer"></span>'+
         '<label class="btn ghost" style="display:inline-block">Importar .xlsx'+
         '<input type="file" accept=".xlsx,.csv" style="display:none" data-act="import-xlsx"></label>'+
+        '<button class="btn ghost" data-act="proj-sim">Simular uno nuevo</button>'+
         '<button class="btn primary" data-act="proj-new">Nuevo proyecto</button></div>'+
         repartoResumen()+
         '<p class="sub">Los proyectos se mueven con las flechas; los hitos y las subtareas, arrastrando por el asa. Lo de arriba se planifica antes.</p>'+
@@ -1235,6 +1446,7 @@ function vProyectos(){
        '<span class="tag" style="border-color:'+SEMAF[st][0]+';color:'+SEMAF[st][0]+'">'+SEMAF[st][1]+'</span>'+
        '<span class="spacer"></span>'+
        '<button class="btn sm '+(p.activo?'':'ghost')+'" data-act="proj-toggle" data-id="'+p.id+'">'+(p.activo?'Activo':'Desactivado')+'</button>'+
+       '<button class="btn sm ghost" data-act="indic" data-id="'+p.id+'">Indicadores</button>'+
        '<button class="btn sm ghost" data-act="comp-abrir" data-id="'+p.id+'">'+(canalDe(p.id)?'Compartido':'Compartir')+'</button>'+
        '<button class="btn sm ghost" data-act="proj-edit" data-id="'+p.id+'">Editar</button></div>';
     h+='<div class="row tiny muted" style="margin-top:8px;gap:16px"><span>Avance <b style="color:var(--text)">'+Math.round(av)+' %</b></span>'+
@@ -1250,10 +1462,24 @@ function vProyectos(){
          '<span class="track"><i style="width:'+real+'%;background:'+p.color+'"></i></span>'+
          '<span class="tiny muted">'+(p.activo?real+' % real':'sin reparto')+'</span></div>';
     }
+    if(p.tipo==='finito'&&p.fechaLimite){
+      const sim=simularProyecto(p,{n:400,semilla:7});
+      const col=sim.prob===null?'var(--muted)':sim.prob>=85?'var(--ok)':sim.prob>=50?'var(--warn)':'var(--bad)';
+      h+='<div class="row tiny muted" style="margin-top:8px;gap:14px">'+
+        '<span>Fecha probable <b style="color:var(--text)">'+(sim.p50?esp(sim.p50):'—')+'</b></span>'+
+        '<span>Casi segura <b style="color:var(--text)">'+(sim.p85?esp(sim.p85):'—')+'</b></span>'+
+        '<span>Llegar al '+esp(p.fechaLimite)+' <b style="color:'+col+'">'+(sim.prob===null?'—':sim.prob+' %')+'</b></span>'+
+        (sim.pocas?'<span class="tiny">con capacidad teórica, aún sin histórico</span>':'')+
+        '<button class="btn sm ghost" data-act="viab" data-id="'+p.id+'">Ver detalle</button></div>';
+    }
+    const nc=canalDe(p.id)?comentNuevosProyecto(p):0;
     const ha=canalDe(p.id)?horasPorAutor(p.id):null;
     if(ha&&Object.keys(ha).length)h+='<div class="row tiny muted" style="margin-top:6px;gap:14px">'+
       '<span>Compartido:</span>'+Object.keys(ha).map(k=>'<span><b style="color:var(--text)">'+esc(k)+'</b> '+fmtH(ha[k])+'</span>').join('')+
-      '<button class="btn sm ghost" data-act="comp-ahora">Sincronizar</button></div>';
+      '<button class="btn sm ghost" data-act="comp-ahora">Sincronizar</button>'+
+      '<button class="btn sm ghost" data-act="activ" data-id="'+p.id+'">Actividad</button>'+
+      '<button class="btn sm ghost" data-act="correos" data-id="'+p.id+'">Correo semanal</button>'+
+      (nc?'<span class="tag quien">'+nc+' comentario'+(nc===1?'':'s')+'</span>':'')+'</div>';
     if(p.tipo!=='habito'&&es-av>15)h+='<div class="warnbox" style="margin-top:10px">El esfuerzo va '+Math.round(es-av)+' puntos por delante del avance. O las estimaciones son cortas o el hito está mal definido.</div>';
     if(p.tipo==='habito'){
       [7,30,90].forEach(d=>{const a=adherencia(p,d);
@@ -1282,6 +1508,8 @@ function vProyectos(){
         (t.rec?'<span class="tag rec">'+(t.rec.cada>1?'cada '+t.rec.cada+' sem':'semanal')+
            (t.rec.dia!=null?' · '+DIAS3[t.rec.dia]:'')+(t.rec.hora?' '+t.rec.hora:'')+'</span>':'')+
         '<span>'+(t.rec?fmtH(t.rec.horas)+'/sem':fmtH(hr)+' / '+fmtH(t.horas))+'</span>'+
+          (canalDe(p.id)?'<button class="btn sm ghost" data-act="coment" data-p="'+p.id+'" data-h="'+hi.id+'" data-t="'+t.id+'">'+
+            (nuevosComent(t)?'💬 '+nuevosComent(t):(comentarios(t).length?'💬':'+ 💬'))+'</button>':'')+
           '<button class="btn sm ghost" data-act="tarea-edit" data-p="'+p.id+'" data-h="'+hi.id+'" data-t="'+t.id+'">···</button></div>';
       });
       h+='</div>';
@@ -1289,7 +1517,9 @@ function vProyectos(){
       h+='</div>';
     });
     h+='</div>';
-    if(p.tipo!=='habito')h+='<div class="row" style="margin-top:6px"><button class="btn sm ghost" data-act="hito-new" data-p="'+p.id+'">Añadir hito</button></div>';
+    if(p.tipo!=='habito')h+='<div class="row" style="margin-top:6px"><button class="btn sm ghost" data-act="hito-new" data-p="'+p.id+'">Añadir hito</button>'+
+      '<button class="btn sm ghost" data-act="fiscal" data-id="'+p.id+'">'+
+      (p.hitos.some(x=>x.id==='fisc_'+p.id)?'Ampliar obligaciones de la SL':'Añadir obligaciones de una SL')+'</button></div>';
     if(deu.length)h+='<div class="warnbox" style="margin-top:10px">Deuda: '+deu.map(d=>esc(d.nombre)+' ('+fmtH(d.horas)+')').join(', ')+'</div>';
     h+='</div>';
   });
@@ -1364,6 +1594,38 @@ function vConfig(){
   });
   h+='</table></div></div>';
 
+  const ob=cfgObra();
+  h+='<div class="card" style="margin-bottom:12px"><b style="font-size:14px">Obra y meteorología</b>'+
+     '<p class="tiny muted" style="margin:4px 0 10px">Semáforo por día en las jornadas de fin de semana, con el sol directo de cada paño. Datos de Open-Meteo.</p>'+
+     '<div class="row"><button class="btn sm '+(ob.activo?'':'ghost')+'" data-act="obra-tog">'+(ob.activo?'Activada':'Desactivada')+'</button>'+
+     '<button class="btn sm ghost" data-act="obra-cfg2">Coordenadas, umbrales y paños</button></div>'+
+     (ob.activo&&ob.lat===null?'<p class="tiny" style="margin-top:8px;color:var(--warn)">Falta poner las coordenadas de la obra.</p>':'')+
+     (meteoDisponible()?'<p class="tiny muted" style="margin-top:8px">Previsión '+(meteoDesfasada()?'de hace más de 3 horas':'al día')+'.</p>':'')+
+     '<p class="tiny muted" style="margin-top:4px">Datos de <a href="https://open-meteo.com" target="_blank" style="color:inherit;text-decoration:underline">Open-Meteo</a>, gratuitos y sin necesidad de clave.</p>'+
+     '</div>';
+
+  const cal=cfgCal();
+  h+='<div class="card" style="margin-bottom:12px"><b style="font-size:14px">Google Calendar</b>'+
+     '<p class="tiny muted" style="margin:4px 0 10px">Escribe tus bloques de las próximas 4 semanas en un calendario llamado «Centro de mando», y las jornadas de obra y el coche además en otro llamado «Obra», que puedes compartir con tu pareja desde Google Calendar.</p>'+
+     '<div class="row"><button class="btn sm '+(cal.escribir?'':'ghost')+'" data-act="cal-tog" data-k="escribir">'+(cal.escribir?'Escribiendo':'No escribe')+'</button>'+
+     '<button class="btn sm '+(cal.leer?'':'ghost')+'" data-act="cal-tog" data-k="leer">'+(cal.leer?'Leyendo':'No lee')+'</button>'+
+     '<button class="btn sm ghost" data-act="cal-elegir">Elegir calendarios que bloquean</button>'+
+     '<button class="btn sm ghost" data-act="cal-ahora">Sincronizar calendario</button></div>'+
+     (cal.calendarios.length?'<p class="tiny muted" style="margin-top:8px">Bloquean tu agenda: '+cal.calendarios.length+' calendario(s).</p>':'')+
+     (cal.ultima?'<p class="tiny muted" style="margin-top:4px">Última escritura: '+esp(cal.ultima.slice(0,10))+' a las '+cal.ultima.slice(11,16)+'.</p>':'')+
+     '</div>';
+
+  const cc=cfgCierre();
+  h+='<div class="card" style="margin-bottom:12px"><b style="font-size:14px">Cierre del día</b>'+
+     '<p class="tiny muted" style="margin:4px 0 10px">Un panel de un minuto antes de que empiece tu franja protegida de la tarde, y después modo familia hasta que termine.</p>'+
+     '<div class="row"><button class="btn sm '+(cc.activo?'':'ghost')+'" data-act="ci-cfg" data-k="activo">'+(cc.activo?'Activado':'Desactivado')+'</button>'+
+     '<div class="field" style="width:150px"><label>Minutos de antelación</label>'+
+     '<input type="number" min="0" max="60" value="'+cc.minutos+'" data-act="ci-min"></div>'+
+     '<button class="btn sm '+(cc.notificar?'':'ghost')+'" data-act="ci-notif">'+(cc.notificar?'Con notificación':'Sin notificación')+'</button></div>'+
+     (horaCierre(hoyISO())!==null?'<p class="tiny muted" style="margin-top:8px">Hoy saltaría a las '+hhmm(horaCierre(hoyISO()))+'.</p>':'')+
+     '<div class="field" style="margin-top:10px;width:180px"><label>Aviso de vencimientos (días)</label>'+
+     '<input type="number" min="1" max="60" value="'+(c.avisoFiscal||14)+'" data-act="cfg" data-k="avisoFiscal"></div></div>';
+
   h+='<div class="card" style="margin-bottom:12px"><b style="font-size:14px">Equipamiento de entrenamiento</b>'+
      '<div class="row" style="margin-top:10px">'+
      Object.keys(c.equipamiento).map(k=>'<button class="btn sm '+(c.equipamiento[k]?'':'ghost')+'" data-act="equip" data-k="'+k+'">'+k+'</button>').join('')+
@@ -1380,8 +1642,16 @@ function vConfig(){
      '<div class="row"><button class="btn" data-act="sync-probar">Probar conexión</button>'+
      '<button class="btn '+(sy.activo?'':'primary')+'" data-act="sync-toggle">'+(sy.activo?'Sincronización activada':'Activar sincronización')+'</button>'+
      (sy.activo?'<button class="btn ghost" data-act="sync-ahora">Sincronizar ahora</button>':'')+'</div>'+
-     (sy.activo?'<p class="tiny muted" style="margin-top:9px">Se sincroniza sola al abrir la app, al volver a ella y unos segundos después de cada cambio.</p>':'')+
+     (sy.activo?'<button class="btn ghost" data-act="copias">Copias de seguridad</button>':'')+
+     '</div>'+
+     (sy.activo?'<p class="tiny muted" style="margin-top:9px">Se sincroniza sola al abrir la app, al volver a ella, unos segundos después de cada cambio, cada 5 minutos mientras la tengas delante, y al cerrar la pestaña. Si los dos dispositivos han tocado cosas distintas, se conservan las dos.</p>':'')+
      '</div>';
+
+  h+='<div class="card" style="margin-bottom:12px"><b style="font-size:14px">Esta versión</b>'+
+     '<p class="tiny muted" style="margin:4px 0 0">Centro de mando '+esc(VERSION_APP)+' · modelo de datos '+VERSION_DATOS+'</p>'+
+     '<div id="tam" class="tiny muted" style="margin-top:6px">Calculando el tamaño de los datos…</div>'+
+     '<div class="row" style="margin-top:10px"><button class="btn ghost" data-act="recargar">Buscar versión nueva</button>'+
+     '<button class="btn ghost" data-act="registro">Registro técnico</button></div></div>';
 
   h+='<div class="card"><b style="font-size:14px">Datos</b>'+
      '<div class="row" style="margin-top:10px">'+
@@ -1472,9 +1742,15 @@ function mAnularDia(fechas){
 function mFicha(id){
   const plan=planActual()||SEM[semanaId(lunesDe(hoyISO()))];
   const b=plan.bloques.find(x=>x.id===id);if(!b)return;
-  const f=fichaEjercicio(b.fecha,b);
-  let h='<h3>'+esc(f.titulo)+'</h3><div class="mst">'+esp(b.fecha)+' · '+esc(f.fase.n)+
+  const f=fichaEjercicio(b.fecha,b,window.__corta);
+  let h='<h3>'+esc(f.titulo)+'</h3><div class="mst">'+esp(b.fecha)+' · '+esc(f.fase.n)+' · '+f.minutos+' min'+
     (D.config.equipamiento.mancuernas?'':' · sin mancuernas: peso corporal y bandas')+'</div>';
+  if(f.molestias.length)h+='<div class="warnbox" style="margin-bottom:10px">Molestia de '+f.molestias.join(' y ')+
+    ': '+(f.cambios.length?esc(f.cambios.join(' · ')):'se han quitado las cargas axiales')+'. Hoy y mañana.</div>';
+  if(!/Natación/.test(f.titulo))h+='<div class="row" style="margin-bottom:10px">'+
+    '<button class="btn sm '+(f.corta?'ghost':'')+'" data-act="ficha-dur" data-id="'+b.id+'" data-v="45">45 min</button>'+
+    '<button class="btn sm '+(f.corta?'':'ghost')+'" data-act="ficha-dur" data-id="'+b.id+'" data-v="30">30 min</button>'+
+    '<span class="tiny muted" style="margin-left:6px">nunca saltar, solo acortar</span></div>';
   h+='<div>';
   f.ejercicios.forEach((e,i)=>{
     h+='<div class="exrow"><span>'+esc(e.nombre)+'<br><span class="tiny muted">'+e.series+' × '+e.reps+'</span></span>'+
@@ -1496,6 +1772,8 @@ function mProyecto(id){
      '<div class="field" style="flex:1"><label>Fin (opcional)</label><input id="pf" type="date" value="'+(p.fechaFin||'')+'"></div></div>';
   h+='<div class="row" style="margin-bottom:9px"><div class="field" style="flex:1"><label>Fecha límite deseada</label><input id="pl" type="date" value="'+(p.fechaLimite||'')+'"></div>'+
      '<div class="field" style="flex:1"><label>% de reparto</label><input id="pp" type="number" value="'+p.pct+'"></div></div>';
+  if(id)h+='<div class="row" style="margin-bottom:12px"><span class="tiny muted" style="flex:1">Corregir estimaciones con mi histórico</span>'+
+    '<button class="btn sm '+(p.aprender!==false?'':'ghost')+'" data-act="aprender" data-id="'+id+'">'+(p.aprender!==false?'Activado':'Desactivado')+'</button></div>';
   h+='<div class="row"><button class="btn primary" data-act="proj-save" data-id="'+(id||'')+'">Guardar</button>'+
      '<button class="btn ghost" data-act="cerrar">Cancelar</button><span class="spacer"></span>'+
      (id?'<button class="btn danger" data-act="proj-del" data-id="'+id+'">Eliminar</button>':'')+'</div>';
@@ -1534,11 +1812,15 @@ function mTarea(pid,hid,tid){
   h+='<div class="row" style="margin-bottom:9px"><div class="field" style="flex:1"><label>'+(on?'Horas totales (informativo)':'Horas estimadas')+'</label><input id="th" type="number" step="0.5" value="'+t.horas+'"></div>'+
      '<div class="field" style="flex:1"><label>Contexto</label><select id="tc">'+
      ['escritorio','llamadas','obra','cita','gimnasio'].map(c=>'<option'+(t.contexto===c?' selected':'')+'>'+c+'</option>').join('')+'</select></div></div>';
+  const fac=tid?factorDe(t,hi):{activo:false};
+  if(fac.activo)h+='<div class="tiny muted" style="margin:-4px 0 10px;padding:8px 10px;border:1px solid var(--line);border-radius:6px">'+
+    'Estimación '+fmtH(t.horas)+'. Tu histórico en este tipo de tarea va ×'+fac.factor+' ('+fac.n+' tareas), así que el planificador contará '+
+    fmtH(Math.round(t.horas*fac.factor*10)/10)+'.</div>';
   if(esCompartido(pid)){
     const ms=miembrosDe(pid);
     h+='<div class="field" style="margin-bottom:12px"><label>Asignada a</label><select id="tasg">'+
        '<option value="">— sin asignar, la coge quien pueda —</option>'+
-       ms.map(m=>'<option value="'+esc(m)+'"'+(t.asignado===m?' selected':'')+'>'+esc(m)+'</option>').join('')+
+       ms.map(m=>'<option value="'+esc(m)+'"'+(t.asignado===m?' selected':'')+'>'+esc(m)+esc(etiquetaLibre(pid,m))+'</option>').join('')+
        (t.asignado&&!ms.includes(t.asignado)?'<option value="'+esc(t.asignado)+'" selected>'+esc(t.asignado)+'</option>':'')+
        '</select><p class="tiny muted" style="margin-top:5px">Si la asignas a otra persona, deja de aparecer en tu planificación pero sigues viéndola aquí.</p></div>';
   }
@@ -1638,9 +1920,13 @@ function syncCfg(){
 function pintarEstado(){
   const e=$('#save');if(!e)return;
   const s=syncCfg();
-  const txt={off:guardando?'Guardando…':'Guardado en este dispositivo',
-    sync:'Sincronizando…',ok:'Sincronizado'+(syncUltima?' '+syncUltima:''),
-    pend:'Cambios sin subir',error:'Sin conexión con la hoja'}[syncEstado]||'';
+  const corto=typeof innerWidth!=='undefined'&&innerWidth<760;
+  const txt=(corto
+    ?{off:guardando?'Guardando…':'Guardado',sync:'Sincronizando…',
+       ok:'Al día'+(syncUltima?' '+syncUltima:''),pend:'Sin subir',error:'Sin conexión'}
+    :{off:guardando?'Guardando…':'Guardado en este dispositivo',sync:'Sincronizando…',
+       ok:'Sincronizado'+(syncUltima?' '+syncUltima:''),pend:'Cambios sin subir',error:'Sin conexión con la hoja'}
+  )[syncEstado]||'';
   e.innerHTML=s.activo?'<button data-act="sync-ahora" style="color:'+
     (syncEstado==='error'?'var(--bad)':syncEstado==='pend'?'var(--warn)':'var(--faint)')+'">'+esc(txt)+'</button>':esc(txt);
 }
@@ -1650,17 +1936,26 @@ function programarSync(){clearTimeout(syncT);syncT=setTimeout(()=>sincronizar(fa
 async function syncLlamar(accion,payload){
   const s=syncCfg();
   if(!s.url)throw new Error('sin dirección');
+  const cuerpo=JSON.stringify({clave:s.clave,accion,payload});
+  const t0=Date.now();
   const r=await fetch(s.url,{method:'POST',redirect:'follow',
-    headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body:JSON.stringify({clave:s.clave,accion,payload})});
+    headers:{'Content-Type':'text/plain;charset=utf-8'},body:cuerpo})
+    .catch(e=>{registrarOperacion(accion,'sin red: '+e.message,cuerpo.length,false);throw e;});
   const txt=await r.text();
-  let j;try{j=JSON.parse(txt);}catch(e){throw new Error('respuesta inesperada: revisa que el acceso sea «cualquier persona»');}
-  if(j.error)throw new Error(j.error);
+  let j;
+  try{j=JSON.parse(txt);}
+  catch(e){
+    registrarOperacion(accion,'respuesta ilegible ('+txt.length+' car.)',0,false);
+    throw new Error('respuesta inesperada: revisa que el acceso sea «cualquier persona»');
+  }
+  if(j.error){registrarOperacion(accion,'error de la hoja: '+j.error,0,false);throw new Error(j.error);}
+  registrarOperacion(accion,'correcto',cuerpo.length,true);
   return j;
 }
 function paquete(){
   const copia=JSON.parse(JSON.stringify(D));
   delete copia.config.sync;                       // la clave no viaja a la hoja
+  delete copia.registro;                          // el registro técnico es de este dispositivo
   return {datos:copia,semanas:SEM,sesiones:SES,incidencias:INC,
     actualizado:new Date().toISOString(),dispositivo:syncCfg().dispositivo};
 }
@@ -1670,6 +1965,7 @@ async function syncSubir(){
   const p=paquete();
   await syncLlamar('guardar',p);
   const s=syncCfg();s.base=p.actualizado;
+  fijarMapa();
   sucio=false;syncEstado='ok';syncUltima=horaCorta(p.actualizado);
   await guardar(false);pintarEstado();
 }
@@ -1695,21 +1991,29 @@ async function sincronizar(manual){
     if(!rem||!rem.datos){await syncSubir();if(manual)toast('Hoja inicializada con tus datos');}
     else if(rem.actualizado===s.base){
       if(sucio)await syncSubir();
-      else{syncEstado='ok';syncUltima=horaCorta(rem.actualizado);}
-    }
-    else if(!sucio){
-      adoptar(rem);await guardar(false);render();
-      if(manual)toast('Traído lo último de '+(rem.dispositivo||'la hoja'));
+      else{syncEstado='ok';syncUltima=horaCorta(rem.actualizado);if(!syncCfg().mapa)fijarMapa();}
     }
     else{
-      syncOcupado=false;syncEstado='pend';pintarEstado();mConflicto(rem);return;
+      const {conf,res}=fusionarPersonal(rem);
+      if(conf.length){
+        conflictosPend=conf;syncOcupado=false;syncEstado='pend';pintarEstado();mConflictos();return;
+      }
+      await guardar(false);
+      await syncSubir();
+      render();
+      if(manual){
+        const n=res.cambios+res.nuevos+res.sesiones+res.semanas;
+        toast(n?('Fusionado: '+n+' cambio(s) de '+(rem.dispositivo||'la otra copia')):'Todo al día');
+      }
     }
   }catch(err){
     syncEstado='error';console.warn('sync',err);
+    registrarOperacion('sincronizar','abortada: '+err.message,0,false);
     if(manual)toast('No he podido conectar: '+err.message);
   }
   syncOcupado=false;pintarEstado();
   try{await sincronizarCompartidos(false);}catch(e){}
+  try{await subirArchivo();}catch(e){}
 }
 
 function mConflicto(rem){
@@ -1724,6 +2028,50 @@ function mConflicto(rem){
   h+='<button class="mopt" data-act="export">Descargar antes una copia de lo de aquí<small>Se guarda el JSON y luego decides</small></button>';
   h+='<div class="row"><button class="btn ghost" data-act="cerrar">Ahora no</button></div>';
   modal(h);
+}
+
+/* ============================================================
+   LATIDO: vigilancia periódica de coste mínimo
+   Cada 5 minutos: si hay algo sin subir, lo sube. Si no, pregunta
+   solo la fecha del último guardado, que son 64 bytes, y únicamente
+   descarga el paquete completo si de verdad ha cambiado algo.
+   ============================================================ */
+const LATIDO_MIN=5;
+var latido=null, latidoUltimo=null;
+
+function arrancarLatido(){
+  clearInterval(latido);
+  if(!syncCfg().activo)return;
+  latido=setInterval(()=>{pulso();},LATIDO_MIN*60000);
+}
+async function pulso(){
+  const s=syncCfg();
+  if(!s.activo||!s.url)return;
+  if(syncOcupado)return;
+  if(typeof document!=='undefined'&&document.hidden)return;   // en segundo plano no molestamos
+  try{
+    if(sucio){await sincronizar(false);latidoUltimo=AHORA();return;}
+    const j=await syncLlamar('sello');
+    latidoUltimo=AHORA();
+    if(j.actualizado&&j.actualizado!==s.base)await sincronizar(false);
+  }catch(e){
+    // script antiguo sin la acción «sello», o sin red: se cae al camino largo
+    if(/desconocida/.test(e.message||''))await sincronizar(false);
+  }
+}
+
+/* ---------- al cerrar: lo pendiente se manda aunque se cierre la pestaña ---------- */
+function despedida(){
+  const s=syncCfg();
+  if(!sucio||!s.activo||!s.url)return;
+  try{
+    const cuerpo=JSON.stringify({clave:s.clave,accion:'guardar',payload:paquete()});
+    if(navigator.sendBeacon){
+      const b=new Blob([cuerpo],{type:'text/plain;charset=utf-8'});
+      const ok=navigator.sendBeacon(s.url,b);
+      registrarOperacion('guardar al cerrar',ok?'enviado':'el navegador lo ha rechazado',cuerpo.length,ok);
+    }
+  }catch(e){}
 }
 /* ============================================================
    ARRASTRAR BLOQUES POR LA CUADRÍCULA
@@ -1776,8 +2124,10 @@ function terminarDrag(commit){
         if(choque==='familia'){toast('Ahí es tiempo de familia. Cámbialo en Ajustes si de verdad quieres usarlo.');render();drag=null;return;}
         if(choque==='bloqueado'){toast('Esa franja no es tiempo útil.');render();drag=null;return;}
         const cuota=estadoCelda(drag.prev.dia,drag.prev.min,fecha)==='cuota';
+        const antes={fecha:b.fecha,ini:b.ini,fin:b.fin,motivo:b.motivo};
         b.fecha=fecha;b.ini=drag.prev.min;b.fin=drag.prev.min+dur;
-        b.motivo='Movido a mano el '+esp(hoyISO())+'.';
+        b.motivo='Movido a mano el '+esp(hoyISO())+'.';sello(b);
+        registrarAccion('Movido a '+DIAS3[drag.prev.dia]+' '+hhmm(b.ini),()=>{Object.assign(b,antes);sello(b);});
         guardarPronto();render();
         toast(cuota?'Movido al fin de semana: sale del tiempo de familia':'Movido a '+DIAS3[drag.prev.dia]+' '+hhmm(b.ini));
         drag=null;return;
@@ -1929,11 +2279,13 @@ function guardarEvento(){
 
   const viejo=previo;
   const b=viejo||{id:uid('b'),tipo:'trabajo',estado:'planificado'};
+  const antesTodo=viejo?JSON.parse(JSON.stringify(viejo)):null;
   const antes=viejo?{fecha:viejo.fecha,ini:viejo.ini}:null;
   b.fecha=e.fecha;b.ini=e.ini;b.fin=e.ini+e.dur;
   b.proyecto=e.proyecto;b.tareaId=tareaId||null;b.hito=hitoNombre;
   b.nombre=nombre;b.nota=e.nota.trim()||null;
   b.motivo=(viejo?'Editado':'Creado')+' a mano el '+esp(hoyISO())+'.';
+  sello(b);sello(plan);
   if(!viejo){b.origen='manual';plan.bloques.push(b);}
   if(viejo&&viejo.estado==='hecho'&&antes&&(antes.fecha!==b.fecha)){
     SES.filter(s=>s.bloqueId===b.id).forEach(s=>{s.fecha=b.fecha;s.tareaId=b.tareaId;s.proyecto=b.proyecto;});
@@ -1941,7 +2293,8 @@ function guardarEvento(){
   plan.porProyecto=plan.porProyecto||{};
   recalcularSemana(plan);
   cerrar();guardarPronto();render();
-  toast(viejo?'Bloque actualizado':'Bloque creado');
+  if(viejo)registrarAccion('Bloque editado',()=>{restaurar(b,antesTodo);recalcularSemana(plan);});
+  else registrarAccion('Bloque creado',()=>{plan.bloques=plan.bloques.filter(x=>x.id!==b.id);recalcularSemana(plan);});
 }
 function recalcularSemana(plan){
   const pp={};let u=0;
@@ -1958,9 +2311,13 @@ function borrarEvento(){
   const b=plan.bloques.find(x=>x.id===e.id);
   if(!b)return;
   if(b.estado==='hecho'){toast('Está marcado como hecho: deshazlo antes de borrarlo');return;}
+  const guardado=JSON.parse(JSON.stringify(b));
+  anotarBorrado(b.id);
   plan.bloques=plan.bloques.filter(x=>x.id!==e.id);
   recalcularSemana(plan);
-  cerrar();guardarPronto();render();toast('Bloque eliminado');
+  cerrar();guardarPronto();render();
+  registrarAccion('Bloque eliminado',()=>{plan.bloques.push(guardado);recalcularSemana(plan);
+    D.borrados=borrados().filter(x=>x.id!==guardado.id);});
 }
 /* notas de la semana, para la vista general */
 function notasSemana(lunes){
@@ -2160,7 +2517,7 @@ function realEn(desde,hasta){
 }
 function previstoEn(desde,hasta){
   const r={};
-  Object.values(SEM).forEach(w=>{
+  Object.values(todasSemanas()).forEach(w=>{
     if(w.lunes<desde||w.lunes>hasta)return;
     Object.keys(w.porProyecto||{}).forEach(k=>r[k]=(r[k]||0)+w.porProyecto[k]);
   });
@@ -2287,6 +2644,11 @@ function vAnalisis(){
   });
   h+='</table></div></div>';
 
+  h+=bloqueMeteo(per,desde,hasta);
+  h+=bloqueProtegido(per);
+  h+=bloqueEnergia(per);
+  h+=bloqueIndicadores(per,desde,hasta);
+
   // ---------- reparto por persona en los proyectos compartidos ----------
   D.proyectos.filter(p=>esCompartido(p.id)).forEach(p=>{
     const gente=miembrosDe(p.id);
@@ -2378,6 +2740,10 @@ function proyectoPaquete(pid){
   return {proyecto:{id:p.id,nombre:p.nombre,color:p.color,tipo:p.tipo,fechaLimite:p.fechaLimite,
             actualizado:p.actualizado||VIEJO},
           hitos,tareas,sesiones:ses,borrados:borrados(),miembros:miembrosDe(pid),
+          actividad:(p.actividad||[]).slice(-50),
+          libres:Object.assign({},((compartidos().find(x=>x.proyectoId===pid)||{}).libres)||{},
+                               (function(){const o={};o[autorNombre()]=horasLibresMias();return o;})()),
+          correos:((compartidos().find(x=>x.proyectoId===pid)||{}).correos)||[],
           actualizado:AHORA(),autor:autorNombre()};
 }
 
@@ -2419,14 +2785,17 @@ function fusionarProyecto(pid,rem){
       if(bmap[rt.id]&&bmap[rt.id]>(rt.actualizado||VIEJO))return;
       const copia=Object.assign({},rt);delete copia.hito;
       dest.tareas.push(copia);r.nuevasTareas++;
+      fusionarComentarios(mt[rt.id]&&mt[rt.id].t,rt);
     }else if((rt.actualizado||VIEJO)>(cur.t.actualizado||VIEJO)){
       const copia=Object.assign({},rt);delete copia.hito;
+      const coms=(cur.t.coment||[]).slice();
       if(dest&&dest.id!==cur.h.id){                       // ha cambiado de hito
         cur.h.tareas=cur.h.tareas.filter(x=>x.id!==rt.id);
         dest.tareas.push(copia);
-      }else Object.assign(cur.t,copia);
+        copia.coment=coms;fusionarComentarios(copia,rt);
+      }else{Object.assign(cur.t,copia);cur.t.coment=coms;fusionarComentarios(cur.t,rt);}
       r.cambios++;
-    }
+    }else fusionarComentarios(cur.t,rt);
   });
   // aplicar borrados y reordenar
   p.hitos=p.hitos.filter(h=>!(bmap[h.id]&&bmap[h.id]>(h.actualizado||VIEJO)));
@@ -2466,12 +2835,16 @@ function adoptarProyecto(pid,rem){
 
 /* ---------- sincronizar un canal ---------- */
 async function llamarCanal(c,accion,payload){
+  const cuerpo=JSON.stringify({clave:c.clave,accion,proyecto:c.canal||'canal',payload});
   const r=await fetch(c.url,{method:'POST',redirect:'follow',
-    headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body:JSON.stringify({clave:c.clave,accion,proyecto:c.canal||'canal',payload})});
+    headers:{'Content-Type':'text/plain;charset=utf-8'},body:cuerpo})
+    .catch(e=>{registrarOperacion('canal:'+accion,'sin red: '+e.message,cuerpo.length,false);throw e;});
   const txt=await r.text();
-  let j;try{j=JSON.parse(txt);}catch(e){throw new Error('respuesta inesperada: revisa que el acceso sea «cualquier persona»');}
-  if(j.error)throw new Error(j.error);
+  let j;
+  try{j=JSON.parse(txt);}
+  catch(e){registrarOperacion('canal:'+accion,'respuesta ilegible',0,false);throw new Error('respuesta inesperada: revisa que el acceso sea «cualquier persona»');}
+  if(j.error){registrarOperacion('canal:'+accion,'error: '+j.error,0,false);throw new Error(j.error);}
+  registrarOperacion('canal:'+accion,'correcto',cuerpo.length,true);
   return j;
 }
 async function sincronizarCanal(c,manual,unirse){
@@ -2489,6 +2862,7 @@ async function sincronizarCanal(c,manual,unirse){
   }
   if(rem&&rem.actualizado!==c.base)res=fusionarProyecto(c.proyectoId,rem);
   if(rem&&rem.miembros)c.miembros=[...new Set([...(c.miembros||[]),...rem.miembros,autorNombre()])];
+  if(rem)fusionarCanalExtra(c.proyectoId,rem,c);
   const p=proyectoPaquete(c.proyectoId);
   await llamarCanal(c,'guardarProyecto',p);
   c.base=p.actualizado;c.ultima=AHORA();
@@ -2547,6 +2921,1926 @@ function mCompartir(pid){
      (c.activo?'<button class="btn danger sm" data-act="comp-off" data-id="'+pid+'">Dejar de compartir</button>':'')+'</div>';
   modal(h);
 }
+
+/* ---------- comentarios, actividad, horas libres y correos del canal ---------- */
+function fusionarComentarios(lt,rt){
+  if(!lt||!rt||!rt.coment||!rt.coment.length)return;
+  lt.coment=lt.coment||[];
+  const vistos={};lt.coment.forEach(c=>vistos[c.id]=true);
+  rt.coment.forEach(c=>{if(!vistos[c.id])lt.coment.push(c);});
+  lt.coment.sort((a,b)=>a.ts<b.ts?-1:1);
+}
+function fusionarCanalExtra(pid,rem,c){
+  const p=P(pid);if(!p)return;
+  if(rem.actividad&&rem.actividad.length){
+    p.actividad=p.actividad||[];
+    const v={};p.actividad.forEach(a=>v[a.id]=true);
+    rem.actividad.forEach(a=>{if(!v[a.id])p.actividad.push(a);});
+    p.actividad.sort((a,b)=>a.ts<b.ts?-1:1);
+    if(p.actividad.length>200)p.actividad=p.actividad.slice(-200);
+  }
+  if(rem.libres){
+    c.libres=Object.assign({},c.libres||{},rem.libres);
+    delete c.libres[autorNombre()];
+  }
+  if(rem.correos&&rem.correos.length&&!(c.correos||[]).length)c.correos=rem.correos;
+}
+/* ============================================================
+   VERSIÓN, DESHACER Y APLICACIÓN INSTALABLE
+   ============================================================ */
+const VERSION_APP='1.25 · 12/09/2026';
+
+/* ---------- pila de deshacer ---------- */
+var pilaDeshacer=[];
+function registrarAccion(desc,deshacer){
+  pilaDeshacer.push({desc,deshacer,ts:Date.now()});
+  if(pilaDeshacer.length>20)pilaDeshacer.shift();
+  toast(desc,'Deshacer','deshacer');
+}
+function deshacer(){
+  const a=pilaDeshacer.pop();
+  if(!a){toast('No hay nada que deshacer');return;}
+  try{a.deshacer();}catch(e){console.warn('deshacer',e);toast('No se ha podido deshacer');return;}
+  guardarPronto();render();
+  toast('Deshecho: '+a.desc.toLowerCase());
+}
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'&&!e.shiftKey){
+    const t=e.target&&e.target.tagName;
+    if(t==='INPUT'||t==='TEXTAREA'||t==='SELECT')return;
+    e.preventDefault();deshacer();
+  }
+});
+/* copia profunda de un bloque, para poder devolverlo a su sitio */
+const copia=o=>JSON.parse(JSON.stringify(o));
+/* devuelve un objeto a su estado anterior, quitando además los campos que no tenía */
+function restaurar(dst,src){
+  Object.keys(dst).forEach(k=>{if(!(k in src))delete dst[k];});
+  Object.assign(dst,src);
+  return dst;
+}
+
+/* ---------- aviso de versión nueva ---------- */
+var versionRemota=null;
+async function comprobarVersion(){
+  try{
+    const u=location.pathname.replace(/[^/]*$/,'')+'index.html?t='+Date.now();
+    const r=await fetch(u,{cache:'no-store'});
+    if(!r.ok)return;
+    const t=await r.text();
+    const m=t.match(/VERSION_APP\s*=\s*'([^']+)'/);
+    if(m&&m[1]!==VERSION_APP){versionRemota=m[1];pintarAviso();}
+  }catch(e){}
+}
+function pintarAviso(){
+  if(!versionRemota)return;
+  const d=document.getElementById('aviso-version');
+  if(!d)return;
+  d.innerHTML='<div class="avisoNuevo">Hay una versión nueva ('+esc(versionRemota)+')'+
+    '<button data-act="recargar">Actualizar</button></div>';
+}
+function recargarLimpio(){
+  if('serviceWorker' in navigator&&navigator.serviceWorker.getRegistrations){
+    navigator.serviceWorker.getRegistrations().then(rs=>{
+      Promise.all(rs.map(r=>r.unregister())).then(()=>{
+        if(window.caches&&caches.keys)caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))).then(irNueva);
+        else irNueva();
+      });
+    });
+  }else irNueva();
+}
+function irNueva(){location.replace(location.pathname+'?v='+Date.now());}
+
+/* ---------- instalación y almacenamiento persistente ---------- */
+async function prepararApp(){
+  try{
+    if('serviceWorker' in navigator){
+      const base=location.pathname.replace(/[^/]*$/,'');
+      await navigator.serviceWorker.register(base+'sw.js',{scope:base});
+    }
+  }catch(e){console.warn('sw',e);}
+  try{
+    if(navigator.storage&&navigator.storage.persist){
+      const ya=await navigator.storage.persisted();
+      if(!ya)await navigator.storage.persist();
+    }
+  }catch(e){}
+}
+async function tamanoDatos(){
+  const trozo=o=>{try{return JSON.stringify(o).length;}catch(e){return 0;}};
+  const kb=n=>n<1024?n+' B':(n/1024).toFixed(n<102400?1:0)+' kB';
+  const t={config:trozo(D),semanas:trozo(SEM),sesiones:trozo(SES),incidencias:trozo(INC),archivo:trozo(ARCH)};
+  const sync=t.config+t.semanas+t.sesiones+t.incidencias;
+  let cuota=null;
+  try{
+    if(navigator.storage&&navigator.storage.estimate){
+      const e=await navigator.storage.estimate();
+      cuota={usado:e.usage,total:e.quota};
+    }
+  }catch(e){}
+  return {t,sync,kb,cuota};
+}
+/* ============================================================
+   FUSIÓN DE LA COPIA PERSONAL, ELEMENTO A ELEMENTO
+   Cada pieza lleva su marca de edición. Al sincronizar gana la más
+   reciente de cada una, así que dos dispositivos que han tocado cosas
+   distintas conservan las dos. Solo se pregunta cuando la misma pieza
+   se ha cambiado en los dos lados desde la última base común.
+   ============================================================ */
+const VERSION_DATOS=5;
+var ARCH={};                 // semanas archivadas
+var conflictosPend=[];
+
+function sello(o){if(o)o.actualizado=AHORA();return o;}
+function selloCfg(k){D.config.sellos=D.config.sellos||{};D.config.sellos[k]=AHORA();}
+function tumbasSes(){D.sesBorradas=D.sesBorradas||[];return D.sesBorradas;}
+function anotarSesBorrada(id){tumbasSes().push({id,ts:AHORA()});if(tumbasSes().length>500)D.sesBorradas=tumbasSes().slice(-300);}
+
+/* ---------- migración al modelo 2 ---------- */
+function migrarV2(){
+  if(D.version>=VERSION_DATOS)return;
+  D.proyectos.forEach(p=>{
+    p.actualizado=p.actualizado||VIEJO;
+    p.hitos.forEach(h=>{
+      h.actualizado=h.actualizado||VIEJO;
+      h.tareas.forEach(t=>{t.actualizado=t.actualizado||VIEJO;});
+    });
+  });
+  (D.config.reglas||[]).forEach(r=>{r.actualizado=r.actualizado||VIEJO;});
+  const c=D.config.cuotas||{};
+  Object.keys(c).forEach(m=>{if(typeof c[m]==='number')c[m]={jornadas:c[m]};c[m].actualizado=c[m].actualizado||VIEJO;});
+  D.config.sellos=D.config.sellos||{};
+  D.borrados=D.borrados||[];D.sesBorradas=D.sesBorradas||[];
+  Object.values(SEM).forEach(w=>{
+    w.actualizado=w.actualizado||VIEJO;
+    (w.bloques||[]).forEach(b=>{b.actualizado=b.actualizado||VIEJO;});
+  });
+  D.version=VERSION_DATOS;
+}
+
+/* ---------- utilidades de comparación ---------- */
+const CAMPOS_PROY=['nombre','color','tipo','prioridad','pct','minimo','activo','fechaInicio','fechaFin','fechaLimite','objetivoSesiones'];
+const CAMPOS_HITO=['nombre','peso','horas','fecha','estado','dependeDe','orden','avanceManual'];
+const CAMPOS_TAREA=['nombre','horas','contexto','estado','critica','bloqueante','desplaza','etiquetas','rec','asignado','orden'];
+const CAMPOS_BLOQUE=['fecha','ini','fin','tipo','proyecto','tareaId','hito','nombre','nota','estado','quien','motivo','origen','fijo','ejercicio','recFijo','deudaId'];
+const CAMPOS_SEMANA=['capacidad','util','margen','diasOff','jornadas','notas','porProyecto','usadas','sinSitio'];
+const CAMPOS_REGLA=['nombre','tipo','dias','ini','fin','maxHoras','etiquetas','activa','proy','vigenteDesde','vigenteHasta','grupo'];
+
+function recorta(o,campos){const r={};campos.forEach(k=>{if(o[k]!==undefined)r[k]=o[k];});return r;}
+function copiar(dst,src,campos){campos.forEach(k=>{if(src[k]!==undefined)dst[k]=src[k];else delete dst[k];});dst.actualizado=src.actualizado;}
+function iguales(a,b,campos){return JSON.stringify(recorta(a,campos))===JSON.stringify(recorta(b,campos));}
+
+/* Comparación a tres bandas: cada elemento se compara con el estado que las dos
+   copias tenían en la última sincronización. Así se distingue «lo ha cambiado
+   el otro» de «lo he cambiado yo», que es lo que una simple fecha no sabe. */
+var mapaBase={};
+function construirMapa(){
+  const m={};
+  D.proyectos.forEach(p=>{
+    m[p.id]=p.actualizado;
+    p.hitos.forEach(h=>{m[h.id]=h.actualizado;h.tareas.forEach(t=>{m[t.id]=t.actualizado;});});
+  });
+  Object.values(SEM).forEach(w=>{
+    m['W:'+w.id]=w.actualizado;
+    (w.bloques||[]).forEach(b=>{m[b.id]=b.actualizado;});
+  });
+  (D.config.reglas||[]).forEach(r=>{m['R:'+r.id]=r.actualizado;});
+  const q=D.config.cuotas||{};
+  Object.keys(q).forEach(k=>{m['Q:'+k]=q[k].actualizado;});
+  const sl=D.config.sellos||{};
+  Object.keys(sl).forEach(k=>{m['S:'+k]=sl[k];});
+  return m;
+}
+function fijarMapa(){syncCfg().mapa=construirMapa();}
+
+function resolver(loc,rem,campos,clave,etiqueta,conf,res){
+  const la=loc.actualizado||VIEJO, ra=rem.actualizado||VIEJO;
+  if(iguales(loc,rem,campos)){if(ra>la)loc.actualizado=ra;return;}
+  const ba=mapaBase[clave];
+  const cambioAqui = ba===undefined ? true : la!==ba;
+  const cambioAlla = ba===undefined ? true : ra!==ba;
+  if(cambioAqui&&cambioAlla){
+    conf.push({etiqueta,campos,loc,rem,
+      resumen:{mio:resumenCampos(loc,campos),suyo:resumenCampos(rem,campos)}});
+    return;
+  }
+  if(cambioAlla){copiar(loc,rem,campos);res.cambios++;}
+}
+function resumenCampos(o,campos){
+  return campos.filter(k=>o[k]!==undefined&&typeof o[k]!=='object')
+    .slice(0,4).map(k=>k+': '+o[k]).join(' · ')||'(sin detalle)';
+}
+
+/* ---------- fusión completa ---------- */
+function fusionarPersonal(rem){
+  mapaBase=syncCfg().mapa||{};
+  const conf=[],res={cambios:0,nuevos:0,sesiones:0,semanas:0};
+  const rd=rem.datos||{};
+
+  // tumbas de las dos partes
+  const bmap={};
+  [...borrados(),...(rd.borrados||[])].forEach(b=>{if(!bmap[b.id]||bmap[b.id]<b.ts)bmap[b.id]=b.ts;});
+  D.borrados=Object.keys(bmap).map(id=>({id,ts:bmap[id]}));
+  const smap={};
+  [...tumbasSes(),...(rd.sesBorradas||[])].forEach(b=>{if(!smap[b.id]||smap[b.id]<b.ts)smap[b.id]=b.ts;});
+  D.sesBorradas=Object.keys(smap).map(id=>({id,ts:smap[id]}));
+  const enterrado=(id,act)=>bmap[id]&&bmap[id]>(act||VIEJO);
+
+  // ---- proyectos, hitos y tareas ----
+  (rd.proyectos||[]).forEach(rp=>{
+    let lp=P(rp.id);
+    if(!lp){
+      if(enterrado(rp.id,rp.actualizado))return;
+      D.proyectos.push(JSON.parse(JSON.stringify(rp)));res.nuevos++;return;
+    }
+    resolver(lp,rp,CAMPOS_PROY,lp.id,'Proyecto «'+lp.nombre+'»',conf,res);
+    (rp.hitos||[]).forEach(rh=>{
+      let lh=lp.hitos.find(x=>x.id===rh.id);
+      if(!lh){
+        if(enterrado(rh.id,rh.actualizado))return;
+        lp.hitos.push(JSON.parse(JSON.stringify(rh)));res.nuevos++;return;
+      }
+      resolver(lh,rh,CAMPOS_HITO,lh.id,'Hito «'+lh.nombre+'»',conf,res);
+      (rh.tareas||[]).forEach(rt=>{
+        const lt=lh.tareas.find(x=>x.id===rt.id);
+        if(!lt){
+          if(enterrado(rt.id,rt.actualizado))return;
+          lh.tareas.push(JSON.parse(JSON.stringify(rt)));res.nuevos++;return;
+        }
+        resolver(lt,rt,CAMPOS_TAREA,lt.id,'Subtarea «'+lt.nombre+'»',conf,res);
+      });
+    });
+  });
+  // borrados que llegan de fuera
+  D.proyectos.forEach(p=>{
+    p.hitos=p.hitos.filter(h=>!enterrado(h.id,h.actualizado));
+    p.hitos.forEach(h=>{h.tareas=h.tareas.filter(t=>!enterrado(t.id,t.actualizado));});
+  });
+  D.proyectos=D.proyectos.filter(p=>!enterrado(p.id,p.actualizado));
+
+  // ---- semanas y bloques ----
+  const rs=rem.semanas||{};
+  Object.keys(rs).forEach(k=>{
+    const rw=rs[k];
+    let lw=SEM[k];
+    if(!lw){SEM[k]=JSON.parse(JSON.stringify(rw));res.semanas++;return;}
+    resolver(lw,rw,CAMPOS_SEMANA,'W:'+k,'Semana '+k,conf,res);
+    (rw.bloques||[]).forEach(rb=>{
+      const lb=(lw.bloques||[]).find(x=>x.id===rb.id);
+      if(!lb){
+        if(enterrado(rb.id,rb.actualizado))return;
+        lw.bloques.push(JSON.parse(JSON.stringify(rb)));res.cambios++;return;
+      }
+      resolver(lb,rb,CAMPOS_BLOQUE,lb.id,'Bloque «'+(lb.nombre||'')+'»',conf,res);
+    });
+    lw.bloques=(lw.bloques||[]).filter(b=>!enterrado(b.id,b.actualizado));
+  });
+
+  // ---- sesiones e incidencias: unión por identificador ----
+  const vistas={};SES.forEach(s=>vistas[s.id]=true);
+  (rem.sesiones||[]).forEach(s=>{if(vistas[s.id]||smap[s.id])return;SES.push(s);res.sesiones++;});
+  SES=SES.filter(s=>!smap[s.id]);
+  const vi={};INC.forEach(i=>vi[i.id]=true);
+  (rem.incidencias||[]).forEach(i=>{if(!vi[i.id])INC.push(i);});
+
+  // ---- configuración: reglas, cuotas y ajustes sueltos ----
+  const rc=rd.config||{};
+  (rc.reglas||[]).forEach(rr=>{
+    const lr=(D.config.reglas||[]).find(x=>x.id===rr.id);
+    if(!lr){D.config.reglas.push(JSON.parse(JSON.stringify(rr)));res.cambios++;return;}
+    resolver(lr,rr,CAMPOS_REGLA,'R:'+lr.id,'Franja «'+lr.nombre+'»',conf,res);
+  });
+  const rq=rc.cuotas||{};
+  D.config.cuotas=D.config.cuotas||{};
+  Object.keys(rq).forEach(m=>{
+    const l=D.config.cuotas[m];
+    if(!l){D.config.cuotas[m]=rq[m];res.cambios++;return;}
+    resolver(l,rq[m],['jornadas'],'Q:'+m,'Cuota de '+m,conf,res);
+  });
+  const rsel=rc.sellos||{};
+  D.config.sellos=D.config.sellos||{};
+  Object.keys(rsel).forEach(k=>{
+    const mio=D.config.sellos[k]||VIEJO, suyo=rsel[k];
+    if(JSON.stringify(D.config[k])!==JSON.stringify(rc[k])){
+      const ba=mapaBase['S:'+k];
+      const aqui=ba===undefined?true:mio!==ba, alla=ba===undefined?true:suyo!==ba;
+      if(!alla)return;
+      if(aqui&&alla){
+        conf.push({etiqueta:'Ajuste «'+k+'»',campos:[k],loc:D.config,rem:rc,
+          resumen:{mio:k+': '+JSON.stringify(D.config[k]),suyo:k+': '+JSON.stringify(rc[k])},sello:k});
+        return;
+      }
+      D.config[k]=rc[k];D.config.sellos[k]=suyo;res.cambios++;
+    }
+  });
+  // los proyectos compartidos y la sincronización son de cada dispositivo
+  return {conf,res};
+}
+
+/* ---------- modal de conflictos ---------- */
+function mConflictos(){
+  const n=conflictosPend.length;
+  let h='<h3>'+n+' '+(n===1?'cambio a decidir':'cambios a decidir')+'</h3>'+
+    '<div class="mst">Estas piezas se han tocado en los dos dispositivos desde la última sincronización. Todo lo demás ya se ha fusionado sin tocar nada.</div>';
+  conflictosPend.forEach((c,i)=>{
+    h+='<div class="confrow"><b>'+esc(c.etiqueta)+'</b>'+
+      '<div class="opt"><span class="tiny muted">Este dispositivo</span><span>'+esc(c.resumen.mio)+'</span>'+
+      '<button class="btn sm" data-act="conf-el" data-i="'+i+'" data-v="mio">Quedarme con esta</button></div>'+
+      '<div class="opt"><span class="tiny muted">La otra copia</span><span>'+esc(c.resumen.suyo)+'</span>'+
+      '<button class="btn sm" data-act="conf-el" data-i="'+i+'" data-v="suyo">Quedarme con esta</button></div></div>';
+  });
+  h+='<div class="row" style="margin-top:12px"><button class="btn primary" data-act="conf-fin">Aplicar y sincronizar</button>'+
+     '<button class="btn ghost" data-act="conf-todo" data-v="mio">Todo lo de aquí</button>'+
+     '<button class="btn ghost" data-act="conf-todo" data-v="suyo">Todo lo de allí</button></div>';
+  modal(h);
+}
+function resolverConflicto(i,v){
+  const c=conflictosPend[i];
+  if(!c)return;
+  if(v==='suyo'){
+    if(c.sello){D.config[c.sello]=c.rem[c.sello];D.config.sellos[c.sello]=c.rem.sellos[c.sello];}
+    else copiar(c.loc,c.rem,c.campos);
+  }else{
+    if(c.sello)selloCfg(c.sello);
+    else c.loc.actualizado=AHORA();
+  }
+  c.resuelto=v;
+}
+
+/* ---------- modelo 3: diario, cierre e indicadores ---------- */
+function migrarV3(){
+  D.diario=D.diario||{};
+  D.config.cierre=Object.assign({activo:EDICION==='personal',minutos:5,notificar:false},D.config.cierre||{});
+  if(D.config.avisoFiscal===undefined)D.config.avisoFiscal=14;
+  D.proyectos.forEach(p=>{if(p.indicadores&&!p.indicadores.campos)p.indicadores.campos=JSON.parse(JSON.stringify(INDIC_DEF));});
+  D.version=VERSION_DATOS;
+}
+
+/* ---------- modelo 4: calendario, aprendizaje y trabajo con socio ---------- */
+function migrarV4(){
+  D.externos=D.externos||[];
+  D.vistoComent=D.vistoComent||{};
+  D.config.calendario=Object.assign({escribir:false,leer:false,calendarios:[],enviados:{},ultima:null},D.config.calendario||{});
+  D.proyectos.forEach(p=>{if(p.aprender===undefined)p.aprender=true;});
+  D.version=VERSION_DATOS;
+}
+
+/* ---------- modelo 5: meteorología de la obra ---------- */
+function migrarV5(){
+  D.meteo=D.meteo||{perdidos:[]};
+  cfgObra();
+  D.version=VERSION_DATOS;
+}
+/* ============================================================
+   ARCHIVO DE SEMANAS ANTIGUAS Y COPIAS DE SEGURIDAD
+   ============================================================ */
+const SEMANAS_VIVAS=13;
+var archSucio=false;
+
+function todasSemanas(){return Object.assign({},ARCH,SEM);}
+function semanaDe(id){return SEM[id]||ARCH[id]||null;}
+
+/* ---------- compactar sesiones: fuera lo vacío y lo redundante ---------- */
+function compactarSesiones(){
+  let quitados=0;
+  SES.forEach(s=>{
+    Object.keys(s).forEach(k=>{
+      const v=s[k];
+      if(v===null||v===undefined||v===''||(Array.isArray(v)&&!v.length)){delete s[k];quitados++;}
+    });
+    if(s.tipo==='trabajo')delete s.tipo;
+    if(s.detalle&&!s.detalle.filter(Boolean).length){delete s.detalle;quitados++;}
+  });
+  return quitados;
+}
+
+/* ---------- archivar ---------- */
+function archivarViejas(){
+  const corte=addDays(lunesDe(hoyISO()),-7*SEMANAS_VIVAS);
+  let n=0;
+  Object.keys(SEM).forEach(k=>{
+    const w=SEM[k];
+    if(w.lunes<corte){ARCH[k]=w;delete SEM[k];n++;}
+  });
+  if(n){archSucio=true;compactarSesiones();}
+  return n;
+}
+async function guardarArchivo(){
+  await store.set('archivo-semanas',ARCH);
+}
+async function subirArchivo(){
+  const s=syncCfg();
+  if(!s.activo||!s.url||!archSucio)return;
+  try{
+    await syncLlamar('guardarArchivo',{semanas:ARCH,actualizado:AHORA()});
+    archSucio=false;
+  }catch(e){console.warn('archivo',e);}
+}
+async function bajarArchivo(){
+  const s=syncCfg();
+  if(!s.activo||!s.url)return;
+  try{
+    const j=await syncLlamar('leerArchivo');
+    if(j.payload&&j.payload.semanas){
+      Object.keys(j.payload.semanas).forEach(k=>{if(!ARCH[k]&&!SEM[k])ARCH[k]=j.payload.semanas[k];});
+      await guardarArchivo();
+    }
+  }catch(e){}
+}
+
+/* ---------- copias de seguridad ---------- */
+async function mCopias(){
+  modal('<h3>Copias de seguridad</h3><div class="mst">Consultando la hoja…</div>');
+  let cs=[];
+  try{
+    const j=await syncLlamar('listarCopias');
+    cs=j.copias||[];
+  }catch(e){
+    modal('<h3>Copias de seguridad</h3><div class="mst">No se han podido leer.</div>'+
+      '<div class="warnbox" style="margin-bottom:12px">'+esc(e.message)+
+      (/desconocida/.test(e.message)?'<br><br>Tu hoja tiene el script antiguo. Pega el archivo nuevo en Apps Script y publica una versión nueva de la implementación.':'')+'</div>'+
+      '<div class="row"><button class="btn ghost" data-act="cerrar">Cerrar</button></div>');
+    return;
+  }
+  let h='<h3>Copias de seguridad</h3>'+
+    '<div class="mst">La hoja guarda una copia por día, con siete días de rotación. Restaurar sustituye lo que hay ahora.</div>';
+  if(!cs.length)h+='<p class="tiny muted" style="padding:10px 0">Todavía no hay copias. Se crean solas en cada guardado.</p>';
+  cs.forEach(c=>{
+    const kb=c.bytes<1024?c.bytes+' B':(c.bytes/1024).toFixed(0)+' kB';
+    const cual=c.nombre==='_datos'?'tus datos':c.nombre==='_archivo'?'archivo antiguo':'proyecto compartido';
+    h+='<div class="copiarow"><span><b>'+esp(c.fecha)+'</b><span class="q">'+cual+' · '+kb+
+       (c.dispositivo?' · '+esc(c.dispositivo):'')+'</span></span>'+
+       '<button class="btn sm" data-act="copia-rest" data-r="'+esc(c.ranura)+'" data-f="'+c.fecha+'">Restaurar</button></div>';
+  });
+  h+='<div class="row" style="margin-top:12px"><button class="btn ghost" data-act="cerrar">Cerrar</button></div>';
+  modal(h);
+}
+function mConfirmarRestaurar(ranura,fecha){
+  modal('<h3>Restaurar la copia del '+esp(fecha)+'</h3>'+
+    '<div class="mst">Se sustituirá lo que hay ahora en la hoja y en este dispositivo por el contenido de esa copia. Lo que hayas hecho después se perderá.</div>'+
+    '<div class="warnbox" style="margin-bottom:12px">Antes de continuar se descargará automáticamente un JSON con el estado actual, por si te arrepientes.</div>'+
+    '<div class="row"><button class="btn danger" data-act="copia-ok" data-r="'+esc(ranura)+'">Sí, restaurar</button>'+
+    '<button class="btn ghost" data-act="cerrar">Cancelar</button></div>');
+}
+async function restaurarCopia(ranura){
+  exportarJSON();                                  // red de seguridad
+  try{
+    const j=await syncLlamar('restaurarCopia',{ranura});
+    const rem=j.payload;
+    if(!rem||!rem.datos)throw new Error('la copia no tiene datos');
+    const mio=Object.assign({},syncCfg());
+    D=rem.datos;D.deuda=D.deuda||[];
+    D.config=Object.assign({},CONFIG_DEF,D.config||{});
+    D.config.sync=mio;
+    migrarReglas();migrarRecurrentes();migrarReparto();migrarV2();
+    SEM=rem.semanas||{};SES=rem.sesiones||[];INC=rem.incidencias||[];
+    syncCfg().base=rem.actualizado;sucio=false;
+    await guardar(false);cerrar();render();
+    toast('Copia restaurada');
+  }catch(e){
+    toast('No se ha podido restaurar: '+e.message);
+  }
+}
+/* La copia no lleva credenciales: si la compartes o la pierdes, nadie
+   obtiene acceso a tu hoja de Google ni a los canales compartidos. */
+function sinCredenciales(){
+  const c=JSON.parse(JSON.stringify(D));
+  if(c.config){
+    if(c.config.sync){c.config.sync.url='';c.config.sync.clave='';c.config.sync.mapa=null;}
+    (c.config.compartidos||[]).forEach(x=>{x.url='';x.clave='';});
+    if(c.config.obra&&c.config.obra.cache)c.config.obra.cache=null;   // y pesa mucho menos
+  }
+  return c;
+}
+function exportarJSON(){
+  try{
+    const blob=new Blob([JSON.stringify({datos:sinCredenciales(),semanas:SEM,archivo:ARCH,sesiones:SES,incidencias:INC,
+      version:VERSION_APP,exportado:new Date().toISOString(),
+      aviso:'Esta copia no incluye las direcciones ni las claves de las hojas de Google. Al importarla, vuelve a configurarlas en Ajustes.'},null,1)],{type:'application/json'});
+    const u=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=u;a.download='centro-de-mando-'+hoyISO()+'.json';a.click();URL.revokeObjectURL(u);
+  }catch(e){}
+}
+/* ============================================================
+   CIERRE DE JORNADA, MODO FAMILIA Y REGISTRO DE ENERGÍA
+   ============================================================ */
+function diario(f){D.diario=D.diario||{};D.diario[f]=D.diario[f]||{};return D.diario[f];}
+function cfgCierre(){
+  D.config.cierre=Object.assign({activo:EDICION==='personal',minutos:5,notificar:false},D.config.cierre||{});
+  return D.config.cierre;
+}
+/* primera franja protegida de la tarde según la regla vigente ese día */
+function franjaProtegidaTarde(fecha){
+  const d=diaSemana(fecha);
+  const rs=reglasDe(d,fecha).filter(r=>r.tipo==='protegido'&&toMin(r.ini)>=toMin('12:00'));
+  if(!rs.length)return null;
+  rs.sort((a,b)=>toMin(a.ini)-toMin(b.ini));
+  return rs[0];
+}
+function horaCierre(fecha){
+  const r=franjaProtegidaTarde(fecha);
+  if(!r)return null;
+  return toMin(r.ini)-cfgCierre().minutos;
+}
+function ahoraMin(){const d=new Date();return d.getHours()*60+d.getMinutes();}
+function tocaCerrar(){
+  const c=cfgCierre();if(!c.activo)return false;
+  const f=hoyISO();
+  if(diario(f).cerrado)return false;
+  const h=horaCierre(f);
+  return h!==null&&ahoraMin()>=h;
+}
+function enModoFamilia(){
+  const f=hoyISO(),d=diario(f);
+  if(!d.cerrado||d.salida)return false;
+  const r=franjaProtegidaTarde(f);
+  if(!r)return false;
+  return ahoraMin()<toMin(r.fin);
+}
+
+/* ---------- panel de cierre ---------- */
+function mCierre(){
+  const f=hoyISO(),plan=SEM[semanaId(lunesDe(f))];
+  const bs=plan?plan.bloques.filter(b=>b.fecha===f&&b.tipo==='trabajo'&&b.estado!=='anulado'):[];
+  const r=franjaProtegidaTarde(f);
+  const d=diario(f);
+  let h='<h3>Cierre del día</h3><div class="mst">Un minuto y lo dejas cerrado'+
+    (r?'. A las '+r.ini+' empieza '+esc(r.nombre.toLowerCase())+'.':'.')+'</div>';
+  if(!bs.length)h+='<p class="tiny muted" style="padding:6px 0">Hoy no había bloques de trabajo planificados.</p>';
+  bs.forEach(b=>{
+    const hs=(b.fin-b.ini)/60;
+    h+='<div class="cierrefila"><button class="chk'+(b.estado==='hecho'?' on':'')+'" data-act="ci-hecho" data-id="'+b.id+'">'+
+      (b.estado==='hecho'?'✓':'')+'</button>'+
+      '<span><b>'+esc(b.nombre)+'</b><span class="q">'+hhmm(b.ini)+'–'+hhmm(b.fin)+' · '+esc(nombreDe(b.proyecto))+'</span></span>'+
+      '<input type="number" step="0.25" min="0" placeholder="'+hs+'" value="'+(b.horasReales!==undefined?b.horasReales:'')+
+      '" data-act="ci-horas" data-id="'+b.id+'" title="horas reales"></div>';
+  });
+  const pend=bs.filter(b=>b.estado!=='hecho').length;
+  if(pend)h+='<div class="field" style="margin:12px 0 9px"><label>Lo que queda sin hacer ('+pend+')</label>'+
+    '<div class="row"><button class="btn sm '+(d.pendiente!=='deuda'?'':'ghost')+'" data-act="ci-pend" data-v="manana">Pasarlo a mañana</button>'+
+    '<button class="btn sm '+(d.pendiente==='deuda'?'':'ghost')+'" data-act="ci-pend" data-v="deuda">Dejarlo en deuda</button></div></div>';
+  h+='<div class="field" style="margin-bottom:12px"><label>Lo primero de mañana</label>'+
+     '<input id="ciPrim" placeholder="Una sola cosa" value="'+esc(d.primero||'')+'"></div>';
+  h+='<div class="row"><button class="btn primary" data-act="ci-cerrar">Cerrar el día</button>'+
+     '<button class="btn ghost" data-act="cerrar">Ahora no</button></div>';
+  modal(h);
+}
+function cerrarJornada(){
+  const f=hoyISO(),d=diario(f),plan=SEM[semanaId(lunesDe(f))];
+  const el=document.getElementById('ciPrim');
+  d.primero=el?el.value.trim():(d.primero||'');
+  d.cerrado=true;d.cerradoA=AHORA();
+  if(plan){
+    const pend=plan.bloques.filter(b=>b.fecha===f&&b.tipo==='trabajo'&&b.estado==='planificado');
+    pend.forEach(b=>{
+      if(d.pendiente==='deuda'){
+        b.estado='anulado';sello(b);
+        if(b.tareaId){D.deuda=D.deuda||[];D.deuda.push({id:uid('deu'),tareaId:b.tareaId,proyecto:b.proyecto,
+          nombre:b.nombre,horas:(b.fin-b.ini)/60,semanaOrigen:plan.id});}
+      }else{
+        const man=addDays(f,1);
+        if(!esPasado(man)&&diffDias(plan.lunes,man)<=6){b.fecha=man;b.motivo='Pasado a mañana en el cierre del día.';sello(b);}
+      }
+    });
+    recalcularSemana(plan);
+  }
+  cerrar();guardarPronto();render();
+  toast('Día cerrado. Modo familia activado.');
+}
+
+/* ---------- modo familia ---------- */
+function vistaFamilia(){
+  const f=hoyISO(),d=diario(f),r=franjaProtegidaTarde(f);
+  return '<div class="familia">'+
+    '<div class="fh">Modo familia hasta las '+(r?r.fin:'21:30')+'</div>'+
+    (d.primero?'<div class="fp"><span class="tiny muted">Lo primero de mañana</span><b>'+esc(d.primero)+'</b></div>':'')+
+    '<p class="tiny muted">No hay nada más que mirar hoy.</p>'+
+    '<button class="btn ghost" data-act="fam-salir">Salir del modo familia</button></div>';
+}
+
+/* ---------- energía y molestias ---------- */
+const MOLESTIAS=[['hombro','Hombro'],['lumbar','Lumbar'],['otra','Otra']];
+function pideEnergia(){
+  const d=diario(hoyISO());
+  return cfgCierre().activo!==null&&d.energia===undefined&&!d.saltado;
+}
+function panelEnergia(){
+  const d=diario(hoyISO());
+  let h='<div class="card energia"><b style="font-size:14px">¿Con cuánta energía te levantas?</b>'+
+    '<div class="row" style="margin-top:10px">';
+  for(let i=1;i<=5;i++)h+='<button class="ebtn'+(d.energia===i?' on':'')+'" data-act="en-set" data-v="'+i+'">'+i+'</button>';
+  h+='<span class="spacer"></span><button class="btn sm ghost" data-act="en-saltar">Saltar</button></div>'+
+    '<div class="row" style="margin-top:10px;gap:6px"><span class="tiny muted">¿Alguna molestia?</span>'+
+    MOLESTIAS.map(([k,n])=>'<button class="btn sm '+((d.molestias||[]).includes(k)?'':'ghost')+'" data-act="en-mol" data-v="'+k+'">'+n+'</button>').join('')+
+    '</div></div>';
+  return h;
+}
+function fijarEnergia(v){
+  const d=diario(hoyISO());
+  d.energia=v;
+  guardarPronto();render();
+  if(v<=2)proponerSinEnergia();
+}
+function proponerSinEnergia(){
+  modal('<h3>Día de poca energía</h3><div class="mst">Con energía '+diario(hoyISO()).energia+
+    ', forzar la jornada suele salir caro. Puedo aplicar la incidencia «Sin energía», pero lo decides tú.</div>'+
+    '<button class="mopt" data-act="en-inc" data-v="minimos">Dejar solo los mínimos de hoy'+
+    '<small>El resto pasa a deuda y se replantea</small></button>'+
+    '<button class="mopt" data-act="en-inc" data-v="corta">Mantener el plan, ejercicio de 30 min'+
+    '<small>La ficha del día se acorta, no se salta</small></button>'+
+    '<button class="mopt" data-act="en-inc" data-v="nada">No hacer nada<small>Sigo con lo previsto</small></button>'+
+    '<div class="row"><button class="btn ghost" data-act="cerrar">Cerrar</button></div>');
+}
+function aplicarSinEnergia(v){
+  const f=hoyISO(),d=diario(f),plan=SEM[semanaId(lunesDe(f))];
+  if(v==='minimos'&&plan){
+    const foto=copia(plan.bloques);
+    plan.bloques.filter(b=>b.fecha===f&&b.tipo==='trabajo'&&b.estado==='planificado').forEach((b,i)=>{
+      if(i===0)return;                         // deja el primero
+      b.estado='anulado';sello(b);
+      if(b.tareaId){D.deuda=D.deuda||[];D.deuda.push({id:uid('deu'),tareaId:b.tareaId,proyecto:b.proyecto,
+        nombre:b.nombre,horas:(b.fin-b.ini)/60,semanaOrigen:plan.id});}
+    });
+    recalcularSemana(plan);
+    INC.push({id:uid('inc'),fecha:f,tipo:'sin energía',alcance:'dia',motivo:'energía '+d.energia});
+    registrarAccion('Día recortado por energía',()=>{plan.bloques=foto;recalcularSemana(plan);});
+  }
+  if(v==='corta')d.fichaCorta=true;
+  cerrar();guardarPronto();render();
+}
+
+/* ---------- notificación local del cierre ---------- */
+var avisoCierre=null;
+function programarAvisoCierre(){
+  clearTimeout(avisoCierre);
+  const c=cfgCierre();
+  if(!c.activo||!c.notificar)return;
+  if(typeof Notification==='undefined'||Notification.permission!=='granted')return;
+  const h=horaCierre(hoyISO());
+  if(h===null)return;
+  const falta=(h-ahoraMin())*60000;
+  if(falta<=0||falta>12*3600000)return;
+  avisoCierre=setTimeout(()=>{
+    try{new Notification('Cierre del día',{body:'Un minuto y desconectas. Toca para cerrar.',tag:'cierre'});}catch(e){}
+  },falta);
+}
+async function pedirNotificaciones(){
+  if(typeof Notification==='undefined'){toast('Este navegador no admite notificaciones');return;}
+  const p=await Notification.requestPermission();
+  cfgCierre().notificar=(p==='granted');
+  if(p!=='granted')toast('Sin permiso: el panel saldrá al abrir la app');
+  guardarPronto();render();programarAvisoCierre();
+}
+/* ============================================================
+   OBLIGACIONES DE UNA SL E INDICADORES DE NEGOCIO
+   ============================================================ */
+
+/* ---------- 2.4 calendario fiscal ----------
+   Plazos habituales de una SL en España. Son supuestos editables:
+   revísalos con tu asesoría antes de fiarte de ellos. */
+const FISCAL=[
+  {m:'303',nombre:'IVA trimestral · modelo 303',cada:'T',dias:20,horas:1.5},
+  {m:'111',nombre:'Retenciones de trabajo y profesionales · modelo 111',cada:'T',dias:20,horas:0.75},
+  {m:'115',nombre:'Retenciones por alquiler · modelo 115',cada:'T',dias:20,horas:0.5},
+  {m:'202',nombre:'Pago fraccionado del Impuesto de Sociedades · modelo 202',cada:'202',dias:20,horas:1},
+  {m:'390',nombre:'Resumen anual de IVA · modelo 390',cada:'A',mes:1,dia:30,horas:1.5},
+  {m:'190',nombre:'Resumen anual de retenciones · modelo 190',cada:'A',mes:1,dia:31,horas:1},
+  {m:'347',nombre:'Operaciones con terceros · modelo 347',cada:'A',mes:2,dia:28,horas:1},
+  {m:'200',nombre:'Impuesto de Sociedades · modelo 200',cada:'A',mes:7,dia:25,horas:3},
+  {m:'libros',nombre:'Legalización de libros contables',cada:'A',mes:4,dia:30,horas:1.5},
+  {m:'cuentas',nombre:'Depósito de cuentas anuales en el Registro',cada:'A',mes:7,dia:30,horas:2.5},
+  {m:'junta',nombre:'Junta general y aprobación de cuentas',cada:'A',mes:6,dia:30,horas:1.5}
+];
+function trimestreVence(y,t){                       // T1 abr, T2 jul, T3 oct, T4 ene del año siguiente
+  const mes=[4,7,10,1][t-1], anio=t===4?y+1:y;
+  return anio+'-'+pad(mes)+'-20';
+}
+function obligacionesSL(pid,anios){
+  const p=P(pid);if(!p)return 0;
+  const hid='fisc_'+pid;
+  let hi=p.hitos.find(x=>x.id===hid);
+  if(!hi){
+    hi=tocar({id:hid,nombre:'Obligaciones fiscales y societarias',peso:0,horas:0,fecha:null,
+      estado:'en_curso',tareas:[]});
+    p.hitos.push(hi);
+  }
+  const y0=parse(hoyISO()).getFullYear();
+  let n=0;
+  const anadir=(id,nombre,fecha,horas)=>{
+    if(fecha<hoyISO())return;                      // lo ya vencido no se da de alta
+    if(hi.tareas.some(t=>t.id===id))return;        // id determinista: nunca duplica
+    hi.tareas.push(tocar({id,nombre,horas,contexto:'escritorio',estado:'pendiente',
+      critica:true,bloqueante:false,desplaza:false,etiquetas:['escritorio'],
+      vence:fecha,avisoDias:D.config.avisoFiscal||14,sinDeuda:true,
+      rec:{activo:true,cada:0,horas,dia:null,hora:null,desde:hoyISO(),hasta:null,fija:fecha}}));
+    n++;
+  };
+  for(let a=0;a<(anios||2);a++){
+    const y=y0+a;
+    FISCAL.forEach(o=>{
+      if(o.cada==='T'){
+        for(let t=1;t<=4;t++)anadir('fisc_'+o.m+'_'+y+'T'+t,o.nombre+' · '+y+' T'+t,trimestreVence(y,t),o.horas);
+      }else if(o.cada==='202'){
+        [[4,20],[10,20],[12,20]].forEach(([m,d],i)=>
+          anadir('fisc_202_'+y+'P'+(i+1),o.nombre+' · '+y+' pago '+(i+1),y+'-'+pad(m)+'-'+pad(d),o.horas));
+      }else{
+        anadir('fisc_'+o.m+'_'+y,o.nombre+' · ejercicio '+(y-1),y+'-'+pad(o.mes)+'-'+pad(o.dia),o.horas);
+      }
+    });
+    for(let m=1;m<=12;m++)
+      anadir('fisc_conc_'+y+'M'+pad(m),'Conciliación mensual con la asesoría · '+MESES[m-1]+' '+y,
+        (m===12?y+1:y)+'-'+pad(m===12?1:m+1)+'-10',0.75);
+  }
+  hi.tareas.sort((a,b)=>(a.vence||'')<(b.vence||'')?-1:1);
+  return n;
+}
+function fiscalesProximas(dias){
+  const lim=addDays(hoyISO(),dias||30),out=[];
+  D.proyectos.forEach(p=>p.hitos.forEach(h=>h.tareas.forEach(t=>{
+    if(!t.vence||t.estado==='completada')return;
+    if(t.vence<hoyISO()||t.vence>lim)return;
+    out.push({p:p.nombre,color:p.color,nombre:t.nombre,vence:t.vence,
+      dias:diffDias(hoyISO(),t.vence),aviso:t.avisoDias||14});
+  })));
+  return out.sort((a,b)=>a.vence<b.vence?-1:1);
+}
+
+/* ---------- 2.5 indicadores de negocio ---------- */
+const INDIC_DEF=[
+  {id:'subs',nombre:'Suscriptores totales',tipo:'num'},
+  {id:'subsPago',nombre:'Suscriptores de pago',tipo:'num'},
+  {id:'ingPatro',nombre:'Ingresos por patrocinio y afiliación',tipo:'eur'},
+  {id:'certs',nombre:'Certificaciones cobradas',tipo:'num'},
+  {id:'ingCerts',nombre:'Ingresos por certificaciones',tipo:'eur'},
+  {id:'ingSubs',nombre:'Ingresos por suscripción',tipo:'eur'}
+];
+const LINEAS=[['subs','Suscripción'],['patro','Patrocinio'],['certs','Certificaciones'],['','Sin línea']];
+function indic(p){
+  p.indicadores=p.indicadores||{campos:JSON.parse(JSON.stringify(INDIC_DEF)),meses:{},lineas:{}};
+  return p.indicadores;
+}
+function ingresosLinea(p,mes){
+  const i=indic(p),v=i.meses[mes]||{};
+  return {subs:Number(v.ingSubs||0),patro:Number(v.ingPatro||0),certs:Number(v.ingCerts||0)};
+}
+function horasLinea(p,desde,hasta){
+  const i=indic(p),r={subs:0,patro:0,certs:0,'':0};
+  SES.forEach(s=>{
+    if(s.proyecto!==p.id||!s.tareaId)return;
+    if(s.fecha<desde||s.fecha>hasta)return;
+    let hid=null;
+    p.hitos.forEach(h=>{if(h.tareas.some(t=>t.id===s.tareaId))hid=h.id;});
+    const l=(i.lineas[hid]!==undefined?i.lineas[hid]:'');
+    r[l]=(r[l]||0)+s.horas;
+  });
+  return r;
+}
+function conversion(p,mes){
+  const v=indic(p).meses[mes]||{};
+  const t=Number(v.subs||0),pg=Number(v.subsPago||0);
+  return t>0?100*pg/t:null;
+}
+const CONV_OBJ=[0.4,1.3];
+
+/* ---------- modales ---------- */
+function mIndicadores(pid){
+  const p=P(pid),i=indic(p);
+  const meses=[];
+  const d=parse(hoyISO());
+  for(let k=5;k>=0;k--){const m=new Date(d.getFullYear(),d.getMonth()-k,1);meses.push(iso(m).slice(0,7));}
+  let h='<h3>Indicadores · '+esc(p.nombre)+'</h3>'+
+    '<div class="mst">Una fila por mes. Se guardan al salir del campo y, si el proyecto está compartido, viajan por el canal.</div>';
+  h+='<div style="overflow-x:auto"><table class="cfg"><tr><th></th>'+
+     i.campos.map((c,ci)=>'<th>'+
+       '<input style="width:100px;background:transparent;border:none;font-weight:600;color:inherit;padding:0" '+
+       'value="'+esc(c.nombre)+'" data-act="ind-nom" data-p="'+pid+'" data-i="'+ci+'">'+
+       '<div class="row" style="gap:3px;margin-top:3px">'+
+       '<select style="font-size:10px;padding:1px 3px" data-act="ind-tipo" data-p="'+pid+'" data-i="'+ci+'">'+
+       [['num','nº'],['eur','€']].map(([tk,tn])=>'<option value="'+tk+'"'+(c.tipo===tk?' selected':'')+'>'+tn+'</option>').join('')+
+       '</select><button class="btn sm ghost" style="padding:1px 6px;font-size:10px" data-act="ind-del" data-p="'+pid+'" data-i="'+ci+'">×</button></div></th>').join('')+
+     '</tr>';
+  meses.forEach(m=>{
+    const v=i.meses[m]||{};
+    h+='<tr><td class="tiny">'+MESES[Number(m.slice(5))-1].slice(0,3)+' '+m.slice(2,4)+'</td>'+
+      i.campos.map(c=>'<td><input style="width:82px" type="number" step="'+(c.tipo==='eur'?'0.01':'1')+
+      '" value="'+(v[c.id]!==undefined?v[c.id]:'')+'" data-act="ind-set" data-p="'+pid+'" data-m="'+m+'" data-c="'+c.id+'"></td>').join('')+'</tr>';
+  });
+  h+='</table></div>';
+  h+='<div class="row" style="margin-top:8px"><button class="btn sm ghost" data-act="ind-add" data-p="'+pid+'">+ Añadir indicador</button></div>';
+  h+='<div style="border-top:1px solid var(--line);margin-top:12px;padding-top:12px">'+
+     '<b style="font-size:13px">Qué línea de ingreso alimenta cada hito</b>'+
+     '<p class="tiny muted" style="margin:4px 0 8px">Sirve para calcular los euros por hora de cada línea.</p>';
+  p.hitos.forEach(hh=>{
+    h+='<div class="row" style="margin-bottom:6px"><span class="tiny" style="flex:1">'+esc(hh.nombre)+'</span>'+
+      '<select data-act="ind-linea" data-p="'+pid+'" data-h="'+hh.id+'" style="width:150px">'+
+      LINEAS.map(([k,n])=>'<option value="'+k+'"'+((i.lineas[hh.id]||'')===k?' selected':'')+'>'+n+'</option>').join('')+
+      '</select></div>';
+  });
+  h+='</div><div class="row" style="margin-top:12px"><button class="btn primary" data-act="cerrar">Listo</button>'+
+     '<button class="btn ghost" data-act="calc-ext" data-p="'+pid+'">Calculadora de externalizar</button></div>';
+  modal(h);
+}
+function mCalculadora(pid){
+  const p=P(pid);
+  const st=window.__calc=window.__calc||{piezas:4,coste:120,horas:5};
+  const mes=hoyISO().slice(0,7);
+  const hl=horasLinea(p,addDays(hoyISO(),-90),hoyISO());
+  const il=ingresosLinea(p,mes);
+  const eurH=l=>hl[l]>0?il[l]/(hl[l]/3):null;      // 3 meses de horas
+  let h='<h3>¿Compensa externalizar?</h3>'+
+    '<div class="mst">Compara lo que cuesta encargar una tarea fuera con lo que rinde tu hora en cada línea.</div>';
+  h+='<div class="row" style="margin-bottom:10px">'+
+     '<div class="field" style="flex:1"><label>Piezas al mes</label><input id="cpz" type="number" value="'+st.piezas+'" data-act="calc-campo"></div>'+
+     '<div class="field" style="flex:1"><label>Coste por pieza (€)</label><input id="cco" type="number" value="'+st.coste+'" data-act="calc-campo"></div>'+
+     '<div class="field" style="flex:1"><label>Horas por pieza</label><input id="cho" type="number" step="0.5" value="'+st.horas+'" data-act="calc-campo"></div></div>';
+  const libres=st.piezas*st.horas, gasto=st.piezas*st.coste;
+  h+='<div class="card" style="margin-bottom:10px"><b>'+fmtH(libres/4.33)+' a la semana</b>'+
+     '<p class="tiny muted" style="margin-top:4px">Liberas '+fmtH(libres)+' al mes por '+gasto.toFixed(0)+' € · '+
+     (libres?(gasto/libres).toFixed(1):'—')+' € por hora liberada.</p></div>';
+  h+='<table class="cfg"><tr><th>Línea</th><th>Horas/mes</th><th>Ingresos del mes</th><th>€/hora</th></tr>';
+  LINEAS.filter(l=>l[0]).forEach(([k,n])=>{
+    const e=eurH(k);
+    const col=e===null?'var(--muted)':(e>=(libres?gasto/libres:0)?'var(--ok)':'var(--warn)');
+    h+='<tr><td>'+n+'</td><td>'+fmtH((hl[k]||0)/3)+'</td><td>'+(il[k]||0).toFixed(0)+' €</td>'+
+      '<td style="color:'+col+'">'+(e===null?'sin datos':e.toFixed(1)+' €/h')+'</td></tr>';
+  });
+  h+='</table><p class="tiny muted" style="margin-top:10px">En verde, las líneas que rinden más por hora de lo que te cuesta liberar esa hora. Ahí externalizar sale a cuenta.</p>';
+  h+='<div class="row" style="margin-top:12px"><button class="btn ghost" data-act="cerrar">Cerrar</button></div>';
+  modal(h);
+}
+/* ============================================================
+   ANÁLISIS · TIEMPO PROTEGIDO, ENERGÍA E INDICADORES
+   ============================================================ */
+
+/* ---------- 2.2 tiempo protegido consumido ---------- */
+function clasificaProtegido(b){
+  // se mira qué franjas solapa el bloque, no solo la de su hora de inicio:
+  // en fin de semana el ejercicio reservado se cruza con la franja de cuota
+  const d=diaSemana(b.fecha);
+  const rs=reglasDe(d,b.fecha).filter(r=>toMin(r.ini)<b.fin&&toMin(r.fin)>b.ini);
+  if(rs.some(r=>r.tipo==='cuota'))return 'cuota';
+  if(rs.some(r=>r.tipo==='protegido'))return 'familia';
+  if(rs.some(r=>r.tipo==='excepcional'))return 'excepcional';
+  return null;
+}
+function protegidoEn(desde,hasta){
+  const r={cuota:0,familia:0,excepcional:0,jornadas:[],dias:{}};
+  Object.values(todasSemanas()).forEach(w=>{
+    (w.bloques||[]).forEach(b=>{
+      if(b.estado==='anulado'||b.fecha<desde||b.fecha>hasta)return;
+      if(b.tipo!=='trabajo'&&b.tipo!=='coche')return;
+      const c=clasificaProtegido(b);
+      if(!c)return;
+      const hs=(b.fin-b.ini)/60;
+      r[c]+=hs;
+      r.dias[b.fecha]=(r.dias[b.fecha]||0)+hs;
+    });
+    (w.jornadas||[]).forEach(j=>{if(j.fecha>=desde&&j.fecha<=hasta)r.jornadas.push(j.fecha);});
+  });
+  return r;
+}
+function findesSeguidos(fechas){
+  const ls=[...new Set(fechas.map(f=>lunesDe(f)))].sort();
+  let max=1,act=1;
+  for(let i=1;i<ls.length;i++){act=diffDias(ls[i-1],ls[i])===7?act+1:1;max=Math.max(max,act);}
+  return ls.length?max:0;
+}
+function bloqueProtegido(per){
+  let h='<div class="card" style="margin-top:12px"><b style="font-size:14px">Tiempo protegido que has usado</b>'+
+    '<p class="tiny muted" style="margin:3px 0 10px">Horas de trabajo dentro de franjas que tenías reservadas para otra cosa. No es un reproche: es para que lo veas.</p>';
+  h+='<div style="overflow-x:auto"><table class="cfg"><tr><th>Periodo</th><th>Cuota de finde</th><th>Excepcional</th>'+
+     '<th>A mano en familia</th><th>Jornadas</th><th>Cuota del mes</th></tr>';
+  let totJor=[];
+  per.forEach(p=>{
+    const r=protegidoEn(p.desde,p.hasta);
+    totJor=totJor.concat(r.jornadas);
+    const mes=p.desde.slice(0,7);
+    const cuota=cuotaMes(mes), usadas=r.jornadas.length;
+    const exceso=anaModo==='mes'&&usadas>cuota;
+    h+='<tr><td>'+esc(p.etq)+'</td>'+
+      '<td>'+(r.cuota?fmtH(r.cuota):'·')+'</td><td>'+(r.excepcional?fmtH(r.excepcional):'·')+'</td>'+
+      '<td'+(r.familia?' style="color:var(--warn)"':'')+'>'+(r.familia?fmtH(r.familia):'·')+'</td>'+
+      '<td>'+(usadas||'·')+'</td>'+
+      '<td'+(exceso?' style="color:var(--bad)"':'')+'>'+(anaModo==='mes'?usadas+' de '+cuota:'—')+'</td></tr>';
+  });
+  h+='</table></div>';
+  const seg=findesSeguidos(totJor);
+  if(seg>=2)h+='<div class="warnbox" style="margin-top:10px">Llevas '+seg+' fines de semana seguidos con jornada de obra. El Documento 2 avisaba de que ahí es donde se rompe el equilibrio. Igual toca saltarse el próximo.</div>';
+  const mesAct=hoyISO().slice(0,7);
+  const usadasMes=totJor.filter(f=>f.slice(0,7)===mesAct).length;
+  if(usadasMes>cuotaMes(mesAct))h+='<div class="badbox" style="margin-top:10px">Este mes llevas '+usadasMes+
+    ' jornadas de obra y la cuota que te pusiste era de '+cuotaMes(mesAct)+'.</div>';
+  h+='</div>';
+  return h;
+}
+
+/* ---------- 2.3 energía ---------- */
+function bloqueEnergia(per){
+  const dia=D.diario||{};
+  const filas=per.map(p=>{
+    let suma=0,n=0,mol=0;
+    Object.keys(dia).forEach(f=>{
+      if(f<p.desde||f>p.hasta)return;
+      if(dia[f].energia){suma+=dia[f].energia;n++;}
+      if((dia[f].molestias||[]).length)mol++;
+    });
+    const real=sumaObj(realEn(p.desde,p.hasta));
+    return {etq:p.etq,media:n?suma/n:null,dias:n,mol,horas:real};
+  });
+  if(!filas.some(f=>f.dias))return '';
+  const maxH=Math.max(1,...filas.map(f=>f.horas));
+  let h='<div class="card" style="margin-top:12px"><b style="font-size:14px">Energía y horas</b>'+
+    '<p class="tiny muted" style="margin:3px 0 10px">La media de cómo te levantas, junto a lo que acabaste haciendo.</p>'+
+    '<div class="hbars">';
+  filas.forEach(f=>{
+    h+='<div class="hbar"><span class="tiny">'+esc(f.etq)+'</span>'+
+      '<span class="track"><i style="width:'+(100*f.horas/maxH)+'%;background:var(--ok)"></i>'+
+      (f.media?'<u style="left:'+(100*(f.media/5))+'%"></u>':'')+'</span>'+
+      '<span class="tiny muted">'+fmtH(f.horas)+(f.media?' · energía '+f.media.toFixed(1):'')+
+      (f.mol?' · '+f.mol+' con molestia':'')+'</span></div>';
+  });
+  h+='</div><p class="tiny muted" style="margin-top:8px">La marca gris de cada barra es la energía media sobre 5.</p></div>';
+  return h;
+}
+
+/* ---------- 2.5 indicadores ---------- */
+function bloqueIndicadores(per,desde,hasta){
+  let h='';
+  D.proyectos.filter(p=>p.indicadores&&Object.keys(p.indicadores.meses||{}).length).forEach(p=>{
+    const i=indic(p);
+    const meses=Object.keys(i.meses).sort().slice(-12);
+    h+='<div class="card" style="margin-top:12px"><b style="font-size:14px">'+esc(p.nombre)+' · indicadores</b>';
+    // evolución
+    h+='<div style="overflow-x:auto;margin-top:8px"><table class="cfg"><tr><th>Indicador</th>'+
+       meses.map(m=>'<th>'+MESES[Number(m.slice(5))-1].slice(0,3)+'</th>').join('')+'</tr>';
+    i.campos.forEach(c=>{
+      h+='<tr><td>'+esc(c.nombre)+'</td>'+meses.map(m=>{
+        const v=(i.meses[m]||{})[c.id];
+        return '<td'+(v===undefined?' class="muted"':'')+'>'+(v===undefined?'·':(c.tipo==='eur'?Number(v).toFixed(0)+' €':v))+'</td>';
+      }).join('')+'</tr>';
+    });
+    // conversión
+    h+='<tr><td><b>Conversión a pago</b></td>'+meses.map(m=>{
+      const c=conversion(p,m);
+      if(c===null)return '<td class="muted">·</td>';
+      const col=c<CONV_OBJ[0]?'var(--warn)':c>CONV_OBJ[1]?'var(--ok)':'var(--ok)';
+      return '<td style="color:'+col+'">'+c.toFixed(2)+' %</td>';
+    }).join('')+'</tr></table></div>';
+    h+='<p class="tiny muted" style="margin-top:6px">El rango de referencia del Documento 5 es '+CONV_OBJ[0]+
+       ' % a '+CONV_OBJ[1]+' %. Por debajo, el problema está en la oferta o en el precio, no en el tamaño de la lista.</p>';
+    // euros por hora
+    const hl=horasLinea(p,desde,hasta);
+    const meses2=[...new Set(per.map(x=>x.desde.slice(0,7)))];
+    const il={subs:0,patro:0,certs:0};
+    meses2.forEach(m=>{const v=ingresosLinea(p,m);il.subs+=v.subs;il.patro+=v.patro;il.certs+=v.certs;});
+    const hay=Object.keys(il).some(k=>il[k]>0)||Object.keys(hl).some(k=>hl[k]>0);
+    if(hay){
+      h+='<div style="border-top:1px solid var(--line);margin-top:10px;padding-top:10px">'+
+         '<b style="font-size:13px">Euros por hora y línea</b>'+
+         '<table class="cfg" style="margin-top:6px"><tr><th>Línea</th><th>Horas</th><th>Ingresos</th><th>€/hora</th></tr>';
+      LINEAS.filter(l=>l[0]).forEach(([k,n])=>{
+        const e=hl[k]>0?il[k]/hl[k]:null;
+        h+='<tr><td>'+n+'</td><td>'+fmtH(hl[k]||0)+'</td><td>'+il[k].toFixed(0)+' €</td>'+
+          '<td'+(e===null?' class="muted"':'')+'>'+(e===null?'sin horas':e.toFixed(1)+' €/h')+'</td></tr>';
+      });
+      if(hl['']>0)h+='<tr><td class="muted">Sin línea asignada</td><td class="muted">'+fmtH(hl[''])+'</td><td class="muted">—</td><td class="muted">—</td></tr>';
+      h+='</table><div class="row" style="margin-top:8px"><button class="btn sm ghost" data-act="calc-ext" data-p="'+p.id+'">Calculadora de externalizar</button></div></div>';
+    }
+    h+='</div>';
+  });
+  return h;
+}
+/* ============================================================
+   GOOGLE CALENDAR EN LOS DOS SENTIDOS
+   La app manda diferencias al script, que es quien habla con Calendar.
+   ============================================================ */
+function cfgCal(){
+  D.config.calendario=Object.assign({escribir:false,leer:false,calendarios:[],
+    enviados:{},ultima:null},D.config.calendario||{});
+  return D.config.calendario;
+}
+var externos=[];                       // eventos ajenos que bloquean franjas
+function cargarExternos(){externos=D.externos||[];}
+
+const SEMANAS_CAL=4;
+function rangoCal(){
+  const desde=lunesDe(hoyISO());
+  return {desde,hasta:addDays(desde,7*SEMANAS_CAL)};
+}
+function fechaHora(f,min){
+  const d=parse(f);d.setHours(Math.floor(min/60),min%60,0,0);
+  return d.toISOString();
+}
+function eventosDeBloques(){
+  const {desde,hasta}=rangoCal();
+  const out=[];
+  Object.values(SEM).forEach(w=>{
+    (w.bloques||[]).forEach(b=>{
+      if(b.fecha<desde||b.fecha>=hasta)return;
+      if(b.estado==='anulado')return;
+      if(b.tipo==='margen')return;
+      const hi=hitoDe(b), qn=quienDe(b);
+      const obra=(b.tipo==='coche')||(b.proyecto==='CASA'&&clasificaProtegido(b)==='cuota');
+      out.push({id:b.id,obra,
+        titulo:nombreDe(b.proyecto)+(hi?' › '+hi:'')+' › '+b.nombre,
+        descripcion:[b.nota?'Nota: '+b.nota:'',qn?'Asignada a: '+qn:'',b.motivo||''].filter(Boolean).join('\n'),
+        inicio:fechaHora(b.fecha,b.ini),fin:fechaHora(b.fecha,b.fin)});
+    });
+  });
+  return out;
+}
+function huellaEvento(e){return e.titulo+'|'+e.inicio+'|'+e.fin+'|'+(e.obra?1:0);}
+
+async function escribirCalendario(manual){
+  const c=cfgCal(),s=syncCfg();
+  if(!c.escribir||!s.activo||!s.url)return null;
+  const {desde,hasta}=rangoCal();
+  const evs=eventosDeBloques();
+  const nuevos={},cambiados=[];
+  evs.forEach(e=>{
+    const hu=huellaEvento(e);
+    nuevos[e.id]=hu;
+    if(c.enviados[e.id]!==hu)cambiados.push(e);
+  });
+  const borrar=Object.keys(c.enviados).filter(id=>!nuevos[id]);
+  if(!cambiados.length&&!borrar.length){if(manual)toast('El calendario ya estaba al día');return {sin:true};}
+  try{
+    const j=await syncLlamar('calEscribir',{eventos:cambiados,borrar,desde:fechaHora(desde,0),hasta:fechaHora(hasta,0)});
+    c.enviados=nuevos;c.ultima=AHORA();
+    await guardar(false);
+    if(manual)toast('Calendario: '+j.creados+' nuevos, '+j.actualizados+' actualizados, '+j.borrados+' borrados');
+    return j;
+  }catch(e){
+    if(manual)toast('No se ha podido escribir: '+e.message);
+    return null;
+  }
+}
+async function leerCalendario(manual){
+  const c=cfgCal(),s=syncCfg();
+  if(!c.leer||!c.calendarios.length||!s.activo||!s.url)return null;
+  const {desde,hasta}=rangoCal();
+  try{
+    const j=await syncLlamar('calLeer',{calendarios:c.calendarios,desde:fechaHora(desde,0),hasta:fechaHora(hasta,0)});
+    const antes=JSON.stringify(D.externos||[]);
+    D.externos=(j.eventos||[]).map(e=>{
+      const i=new Date(e.inicio),f=new Date(e.fin);
+      return {id:e.id,titulo:e.titulo,cal:e.cal,fecha:iso(i),
+        ini:i.getHours()*60+i.getMinutes(),fin:f.getHours()*60+f.getMinutes(),
+        todoElDia:!!e.todoElDia};
+    }).filter(e=>!e.todoElDia&&e.fin>e.ini);
+    cargarExternos();
+    const ch=choquesExternos();
+    if(JSON.stringify(D.externos)!==antes)await guardar(false);
+    if(ch.length){mChoques(ch);}
+    else if(manual)toast('Traídos '+externos.length+' eventos, sin choques');
+    return externos;
+  }catch(e){
+    if(manual)toast('No se han podido leer: '+e.message);
+    return null;
+  }
+}
+async function listarCalendarios(){
+  try{const j=await syncLlamar('calendarios');return j.calendarios||[];}
+  catch(e){toast('No se han podido leer los calendarios: '+e.message);return [];}
+}
+
+/* ---------- los eventos ajenos bloquean franjas ---------- */
+function externosDe(fecha){return externos.filter(e=>e.fecha===fecha);}
+function chocaExterno(fecha,ini,fin){
+  return externosDe(fecha).some(e=>e.ini<fin&&e.fin>ini);
+}
+function choquesExternos(){
+  const out=[];
+  Object.values(SEM).forEach(w=>(w.bloques||[]).forEach(b=>{
+    if(b.estado!=='planificado'||b.tipo==='margen')return;
+    const e=externosDe(b.fecha).find(x=>x.ini<b.fin&&x.fin>b.ini);
+    if(e)out.push({b,e,semana:w.id});
+  }));
+  return out;
+}
+function mChoques(ch){
+  let h='<h3>'+ch.length+' '+(ch.length===1?'choque con tu calendario':'choques con tu calendario')+'</h3>'+
+    '<div class="mst">Han entrado eventos que se solapan con lo que tenías planificado. No muevo nada sin que lo digas.</div>';
+  ch.slice(0,8).forEach(c=>{
+    h+='<div class="confrow"><b>'+esc(c.b.nombre)+'</b>'+
+      '<div class="tiny muted" style="margin-top:4px">'+DIAS3[diaSemana(c.b.fecha)]+' '+esp(c.b.fecha)+' · '+
+      hhmm(c.b.ini)+'–'+hhmm(c.b.fin)+'</div>'+
+      '<div class="tiny" style="margin-top:4px;color:var(--warn)">Choca con «'+esc(c.e.titulo)+'» ('+esc(c.e.cal)+') de '+
+      hhmm(c.e.ini)+' a '+hhmm(c.e.fin)+'</div></div>';
+  });
+  h+='<div class="row" style="margin-top:12px">'+
+     '<button class="btn primary" data-act="cho-replan">Reasignar esos bloques</button>'+
+     '<button class="btn ghost" data-act="cho-hueco">Dejar el hueco</button>'+
+     '<button class="btn ghost" data-act="cerrar">Ahora no</button></div>';
+  modal(h);
+}
+function resolverChoques(modo){
+  const ch=choquesExternos();
+  const foto={};
+  ch.forEach(c=>{
+    foto[c.b.id]=copia(c.b);
+    c.b.estado='anulado';sello(c.b);
+    if(modo==='deuda'&&c.b.tareaId){
+      D.deuda=D.deuda||[];
+      D.deuda.push({id:uid('deu'),tareaId:c.b.tareaId,proyecto:c.b.proyecto,nombre:c.b.nombre,
+        horas:(c.b.fin-c.b.ini)/60,semanaOrigen:c.semana});
+    }
+  });
+  if(modo==='replan'){
+    const plan=SEM[semanaId(lunesDe(hoyISO()))];
+    if(plan)replanificar(plan.lunes,plan.capacidad,plan.diasOff,plan.jornadas);
+  }
+  cerrar();guardarPronto();render();
+  toast(modo==='replan'?'Reasignado alrededor de tus eventos':'Hueco liberado');
+}
+/* ============================================================
+   ESTIMACIONES QUE APRENDEN Y VIABILIDAD PROBABILÍSTICA
+   ============================================================ */
+
+/* ---------- 3.2a factor de corrección por tipo de tarea ---------- */
+function tipoTarea(t,hito){
+  const et=(t.etiquetas||[]).slice().sort().join('+');
+  if(hito&&/recurrente/i.test(hito.nombre||''))return 'recurrente:'+(t.nombre||'').split(' ')[0].toLowerCase();
+  if(t.rec)return 'recurrente:'+(t.contexto||'escritorio');
+  if(t.desplaza)return 'obra:'+(t.contexto||'obra');
+  return (t.contexto||'escritorio')+(et?'|'+et:'');
+}
+function tareasDelTipo(tipo){
+  const out=[];
+  D.proyectos.forEach(p=>p.hitos.forEach(h=>h.tareas.forEach(t=>{
+    if(tipoTarea(t,h)!==tipo)return;
+    const real=horasTarea(t.id);
+    const completa=t.estado==='completada'||(t.horas>0&&real>=t.horas*0.95);
+    if(completa&&t.horas>0&&real>0)out.push({t,real,est:t.horas,fin:ultimaSesion(t.id)});
+  })));
+  return out.sort((a,b)=>(a.fin||'')<(b.fin||'')?1:-1);
+}
+function ultimaSesion(tid){
+  let f=null;SES.forEach(s=>{if(s.tareaId===tid&&(!f||s.fecha>f))f=s.fecha;});
+  return f;
+}
+const FACTOR_MIN=0.7, FACTOR_MAX=2, FACTOR_N=8, FACTOR_MINIMO=3;
+function factorTipo(tipo){
+  const hist=tareasDelTipo(tipo).slice(0,FACTOR_N);
+  if(hist.length<FACTOR_MINIMO)return {factor:1,n:hist.length,activo:false};
+  const est=hist.reduce((a,x)=>a+x.est,0), real=hist.reduce((a,x)=>a+x.real,0);
+  const f=Math.min(FACTOR_MAX,Math.max(FACTOR_MIN,real/est));
+  return {factor:Math.round(f*100)/100,n:hist.length,activo:true};
+}
+function factorDe(t,hito){return factorTipo(tipoTarea(t,hito));}
+function aprende(pid){const p=P(pid);return p?p.aprender!==false:false;}
+function horasCorregidas(t,hito,pid){
+  const pend=Math.max(0,t.horas-horasTarea(t.id));
+  if(!aprende(pid))return pend;
+  const f=factorDe(t,hito);
+  return f.activo?Math.round(pend*f.factor*100)/100:pend;
+}
+
+/* ---------- azar reproducible ---------- */
+function azar(semilla){
+  let s=semilla>>>0||123456789;
+  return function(){s^=s<<13;s>>>=0;s^=s>>17;s^=s<<5;s>>>=0;return s/4294967296;};
+}
+
+/* ---------- 3.2b viabilidad por simulación ---------- */
+function historicoSemanal(pid){
+  const out=[];
+  Object.values(todasSemanas()).forEach(w=>{
+    if(!w.lunes||w.lunes>hoyISO())return;
+    out.push({lunes:w.lunes,h:(w.porProyecto&&w.porProyecto[pid])||0});
+  });
+  return out.sort((a,b)=>a.lunes<b.lunes?-1:1);
+}
+function pendienteProyecto(p){
+  let normal=0,obra=0;
+  p.hitos.forEach(h=>h.tareas.forEach(t=>{
+    if(t.rec||t.estado==='completada')return;
+    const c=horasCorregidas(t,h,p.id);
+    if(c<=0.1)return;
+    if(t.desplaza)obra+=c;else normal+=c;
+  }));
+  return {normal,obra,total:normal+obra};
+}
+function cuotaFutura(mes){return cuotaMes(mes);}
+function simularProyecto(p,opts){
+  opts=opts||{};
+  const rnd=azar(opts.semilla||0x5eed);
+  const hist=historicoSemanal(p.id).slice(-26);
+  const muestras=hist.map(x=>x.h);
+  const pocas=muestras.length<6;
+  const teorica=capacidadTeorica(lunesDe(hoyISO()))*0.85*((p.pct||0)/100||0.3);
+  const pend=pendienteProyecto(p);
+  const jorH=D.config.jornadaObra.horasTrabajo;
+  const N=opts.n||1000, TOPE=opts.tope||160;
+  const fechas=[];
+  for(let k=0;k<N;k++){
+    let restN=pend.normal, restO=pend.obra, lun=lunesDe(hoyISO()), s=0, usadasMes={};
+    while(s<TOPE&&(restN>0.1||restO>0.1)){
+      const mes=mesDe(lun);
+      let h=pocas?teorica:muestras[Math.floor(rnd()*muestras.length)];
+      // las jornadas de obra solo si queda cuota ese mes
+      if(restO>0.1){
+        const q=cuotaFutura(mes);
+        usadasMes[mes]=usadasMes[mes]||0;
+        if(usadasMes[mes]<q&&rnd()<0.8){usadasMes[mes]++;restO-=jorH;h=Math.max(0,h-jorH);}
+      }
+      restN-=Math.max(0,h);
+      lun=addDays(lun,7);s++;
+    }
+    fechas.push(s>=TOPE?null:addDays(lun,-1));
+  }
+  const ok=fechas.filter(Boolean).sort();
+  const pct=q=>ok.length?ok[Math.min(ok.length-1,Math.floor(ok.length*q))]:null;
+  const p50=pct(0.5), p85=pct(0.85);
+  const meta=p.fechaLimite;
+  const prob=meta&&fechas.length?100*fechas.filter(f=>f&&f<=meta).length/fechas.length:null;
+  return {p50,p85,prob:prob===null?null:Math.round(prob),pend,pocas,
+    semanasMuestra:muestras.length,mediaSemanal:muestras.length?muestras.reduce((a,b)=>a+b,0)/muestras.length:teorica};
+}
+/* una modificación concreta que haría cumplir la fecha con P85 */
+function ajusteParaCumplir(p,opts){
+  if(!p.fechaLimite)return null;
+  const base=simularProyecto(p,opts);
+  if(base.p85&&base.p85<=p.fechaLimite)return {ya:true,sim:base};
+  const semanas=Math.max(1,Math.round(diffDias(hoyISO(),p.fechaLimite)/7));
+  // 1) más horas semanales
+  for(let extra=0.5;extra<=12;extra+=0.5){
+    const sim=simularProyecto(p,Object.assign({},opts,{n:300}));
+    const necesarias=(base.pend.total/semanas);
+    if(base.mediaSemanal+extra>=necesarias)
+      return {tipo:'horas',extra:Math.round(extra*10)/10,necesarias,sim:base,
+        texto:'Dedicarle '+fmtH(Math.round(extra*10)/10)+' más cada semana, hasta '+fmtH(base.mediaSemanal+extra)+'.'};
+  }
+  // 2) recortar alcance
+  const recorte=Math.max(0,base.pend.total-semanas*base.mediaSemanal);
+  if(recorte>0)return {tipo:'alcance',horas:Math.round(recorte),sim:base,
+    texto:'Quitar '+fmtH(Math.round(recorte))+' de alcance, que es más o menos un hito mediano.'};
+  return {tipo:'fecha',sim:base,texto:'Mover la fecha a '+esp(base.p85||base.p50)+'.'};
+}
+
+/* ---------- simulador de proyectos candidatos ---------- */
+function escenariosCandidato(horasTotales,pctPropuesto){
+  const lun=lunesDe(hoyISO());
+  const libre=capacidadTeorica(lun)*0.85;
+  const hist=[];
+  Object.values(todasSemanas()).forEach(w=>{if(w.lunes<=hoyISO())hist.push(w.usadas||0);});
+  const media=hist.length?hist.reduce((a,b)=>a+b,0)/hist.length:libre;
+  const cuota=media*(pctPropuesto/100);
+  const esc=[['P15','pesimista',0.6],['P50','probable',1],['P85','optimista',1.4]];
+  return esc.map(([k,n,f])=>{
+    const h=cuota*f;
+    const sem=h>0?Math.ceil(horasTotales/h):null;
+    return {k,n,horas:Math.round(h*10)/10,semanas:sem,fecha:sem?addDays(lun,7*sem):null};
+  });
+}
+
+/* ---------- detalle de viabilidad ---------- */
+function mViabilidad(pid){
+  const p=P(pid);
+  const sim=simularProyecto(p,{n:1000,semilla:7});
+  const aj=ajusteParaCumplir(p,{n:1000,semilla:7});
+  let h='<h3>¿Llegas a la fecha?</h3><div class="mst">'+esc(p.nombre)+
+    ' · mil simulaciones de las próximas semanas, muestreando lo que de verdad le has dedicado.</div>';
+  h+='<div class="row" style="gap:20px;margin-bottom:12px">'+
+     '<span class="kpi"><b>'+(sim.p50?esp(sim.p50):'—')+'</b><i>fecha probable</i></span>'+
+     '<span class="kpi"><b>'+(sim.p85?esp(sim.p85):'—')+'</b><i>casi segura</i></span>'+
+     (sim.prob!==null?'<span class="kpi"><b style="color:'+(sim.prob>=85?'var(--ok)':sim.prob>=50?'var(--warn)':'var(--bad)')+'">'+
+       sim.prob+' %</b><i>de llegar al '+esp(p.fechaLimite)+'</i></span>':'')+'</div>';
+  h+='<p class="tiny muted" style="margin-bottom:12px">Quedan '+fmtH(Math.round(sim.pend.total))+' corregidas'+
+     (sim.pend.obra?', de las que '+fmtH(Math.round(sim.pend.obra))+' solo caben en jornada de obra':'')+
+     '. Ritmo real: '+fmtH(Math.round(sim.mediaSemanal*10)/10)+' a la semana'+
+     (sim.pocas?' (estimado, aún no hay 6 semanas de histórico)':' sobre '+sim.semanasMuestra+' semanas')+'.</p>';
+  if(aj&&aj.ya)h+='<div class="warnbox" style="border-left-color:var(--ok)">Con el ritmo actual llegas de sobra. No hace falta cambiar nada.</div>';
+  else if(aj)h+='<div class="warnbox"><b>Lo que lo arreglaría:</b><br>'+esc(aj.texto)+'</div>';
+  h+='<div class="row" style="margin-top:12px"><button class="btn ghost" data-act="cerrar">Cerrar</button></div>';
+  modal(h);
+}
+
+/* ---------- pantalla del simulador de candidatos ---------- */
+function mSimulador(){
+  const st=window.__sim=window.__sim||{nombre:'',horas:80,pct:15,limite:''};
+  let h='<h3>¿Me da tiempo a este proyecto?</h3>'+
+    '<div class="mst">Antes de crearlo de verdad: cuántas horas estimas y qué porcentaje de tu tiempo le dedicarías.</div>';
+  h+='<div class="field" style="margin-bottom:9px"><label>Nombre (opcional)</label>'+
+     '<input id="simN" value="'+esc(st.nombre)+'" placeholder="Para acordarte de qué era" data-act="sim-campo"></div>';
+  h+='<div class="row" style="margin-bottom:9px">'+
+     '<div class="field" style="flex:1"><label>Horas totales estimadas</label>'+
+     '<input id="simH" type="number" min="1" value="'+st.horas+'" data-act="sim-campo"></div>'+
+     '<div class="field" style="flex:1"><label>% de tu tiempo</label>'+
+     '<input id="simP" type="number" min="1" max="100" value="'+st.pct+'" data-act="sim-campo"></div></div>';
+  h+='<div class="field" style="margin-bottom:14px"><label>Fecha que te gustaría (opcional)</label>'+
+     '<input id="simL" type="date" value="'+st.limite+'" data-act="sim-campo"></div>';
+  const esc3=escenariosCandidato(st.horas,st.pct);
+  h+='<table class="cfg"><tr><th>Escenario</th><th>Ritmo</th><th>Semanas</th><th>Fecha</th>'+
+     (st.limite?'<th>¿Llega?</th>':'')+'</tr>';
+  esc3.forEach(e=>{
+    const llega=st.limite&&e.fecha?e.fecha<=st.limite:null;
+    h+='<tr><td>'+e.k+' <span class="tiny muted">'+e.n+'</span></td><td>'+fmtH(e.horas)+'/sem</td>'+
+      '<td>'+(e.semanas||'—')+'</td><td>'+(e.fecha?esp(e.fecha):'—')+'</td>'+
+      (st.limite?'<td style="color:'+(llega===null?'var(--muted)':llega?'var(--ok)':'var(--bad)')+'">'+
+        (llega===null?'—':llega?'sí':'no')+'</td>':'')+'</tr>';
+  });
+  h+='</table>';
+  const suma=D.proyectos.filter(p=>p.activo&&p.tipo!=='habito').reduce((a,p)=>a+(p.pct||0),0);
+  h+='<p class="tiny muted" style="margin-top:10px">Tus proyectos activos ya suman '+Math.round(suma)+
+     ' % de reparto. Añadir este al '+st.pct+' % '+(suma+st.pct>100?'se pasaría de 100: algo tendría que ceder tiempo.':'deja margen.')+'</p>';
+  h+='<div class="row" style="margin-top:12px"><button class="btn primary" data-act="sim-crear">Crear el proyecto con estos datos</button>'+
+     '<button class="btn ghost" data-act="cerrar">Cerrar sin crear</button></div>';
+  modal(h);
+}
+function leerSim(){
+  const st=window.__sim,g=id=>{const e=document.getElementById(id);return e?e.value:'';};
+  st.nombre=g('simN');st.horas=Math.max(1,Number(g('simH')||1));
+  st.pct=Math.max(1,Math.min(100,Number(g('simP')||1)));st.limite=g('simL');
+  return st;
+}
+function crearDesdeSimulador(){
+  const st=leerSim();
+  const nombre=st.nombre.trim()||'Proyecto nuevo';
+  const id=(nombre.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,10)||uid('P'));
+  const p=tocar({id:D.proyectos.some(x=>x.id===id)?uid('P'):id,nombre,color:'#7FB7E8',tipo:'finito',
+    prioridad:3,pct:st.pct,minimo:0,activo:true,aprender:true,
+    fechaInicio:hoyISO(),fechaFin:null,fechaLimite:st.limite||null,hitos:[
+      {id:uid('H'),nombre:'Por definir',peso:100,horas:st.horas,fecha:st.limite||null,estado:'pendiente',tareas:[
+        {id:uid('T'),nombre:'Desglosar en tareas concretas',horas:st.horas,contexto:'escritorio',
+          estado:'pendiente',critica:false,bloqueante:false,desplaza:false,etiquetas:['escritorio']}]}]});
+  D.proyectos.push(p);
+  cerrar();guardarPronto();vista='proyectos';render();
+  toast('Creado. Ahora desglósalo en hitos y subtareas reales cuando puedas.');
+}
+/* ============================================================
+   TRABAJO CON SOCIO · comentarios, actividad y horas libres
+   ============================================================ */
+
+/* ---------- comentarios por subtarea ---------- */
+function comentarios(t){t.coment=t.coment||[];return t.coment;}
+function nuevosComent(t){
+  const visto=(D.vistoComent||{})[t.id]||'';
+  return comentarios(t).filter(c=>c.ts>visto&&c.autor!==autorNombre()).length;
+}
+function marcarVisto(t){
+  D.vistoComent=D.vistoComent||{};
+  const cs=comentarios(t);
+  if(cs.length)D.vistoComent[t.id]=cs[cs.length-1].ts;
+}
+function comentNuevosProyecto(p){
+  let n=0;p.hitos.forEach(h=>h.tareas.forEach(t=>{n+=nuevosComent(t);}));return n;
+}
+function mComentarios(pid,hid,tid){
+  const p=P(pid),hi=p.hitos.find(x=>x.id===hid),t=hi.tareas.find(x=>x.id===tid);
+  marcarVisto(t);
+  const cs=comentarios(t);
+  let h='<h3>'+esc(t.nombre)+'</h3><div class="mst">'+esc(p.nombre)+' › '+esc(hi.nombre)+'</div>';
+  if(!cs.length)h+='<p class="tiny muted" style="padding:8px 0">Todavía no hay comentarios.</p>';
+  cs.forEach(c=>{
+    h+='<div class="coment'+(c.autor===autorNombre()?' mio':'')+'">'+
+      '<span class="ca">'+esc(c.autor)+' · '+esp(c.ts.slice(0,10))+' '+c.ts.slice(11,16)+'</span>'+
+      '<span class="ct">'+esc(c.texto)+'</span></div>';
+  });
+  h+='<div class="field" style="margin-top:12px"><textarea id="comTxt" rows="2" placeholder="Escribe un comentario"></textarea></div>'+
+     '<div class="row" style="margin-top:8px"><button class="btn primary" data-act="com-add" data-p="'+pid+'" data-h="'+hid+'" data-t="'+tid+'">Comentar</button>'+
+     '<button class="btn ghost" data-act="cerrar">Cerrar</button></div>';
+  modal(h);
+}
+function anadirComentario(pid,hid,tid,texto){
+  if(!texto.trim())return;
+  const p=P(pid),hi=p.hitos.find(x=>x.id===hid),t=hi.tareas.find(x=>x.id===tid);
+  comentarios(t).push({id:uid('c'),autor:autorNombre(),ts:AHORA(),texto:texto.trim()});
+  tocar(t);marcarVisto(t);
+  registrarActividad(pid,'comentó','en «'+t.nombre+'»');
+  guardarPronto();mComentarios(pid,hid,tid);
+}
+
+/* ---------- registro de actividad ---------- */
+function registrarActividad(pid,tipo,texto){
+  const p=P(pid);if(!p||!canalDe(pid))return;
+  p.actividad=p.actividad||[];
+  p.actividad.push({id:uid('a'),ts:AHORA(),autor:autorNombre(),tipo,texto});
+  if(p.actividad.length>200)p.actividad=p.actividad.slice(-200);
+}
+function actividadReciente(pid,n){
+  const p=P(pid);if(!p||!p.actividad)return [];
+  return p.actividad.slice().sort((a,b)=>a.ts<b.ts?1:-1).slice(0,n||20);
+}
+function mActividad(pid){
+  const p=P(pid),as=actividadReciente(pid,50);
+  let h='<h3>Actividad · '+esc(p.nombre)+'</h3><div class="mst">Lo último que habéis hecho los dos.</div>';
+  if(!as.length)h+='<p class="tiny muted" style="padding:8px 0">Todavía no hay movimientos registrados.</p>';
+  as.forEach(a=>{
+    h+='<div class="actrow"><span class="tiny muted">'+espCorto(a.ts.slice(0,10))+' '+a.ts.slice(11,16)+'</span>'+
+      '<span><b>'+esc(a.autor)+'</b> '+esc(a.tipo)+' '+esc(a.texto||'')+'</span></div>';
+  });
+  h+='<div class="row" style="margin-top:12px"><button class="btn ghost" data-act="cerrar">Cerrar</button></div>';
+  modal(h);
+}
+
+/* ---------- horas libres publicadas ---------- */
+function horasLibresMias(){
+  const out={};
+  for(let i=0;i<2;i++){
+    const lun=addDays(lunesDe(hoyISO()),7*i);
+    const w=SEM[semanaId(lun)];
+    const cap=w?w.util:capacidadTeorica(lun)*0.85;
+    const usadas=w?w.usadas:0;
+    out['s'+i]=Math.max(0,Math.round((cap-usadas)*10)/10);
+  }
+  return out;
+}
+function librePara(pid,quien){
+  const c=compartidos().find(x=>x.proyectoId===pid);
+  const m=(c&&c.libres)||{};
+  if(quien===autorNombre())return horasLibresMias();
+  return m[quien]||null;
+}
+function etiquetaLibre(pid,quien){
+  const l=librePara(pid,quien);
+  if(!l)return '';
+  return ' · '+fmtH(l.s0)+' libres esta semana';
+}
+
+/* ---------- correos del canal, para el resumen semanal ---------- */
+function mCorreos(pid){
+  const c=compartidos().find(x=>x.proyectoId===pid)||{};
+  const cs=(c.correos||[]).join(', ');
+  modal('<h3>Resumen semanal por correo</h3>'+
+    '<div class="mst">Cada lunes a las 8:00, la hoja del canal envía a estas direcciones el resumen de la semana anterior: horas por persona, subtareas completadas y vencimientos cercanos.</div>'+
+    '<div class="field" style="margin-bottom:12px"><label>Direcciones, separadas por comas</label>'+
+    '<input id="corrTxt" value="'+esc(cs)+'" placeholder="tu@correo.com, socio@correo.com"></div>'+
+    '<div class="tiny muted" style="border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:12px;line-height:1.5">'+
+    'Para que se envíe solo, abre el Apps Script de la hoja del canal, elige en el desplegable la función '+
+    '<b style="color:var(--text)">activarResumenSemanal</b> y pulsa Ejecutar una sola vez. Google pedirá permiso para enviar correo en tu nombre.</div>'+
+    '<div class="row"><button class="btn primary" data-act="corr-save" data-id="'+pid+'">Guardar</button>'+
+    '<button class="btn" data-act="corr-probar" data-id="'+pid+'">Enviar una prueba ahora</button>'+
+    '<button class="btn ghost" data-act="cerrar">Cerrar</button></div>');
+}
+/* ============================================================
+   METEOROLOGÍA PARA LA OBRA
+   Fuente: Open-Meteo (api.open-meteo.com), sin clave y con previsión
+   horaria a 16 días. Regla del Documento 3: el día bueno es seco, sin
+   viento y sin sol directo sobre el paño. Soleado no es favorable.
+   ============================================================ */
+const ORIENTACIONES=[['N',0],['NE',45],['E',90],['SE',135],['S',180],['SO',225],['O',270],['NO',315]];
+function cfgObra(){
+  D.config.obra=Object.assign({
+    activo:EDICION==='personal',
+    lat:null,lon:null,
+    umbrales:{tMin:5,tMax:30,probLluvia:30,precip:0,precipPrevia:0,racha:40},
+    panos:[{id:'p1',nombre:'Paño 1',orientacion:180}],
+    cache:null
+  },D.config.obra||{});
+  return D.config.obra;
+}
+
+/* ---------- posición del sol, por hora ---------- */
+function posicionSolar(fecha,horaMin,lat,lon,tz){
+  const d=parse(fecha);
+  const inicio=new Date(d.getFullYear(),0,1);
+  const dia=Math.round((d-inicio)/86400000)+1;
+  const h=horaMin/60;
+  const g=2*Math.PI/365*(dia-1+(h-12)/24);
+  const eq=229.18*(0.000075+0.001868*Math.cos(g)-0.032077*Math.sin(g)
+    -0.014615*Math.cos(2*g)-0.040849*Math.sin(2*g));
+  const dec=0.006918-0.399912*Math.cos(g)+0.070257*Math.sin(g)-0.006758*Math.cos(2*g)
+    +0.000907*Math.sin(2*g)-0.002697*Math.cos(3*g)+0.00148*Math.sin(3*g);
+  const off=eq+4*lon-60*tz;
+  const tst=horaMin+off;
+  const ha=(tst/4)-180;
+  const rad=Math.PI/180, la=lat*rad, haR=ha*rad;
+  const cosZ=Math.sin(la)*Math.sin(dec)+Math.cos(la)*Math.cos(dec)*Math.cos(haR);
+  const z=Math.acos(Math.max(-1,Math.min(1,cosZ)));
+  const alt=90-z/rad;
+  // azimut medido desde el sur y llevado a grados desde el norte
+  const azSur=Math.atan2(Math.sin(haR),Math.cos(haR)*Math.sin(la)-Math.tan(dec)*Math.cos(la));
+  let az=(azSur/rad+180)%360;
+  if(az<0)az+=360;
+  return {alt:Math.round(alt*10)/10,az:Math.round(az*10)/10};
+}
+function solDirecto(pano,pos,nubes){
+  if(pos.alt<5)return false;                       // sol demasiado bajo
+  if(nubes>=70)return false;                       // cubierto: no calienta el paño
+  let dif=Math.abs(pos.az-pano.orientacion);
+  if(dif>180)dif=360-dif;
+  return dif<85;
+}
+
+/* ---------- descarga con caché de 3 horas ---------- */
+const CACHE_MIN=180;
+function cacheValida(){
+  const c=cfgObra().cache;
+  if(!c||!c.ts)return false;
+  return (Date.now()-new Date(c.ts).getTime())<CACHE_MIN*60000;
+}
+async function traerMeteo(forzar){
+  const o=cfgObra();
+  if(!o.activo||o.lat===null||o.lon===null)return null;
+  if(!forzar&&cacheValida())return o.cache.datos;
+  const u='https://api.open-meteo.com/v1/forecast?latitude='+o.lat+'&longitude='+o.lon+
+    '&hourly=temperature_2m,precipitation_probability,precipitation,wind_gusts_10m,cloud_cover,shortwave_radiation'+
+    '&forecast_days=16&timezone=auto';
+  try{
+    const r=await fetch(u);
+    if(!r.ok)throw new Error('respuesta '+r.status);
+    const j=await r.json();
+    o.cache={ts:AHORA(),datos:j};
+    await guardar(false);
+    return j;
+  }catch(e){
+    console.warn('meteo',e);
+    return o.cache?o.cache.datos:null;
+  }
+}
+function meteoDisponible(){const c=cfgObra().cache;return !!(c&&c.datos);}
+function meteoDesfasada(){return meteoDisponible()&&!cacheValida();}
+
+/* ---------- evaluación de un día ---------- */
+function horasDe(datos,fecha){
+  const H=datos&&datos.hourly;
+  if(!H)return [];
+  const out=[];
+  H.time.forEach((t,i)=>{
+    if(t.slice(0,10)!==fecha)return;
+    out.push({min:Number(t.slice(11,13))*60,
+      t:H.temperature_2m[i],prob:H.precipitation_probability[i],
+      mm:H.precipitation[i],racha:H.wind_gusts_10m[i],nubes:H.cloud_cover[i],
+      rad:H.shortwave_radiation?H.shortwave_radiation[i]:null});
+  });
+  return out;
+}
+function evaluarDia(fecha,datos){
+  const o=cfgObra();
+  const d=datos||(o.cache&&o.cache.datos);
+  if(!d)return null;
+  const hs=horasDe(d,fecha).filter(x=>x.min>=8*60&&x.min<=19*60);
+  if(!hs.length)return null;
+  const ayer=horasDe(d,addDays(fecha,-1));
+  const u=o.umbrales;
+  const motivos=[],avisos=[];
+  const tMin=Math.min(...hs.map(x=>x.t)), tMax=Math.max(...hs.map(x=>x.t));
+  const probMax=Math.max(...hs.map(x=>x.prob||0));
+  const mm=hs.reduce((a,x)=>a+(x.mm||0),0);
+  const mmAyer=ayer.reduce((a,x)=>a+(x.mm||0),0);
+  const racha=Math.max(...hs.map(x=>x.racha||0));
+  if(tMin<u.tMin)motivos.push('mínima de '+Math.round(tMin)+' °C, por debajo de '+u.tMin);
+  if(tMax>u.tMax)motivos.push('máxima de '+Math.round(tMax)+' °C, por encima de '+u.tMax);
+  if(mm>u.precip)motivos.push('se esperan '+mm.toFixed(1)+' mm de lluvia');
+  if(mmAyer>u.precipPrevia)motivos.push('llovió el día anterior ('+mmAyer.toFixed(1)+' mm): el soporte estará húmedo');
+  if(probMax>u.probLluvia)avisos.push('probabilidad de lluvia del '+Math.round(probMax)+' %');
+  if(racha>u.racha)motivos.push('rachas de '+Math.round(racha)+' km/h');
+  else if(racha>u.racha*0.75)avisos.push('rachas de hasta '+Math.round(racha)+' km/h');
+  const tz=-new Date().getTimezoneOffset()/60;
+  const panos={};
+  o.panos.forEach(p=>{
+    const sol=[],buenas=[];
+    hs.forEach(x=>{
+      const pos=posicionSolar(fecha,x.min+30,o.lat,o.lon,tz);
+      if(solDirecto(p,pos,x.nubes||0))sol.push(x.min);else buenas.push(x.min);
+    });
+    panos[p.id]={nombre:p.nombre,orientacion:p.orientacion,sol,buenas,
+      tramos:agrupaHoras(buenas),tramosSol:agrupaHoras(sol)};
+  });
+  const sinSombra=o.panos.filter(p=>!panos[p.id].buenas.length);
+  if(sinSombra.length===o.panos.length&&o.panos.length)
+    motivos.push('sol directo todo el día en todos los paños');
+  const estado=motivos.length?'rojo':(avisos.length?'ambar':'verde');
+  return {fecha,estado,motivos,avisos,tMin:Math.round(tMin),tMax:Math.round(tMax),
+    mm:Math.round(mm*10)/10,probMax:Math.round(probMax),racha:Math.round(racha),panos};
+}
+function agrupaHoras(mins){
+  if(!mins.length)return [];
+  const s=mins.slice().sort((a,b)=>a-b),out=[];
+  let ini=s[0],ant=s[0];
+  s.slice(1).forEach(m=>{
+    if(m===ant+60)ant=m;
+    else{out.push([ini,ant+60]);ini=m;ant=m;}
+  });
+  out.push([ini,ant+60]);
+  return out;
+}
+const COLOR_EST={verde:'var(--ok)',ambar:'var(--warn)',rojo:'var(--bad)'};
+
+/* ---------- incidencia propuesta a 48 h ---------- */
+/* días con trabajo de obra planificado, sea jornada de fin de semana,
+   un rato entre semana o cualquier bloque que exija estar allí */
+function diasDeObra(){
+  const m={};
+  Object.values(SEM).forEach(w=>{
+    (w.jornadas||[]).forEach(j=>{m[j.fecha]=w.id;});
+    (w.bloques||[]).forEach(b=>{
+      if(b.estado==='anulado'||b.estado==='hecho')return;
+      if(b.tipo==='coche'){m[b.fecha]=w.id;return;}
+      if(b.tipo!=='trabajo'||!b.tareaId)return;
+      const t=tareaPorId(b.tareaId);
+      if(t&&(t.desplaza||t.contexto==='obra'))m[b.fecha]=w.id;
+    });
+  });
+  return m;
+}
+function tareaPorId(id){
+  for(const p of D.proyectos)for(const h of p.hitos)for(const t of h.tareas)if(t.id===id)return t;
+  return null;
+}
+function jornadasEnRiesgo(){
+  if(!meteoDisponible())return [];
+  const m=diasDeObra(),out=[];
+  Object.keys(m).forEach(f=>{
+    const d=diffDias(hoyISO(),f);
+    if(d<0||d>2)return;
+    const e=evaluarDia(f);
+    if(e&&e.estado==='rojo')out.push({fecha:f,ev:e,semana:m[f]});
+  });
+  return out.sort((a,b)=>a.fecha<b.fecha?-1:1);
+}
+/* el mejor día alternativo de los próximos siete, sin sacarte de tus franjas */
+function mejorAlternativa(fecha){
+  let mejor=null;
+  for(let i=1;i<=7;i++){
+    const f=addDays(fecha,i);
+    if(esPasado(f))continue;
+    const e=evaluarDia(f);
+    if(!e)continue;
+    const puntos={verde:2,ambar:1,rojo:0}[e.estado];
+    if(!mejor||puntos>mejor.puntos)mejor={fecha:f,estado:e.estado,puntos};
+    if(puntos===2)break;
+  }
+  return mejor&&mejor.puntos>0?mejor:null;
+}
+function mMalTiempo(r){
+  const e=r.ev;
+  let h='<h3>Mal tiempo en la obra</h3>'+
+    '<div class="mst">La jornada del '+DIAS[diaSemana(r.fecha)].toLowerCase()+' '+esp(r.fecha)+
+    ' está en rojo. No cambio nada sin que lo digas.</div>'+
+    '<div class="badbox" style="margin-bottom:12px">'+e.motivos.map(esc).join('<br>')+'</div>';
+  const alt=mejorAlternativa(r.fecha);
+  h+='<button class="mopt" data-act="mt-op" data-v="mover" data-f="'+r.fecha+'"'+(alt?'':' disabled style="opacity:.4"')+'>'+
+     (alt?'Pasarla al '+DIAS[diaSemana(alt.fecha)].toLowerCase()+' '+espCorto(alt.fecha)
+        :'Pasarla a otro día')+
+     '<small>'+(alt?'Ese día está en '+alt.estado+' y se mantiene la cuota'
+        :'No hay ningún día mejor en los próximos siete')+'</small></button>';
+  h+='<button class="mopt" data-act="mt-op" data-v="anular" data-f="'+r.fecha+'">Anular la jornada'+
+     '<small>Lo de obra pasa a deuda y no se consume cuota</small></button>';
+  h+='<button class="mopt" data-act="mt-op" data-v="interior" data-f="'+r.fecha+'">Cambiar a trabajo de interior'+
+     '<small>Se anula solo lo que exige estar fuera</small></button>';
+  h+='<button class="mopt" data-act="mt-op" data-v="nada" data-f="'+r.fecha+'">Mantenerla<small>Voy igualmente</small></button>';
+  h+='<div class="row"><button class="btn ghost" data-act="cerrar">Ahora no</button></div>';
+  modal(h);
+}
+function aplicarMalTiempo(fecha,v){
+  const w=SEM[semanaId(lunesDe(fecha))];
+  if(!w){cerrar();return;}
+  const foto={bloques:copia(w.bloques),jor:copia(w.jornadas||[]),deuda:copia(D.deuda||[])};
+  if(v==='mover'){
+    const alt=mejorAlternativa(fecha);
+    if(!alt){toast('No hay ningún día mejor en los próximos siete');cerrar();return;}
+    const otro=alt.fecha, dest=SEM[semanaId(lunesDe(otro))]||w;
+    w.jornadas=(w.jornadas||[]).filter(j=>{
+      if(j.fecha!==fecha)return true;
+      dest.jornadas=dest.jornadas||[];
+      dest.jornadas.push({fecha:otro,mes:mesDe(otro)});
+      return false;
+    });
+    const mueve=w.bloques.filter(b=>b.fecha===fecha&&b.estado!=='hecho');
+    mueve.forEach(b=>{b.fecha=otro;b.motivo='Movida por meteorología.';sello(b);});
+    if(dest!==w){
+      w.bloques=w.bloques.filter(b=>mueve.indexOf(b)<0);
+      dest.bloques=dest.bloques.concat(mueve);
+      sello(dest);recalcularSemana(dest);
+    }
+    registrarDiaPerdido(fecha,'movida');
+    toast('Movida al '+DIAS3[diaSemana(otro)]+' '+espCorto(otro)+', que está en '+alt.estado);
+  }
+  if(v==='anular'||v==='interior'){
+    w.bloques.forEach(b=>{
+      if(b.fecha!==fecha)return;
+      if(v==='interior'&&!(b.tipo==='coche'||b.proyecto==='CASA'))return;
+      if(b.estado==='hecho')return;
+      b.estado='anulado';sello(b);
+      if(b.tareaId){D.deuda=D.deuda||[];D.deuda.push({id:uid('deu'),tareaId:b.tareaId,proyecto:b.proyecto,
+        nombre:b.nombre,horas:(b.fin-b.ini)/60,semanaOrigen:w.id});}
+    });
+    w.jornadas=(w.jornadas||[]).filter(j=>j.fecha!==fecha);
+    registrarDiaPerdido(fecha,v);
+    toast('Jornada anulada. No consume cuota.');
+  }
+  if(v==='nada')registrarDiaPerdido(fecha,'mantenida');
+  recalcularSemana(w);
+  cerrar();guardarPronto();render();
+  registrarAccion('Jornada por mal tiempo',()=>{w.bloques=foto.bloques;w.jornadas=foto.jor;D.deuda=foto.deuda;recalcularSemana(w);});
+}
+function registrarDiaPerdido(fecha,decision){
+  D.meteo=D.meteo||{perdidos:[]};
+  const e=evaluarDia(fecha);
+  D.meteo.perdidos=D.meteo.perdidos.filter(x=>x.fecha!==fecha);
+  D.meteo.perdidos.push({fecha,decision,estado:e?e.estado:'?',motivos:e?e.motivos:[],ts:AHORA()});
+  INC.push({id:uid('inc'),fecha,tipo:'meteorología',alcance:decision,motivo:(e&&e.motivos[0])||''});
+}
+function diasPerdidos(desde,hasta){
+  return ((D.meteo&&D.meteo.perdidos)||[]).filter(x=>x.fecha>=desde&&x.fecha<=hasta);
+}
+
+/* ---------- detalle del día ---------- */
+function mMeteoDia(fecha){
+  const o=cfgObra();
+  if(!meteoDisponible()){
+    modal('<h3>'+DIAS[diaSemana(fecha)]+' '+esp(fecha)+'</h3>'+
+      '<div class="mst">Todavía no hay previsión descargada.</div>'+
+      '<div class="row"><button class="btn primary" data-act="meteo-traer">Consultar ahora</button>'+
+      '<button class="btn ghost" data-act="cerrar">Cerrar</button></div>');
+    return;
+  }
+  const e=evaluarDia(fecha);
+  if(!e){modal('<h3>'+esp(fecha)+'</h3><div class="mst">Esa fecha está fuera de la previsión de 16 días.</div>'+
+    '<div class="row"><button class="btn ghost" data-act="cerrar">Cerrar</button></div>');return;}
+  let h='<h3>'+DIAS[diaSemana(fecha)]+' '+esp(fecha)+'</h3>'+
+    '<div class="mst"><span class="pt" style="background:'+COLOR_EST[e.estado]+'"></span>'+
+    (e.estado==='verde'?'Buen día para la obra':e.estado==='ambar'?'Con reservas':'No es día de obra')+'</div>';
+  h+='<div class="row" style="gap:18px;margin-bottom:12px">'+
+     '<span class="kpi"><b>'+e.tMin+'–'+e.tMax+' °C</b><i>temperatura</i></span>'+
+     '<span class="kpi"><b>'+e.mm+' mm</b><i>lluvia · '+e.probMax+' %</i></span>'+
+     '<span class="kpi"><b>'+e.racha+' km/h</b><i>racha máxima</i></span></div>';
+  if(e.motivos.length)h+='<div class="badbox" style="margin-bottom:10px">'+e.motivos.map(esc).join('<br>')+'</div>';
+  if(e.avisos.length)h+='<div class="warnbox" style="margin-bottom:10px">'+e.avisos.map(esc).join('<br>')+'</div>';
+  h+='<b style="font-size:13px">Sol directo por paño</b>'+
+     '<p class="tiny muted" style="margin:3px 0 8px">El SATE no se aplica con el sol dando en el paño. Estas son las horas en sombra.</p>';
+  o.panos.forEach(p=>{
+    const d=e.panos[p.id];if(!d)return;
+    const ori=(ORIENTACIONES.find(x=>x[1]===p.orientacion)||['?'])[0];
+    h+='<div class="panorow"><span><b>'+esc(p.nombre)+'</b><span class="q">orientación '+ori+'</span></span>'+
+      '<span class="tiny">'+(d.tramos.length?d.tramos.map(t=>hhmm(t[0])+'–'+hhmm(t[1])).join(', ')
+        :'<span style="color:var(--bad)">sol todo el día</span>')+'</span></div>';
+  });
+  h+='<div class="row" style="margin-top:12px"><button class="btn ghost" data-act="meteo-traer">Actualizar previsión</button>'+
+     '<button class="btn ghost" data-act="cerrar">Cerrar</button></div>';
+  if(meteoDesfasada())h+='<p class="tiny muted" style="margin-top:8px">Previsión de hace más de 3 horas.</p>';
+  modal(h);
+}
+function mObraCfg(){
+  const o=cfgObra(),u=o.umbrales;
+  let h='<h3>Obra y meteorología</h3>'+
+    '<div class="mst">Los umbrales son supuestos del Documento 3. Cámbialos cuando tengas criterio propio.</div>';
+  h+='<div class="row" style="margin-bottom:9px">'+
+     '<button class="btn sm '+(o.activo?'':'ghost')+'" data-act="obra-tog">'+(o.activo?'Activada':'Desactivada')+'</button>'+
+     '<div class="field" style="flex:1"><label>Latitud</label><input type="number" step="0.0001" value="'+(o.lat===null?'':o.lat)+'" data-act="obra-cfg" data-k="lat"></div>'+
+     '<div class="field" style="flex:1"><label>Longitud</label><input type="number" step="0.0001" value="'+(o.lon===null?'':o.lon)+'" data-act="obra-cfg" data-k="lon"></div></div>';
+  h+='<div class="row" style="margin-bottom:9px;flex-wrap:wrap">'+
+     [['tMin','Mín. °C'],['tMax','Máx. °C'],['probLluvia','% lluvia'],['precip','mm del día'],['precipPrevia','mm del día antes'],['racha','Racha km/h']]
+     .map(([k,n])=>'<div class="field" style="width:104px"><label>'+n+'</label><input type="number" step="0.5" value="'+u[k]+'" data-act="obra-umb" data-k="'+k+'"></div>').join('')+
+     '</div>';
+  h+='<b style="font-size:13px">Paños y su orientación</b>';
+  o.panos.forEach((p,i)=>{
+    h+='<div class="row" style="margin-top:6px"><input style="flex:1" value="'+esc(p.nombre)+'" data-act="pano-nom" data-i="'+i+'">'+
+      '<select style="width:120px" data-act="pano-ori" data-i="'+i+'">'+
+      ORIENTACIONES.map(([n,g])=>'<option value="'+g+'"'+(p.orientacion===g?' selected':'')+'>'+n+' ('+g+'°)</option>').join('')+
+      '</select><button class="btn sm danger" data-act="pano-del" data-i="'+i+'">×</button></div>';
+  });
+  h+='<div class="row" style="margin-top:8px"><button class="btn sm ghost" data-act="pano-add">Añadir paño</button>'+
+     '<button class="btn sm ghost" data-act="meteo-traer">Consultar previsión</button></div>';
+  h+='<p class="tiny muted" style="margin-top:10px">Datos meteorológicos de Open-Meteo, gratuitos y sin clave. Se consulta como mucho una vez cada 3 horas.</p>';
+  h+='<div class="row" style="margin-top:10px"><button class="btn primary" data-act="cerrar">Listo</button></div>';
+  modal(h);
+}
+function bloqueMeteo(per,desde,hasta){
+  if(!cfgObra().activo)return '';
+  const ps=diasPerdidos(desde,hasta);
+  const prev=[];
+  per.forEach(p=>{
+    let rojos=0,verdes=0,total=0;
+    for(let f=p.desde;f<=p.hasta;f=addDays(f,1)){
+      const d=diaSemana(f);
+      if(d<5)continue;
+      const e=evaluarDia(f);
+      if(!e)continue;
+      total++;if(e.estado==='rojo')rojos++;if(e.estado==='verde')verdes++;
+    }
+    prev.push({etq:p.etq,rojos,verdes,total,perdidos:ps.filter(x=>x.fecha>=p.desde&&x.fecha<=p.hasta).length});
+  });
+  if(!ps.length&&!prev.some(x=>x.total))return '';
+  const perdidasReales=ps.filter(x=>x.decision!=='mantenida').length;
+  const totalJor=perdidasReales+Object.values(todasSemanas()).reduce((a,w)=>a+((w.jornadas||[]).filter(j=>j.fecha>=desde&&j.fecha<=hasta).length),0);
+  let h='<div class="card" style="margin-top:12px"><b style="font-size:14px">Meteorología y días de obra</b>'+
+    '<p class="tiny muted" style="margin:3px 0 10px">Previsión frente a realidad. El Documento 3 suponía perder un 30 % de las jornadas: aquí se ve si acertaba.</p>';
+  h+='<div class="row" style="gap:20px;margin-bottom:10px">'+
+     '<span class="kpi"><b>'+perdidasReales+'</b><i>jornadas perdidas</i></span>'+
+     '<span class="kpi"><b>'+(totalJor?Math.round(100*perdidasReales/totalJor):0)+' %</b><i>del total previsto</i></span>'+
+     '<span class="kpi"><b>'+(meteoDisponible()?(meteoDesfasada()?'desfasada':'al día'):'sin datos')+'</b><i>previsión</i></span></div>';
+  if(ps.length){
+    h+='<table class="cfg"><tr><th>Fecha</th><th>Estado</th><th>Decisión</th><th>Motivo</th></tr>';
+    ps.slice().sort((a,b)=>a.fecha<b.fecha?1:-1).slice(0,12).forEach(x=>{
+      h+='<tr><td>'+esp(x.fecha)+'</td><td style="color:'+(COLOR_EST[x.estado]||'var(--muted)')+'">'+x.estado+'</td>'+
+        '<td>'+esc(x.decision)+'</td><td class="tiny muted">'+esc((x.motivos||[])[0]||'')+'</td></tr>';
+    });
+    h+='</table>';
+  }
+  h+='</div>';
+  return h;
+}
+/* ============================================================
+   VALIDACIÓN DE NÚMEROS Y FECHAS
+   No es seguridad: es que los datos no envenenen los cálculos.
+   Un dato fuera de rango se corrige y se avisa, nunca se guarda a medias.
+   ============================================================ */
+const LIMITES={
+  horasTarea:{min:0,max:2000,nombre:'las horas de una subtarea'},
+  horasRec:{min:0.25,max:60,nombre:'las horas por repetición'},
+  capacidad:{min:0,max:100,nombre:'la capacidad semanal'},
+  peso:{min:0,max:100,nombre:'el peso de un hito'},
+  pct:{min:0,max:100,nombre:'el porcentaje de tiempo'},
+  minimo:{min:0,max:80,nombre:'el mínimo semanal'},
+  margen:{min:0,max:50,nombre:'el margen'},
+  cuota:{min:0,max:8,nombre:'la cuota de fin de semana'},
+  costeKm:{min:0,max:5,nombre:'el coste por kilómetro'},
+  km:{min:0,max:2000,nombre:'los kilómetros por viaje'},
+  minCoche:{min:0,max:300,nombre:'los minutos de trayecto'},
+  cada:{min:1,max:52,nombre:'la cadencia en semanas'},
+  avisoDias:{min:1,max:120,nombre:'los días de aviso'},
+  minutosCierre:{min:0,max:120,nombre:'la antelación del cierre'},
+  temp:{min:-20,max:55,nombre:'la temperatura'},
+  racha:{min:0,max:200,nombre:'la racha de viento'},
+  mm:{min:0,max:200,nombre:'los milímetros de lluvia'},
+  prob:{min:0,max:100,nombre:'la probabilidad de lluvia'},
+  lat:{min:-90,max:90,nombre:'la latitud'},
+  lon:{min:-180,max:180,nombre:'la longitud'},
+  indicador:{min:-1e9,max:1e12,nombre:'el indicador'},
+  orientacion:{min:0,max:359,nombre:'la orientación'},
+  piezas:{min:0,max:1000,nombre:'las piezas'},
+  eur:{min:0,max:1e7,nombre:'el importe'},
+  periodos:{min:1,max:24,nombre:'los periodos'}
+};
+const FECHA_MIN='2000-01-01', FECHA_MAX='2100-12-31';
+
+/* Devuelve un número válido dentro del rango, o el de reserva.
+   Si hubo que corregir, avisa una sola vez y sin dramatismo. */
+function num(valor,clave,reserva){
+  const L=LIMITES[clave]||{min:-1e12,max:1e12,nombre:'ese valor'};
+  const base=(reserva===undefined?L.min:reserva);
+  if(valor===''||valor===null||valor===undefined)return base;
+  const n=Number(valor);
+  if(!isFinite(n)){avisoDato(L.nombre+' tiene que ser un número');return base;}
+  if(n<L.min){avisoDato(L.nombre+' no puede bajar de '+L.min);return L.min;}
+  if(n>L.max){avisoDato(L.nombre+' no puede pasar de '+L.max);return L.max;}
+  return Math.round(n*1000)/1000;
+}
+function fecha(valor,reserva){
+  if(!valor)return reserva===undefined?null:reserva;
+  const s=String(valor).slice(0,10);
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(s)){avisoDato('la fecha no tiene un formato válido');return reserva===undefined?null:reserva;}
+  const d=parse(s);
+  if(isNaN(d.getTime())||iso(d)!==s){avisoDato('esa fecha no existe en el calendario');return reserva===undefined?null:reserva;}
+  if(s<FECHA_MIN||s>FECHA_MAX){avisoDato('la fecha queda fuera de lo razonable');return reserva===undefined?null:reserva;}
+  return s;
+}
+function texto(valor,max){
+  return String(valor===undefined||valor===null?'':valor).replace(/\s+/g,' ').trim().slice(0,max||200);
+}
+var ultimoAviso=0;
+function avisoDato(m){
+  const ahora=Date.now();
+  if(ahora-ultimoAviso<2500)return;      // no encadenar avisos al teclear
+  ultimoAviso=ahora;
+  registrarOperacion('validación','corregido: '+m,0,true);
+  if(typeof toast==='function')toast('He ajustado '+m);
+}
+
+/* ============================================================
+   REGISTRO TÉCNICO DE OPERACIONES
+   Las últimas 200 operaciones contra la hoja, para poder
+   diagnosticar el día que la sincronización haga algo raro.
+   ============================================================ */
+function registroOps(){D.registro=D.registro||[];return D.registro;}
+function registrarOperacion(accion,detalle,bytes,ok){
+  const r=registroOps();
+  r.push({ts:AHORA(),accion,detalle:texto(detalle,140),
+    bytes:bytes||0,ok:ok===undefined?true:!!ok,
+    disp:(D.config.sync&&D.config.sync.dispositivo)||'—',
+    v:typeof VERSION_APP!=='undefined'?VERSION_APP:''});
+  if(r.length>200)D.registro=r.slice(-200);
+}
+function mRegistro(){
+  const r=registroOps().slice().reverse();
+  const kb=n=>!n?'':(n<1024?n+' B':(n/1024).toFixed(1)+' kB');
+  let h='<h3>Registro técnico</h3>'+
+    '<div class="mst">Las últimas '+r.length+' operaciones de este dispositivo contra la hoja. Sirve para diagnosticar, no para el uso diario.</div>';
+  if(!r.length)h+='<p class="tiny muted" style="padding:8px 0">Todavía no hay nada registrado.</p>';
+  else{
+    const fallos=r.filter(x=>!x.ok).length;
+    if(fallos)h+='<div class="warnbox" style="margin-bottom:10px">'+fallos+' operación(es) con problema entre las registradas.</div>';
+    h+='<div style="overflow-x:auto"><table class="cfg"><tr><th>Cuándo</th><th>Qué</th><th>Detalle</th><th>Tamaño</th></tr>';
+    r.slice(0,60).forEach(x=>{
+      h+='<tr'+(x.ok?'':' style="color:var(--bad)"')+'><td class="tiny">'+espCorto(x.ts.slice(0,10))+' '+x.ts.slice(11,16)+'</td>'+
+        '<td class="tiny">'+esc(x.accion)+'</td><td class="tiny muted">'+esc(x.detalle)+'</td>'+
+        '<td class="tiny">'+kb(x.bytes)+'</td></tr>';
+    });
+    h+='</table></div>';
+  }
+  h+='<div class="row" style="margin-top:12px"><button class="btn ghost" data-act="reg-copiar">Copiar como texto</button>'+
+     '<button class="btn ghost" data-act="reg-borrar">Vaciar</button>'+
+     '<button class="btn ghost" data-act="cerrar">Cerrar</button></div>';
+  modal(h);
+}
+function registroTexto(){
+  return registroOps().slice().reverse().map(x=>
+    [x.ts,x.ok?'ok':'FALLO',x.accion,x.detalle,x.bytes?x.bytes+'B':'',x.disp,x.v].filter(Boolean).join(' · ')
+  ).join('\n');
+}
 /* ============================================================
    PERSISTENCIA, ACCIONES E INICIO
    ============================================================ */
@@ -2557,10 +4851,12 @@ async function guardar(marcar){
   const ok2=await store.set('semanas-plan',SEM);
   const ok3=await store.set('registro-sesiones',SES);
   const ok4=await store.set('incidencias',INC);
+  if(archSucio)await store.set('archivo-semanas',ARCH);
   guardando=false;
-  pintarSave((ok1&&ok2&&ok3&&ok4)?'Guardado':'No se pudo guardar');
+  if(!(ok1&&ok2&&ok3&&ok4))toast('No se ha podido guardar en este dispositivo');
+  if(marcar!==false)marcarSucio();      // marca que hay algo que subir
+  pintarEstado();
 }
-function pintarSave(t){const e=$('#save');if(e)e.textContent=t;}
 let debT;
 function guardarPronto(){clearTimeout(debT);debT=setTimeout(()=>guardar(true),350);}
 
@@ -2691,7 +4987,7 @@ document.addEventListener('input',e=>{
 });
 document.addEventListener('change',e=>{
   const r=e.target.closest('[data-act="ana-n"]');
-  if(r){anaN=Math.max(1,Math.min(24,Number(r.value)||12));render();return;}
+  if(r){anaN=num(r.value,'periodos',12);render();return;}
   const el=e.target.closest('[data-act]');if(!el)return;
   const a=el.dataset.act;
   if(a==='ev-campo'||a==='ev-cascada'){leerEv();if(a==='ev-cascada'){const e=window.__ev;
@@ -2700,11 +4996,36 @@ document.addEventListener('change',e=>{
     if(e.tareaId&&e.tareaId!=='__nueva'&&(!hi||!hi.tareas.some(t=>t.id===e.tareaId)))e.tareaId='';
     mEvento();}return;}
   if(a==='selday'){el.checked?sel.add(el.dataset.f):sel.delete(el.dataset.f);render();}
-  if(a==='cuota'){D.config.cuotas[el.dataset.m]={jornadas:Number(el.value)};guardarPronto();}
-  if(a==='pct'){P(el.dataset.id).pct=Math.max(0,Number(el.value)||0);guardarPronto();if(vista==='proyectos')render();}
-  if(a==='min'){P(el.dataset.id).minimo=Number(el.value);guardarPronto();}
-  if(a==='cfg'){D.config[el.dataset.k]=Number(el.value);guardarPronto();}
-  if(a==='cfgt'){D.config[el.dataset.k]=el.value;guardarPronto();render();}
+  if(a==='obra-cfg'){const o=cfgObra();o[el.dataset.k]=el.value===''?null:num(el.value,el.dataset.k,null);selloCfg('obra');guardarPronto();
+    if(o.lat!==null&&o.lon!==null)traerMeteo(true).then(()=>render());}
+  if(a==='obra-umb'){const k=el.dataset.k;
+    const cl={tMin:'temp',tMax:'temp',probLluvia:'prob',precip:'mm',precipPrevia:'mm',racha:'racha'}[k]||'indicador';
+    cfgObra().umbrales[k]=num(el.value,cl,cfgObra().umbrales[k]);selloCfg('obra');guardarPronto();render();}
+  if(a==='pano-nom'){cfgObra().panos[Number(el.dataset.i)].nombre=texto(el.value,40)||'Paño';selloCfg('obra');guardarPronto();}
+  if(a==='pano-ori'){cfgObra().panos[Number(el.dataset.i)].orientacion=num(el.value,'orientacion',180);selloCfg('obra');guardarPronto();}
+  if(a==='ci-min'){cfgCierre().minutos=num(el.value,'minutosCierre',5);guardarPronto();render();}
+  if(a==='sim-campo'){leerSim();mSimulador();return;}
+  if(a==='ind-nom'){const p=P(el.dataset.p),i=indic(p);
+    i.campos[Number(el.dataset.i)].nombre=texto(el.value,50)||'Indicador';tocar(p);guardarPronto();}
+  if(a==='ind-tipo'){const p=P(el.dataset.p),i=indic(p);
+    i.campos[Number(el.dataset.i)].tipo=el.value;tocar(p);guardarPronto();}
+  if(a==='ind-set'){const p=P(el.dataset.p),i=indic(p);
+    i.meses[el.dataset.m]=i.meses[el.dataset.m]||{};
+    if(el.value==='')delete i.meses[el.dataset.m][el.dataset.c];
+    else i.meses[el.dataset.m][el.dataset.c]=num(el.value,'indicador',0);
+    tocar(p);guardarPronto();}
+  if(a==='ind-linea'){const p=P(el.dataset.p);indic(p).lineas[el.dataset.h]=el.value;tocar(p);guardarPronto();}
+  if(a==='calc-campo'){const st=window.__calc;
+    const g=id=>{const e=document.getElementById(id);return e?Number(e.value)||0:0;};
+    st.piezas=num(g('cpz'),'piezas',0);st.coste=num(g('cco'),'eur',0);st.horas=num(g('cho'),'horasRec',1);
+    mCalculadora(window.__calcP||D.proyectos[0].id);}
+  if(a==='cuota'){D.config.cuotas[el.dataset.m]={jornadas:num(el.value,'cuota',0),actualizado:AHORA()};guardarPronto();}
+  if(a==='pct'){const p=P(el.dataset.id);p.pct=num(el.value,'pct',0);tocar(p);guardarPronto();if(vista==='proyectos')render();}
+  if(a==='min'){const p=P(el.dataset.id);p.minimo=num(el.value,'minimo',0);tocar(p);guardarPronto();}
+  if(a==='cfg'){const k=el.dataset.k;
+    const cl={margenPct:'margen',costeKm:'costeKm',kmPorViaje:'km',minCoche:'minCoche',avisoFiscal:'avisoDias'}[k]||'indicador';
+    D.config[k]=num(el.value,cl,D.config[k]);selloCfg(k);guardarPronto();}
+  if(a==='cfgt'){D.config[el.dataset.k]=el.value;selloCfg(el.dataset.k);guardarPronto();render();}
   if(a==='syncf'){syncCfg()[el.dataset.k]=el.value.trim();guardar(false);}
   if(a==='rec'){const r=D.config.recurrentes.find(x=>x.id===el.dataset.id);r[el.dataset.k]=Number(el.value);guardarPronto();}
   if(a==='ej-peso'){
@@ -2716,7 +5037,13 @@ document.addEventListener('change',e=>{
   if(a==='import-json'){const f=el.files[0];if(!f)return;
     const rd=new FileReader();rd.onload=()=>{try{
       const j=JSON.parse(rd.result);
+      const credenciales={sync:D.config.sync,compartidos:D.config.compartidos};
       D=j.datos||j.D||D;SEM=j.semanas||SEM;SES=j.sesiones||SES;INC=j.incidencias||INC;
+      D.config=D.config||{};
+      if(!D.config.sync||!D.config.sync.url)D.config.sync=credenciales.sync;
+      if(!(D.config.compartidos||[]).some(x=>x.url))D.config.compartidos=credenciales.compartidos;
+      if(j.archivo)ARCH=j.archivo;
+      migrarV2();
       guardar();render();toast('Datos importados');
     }catch(err){toast('El archivo no es válido');}};rd.readAsText(f);}
   if(a==='import-xlsx'){const f=el.files[0];if(!f)return;
@@ -2743,9 +5070,9 @@ document.addEventListener('click',e=>{
    case 'off-toggle':{const f=el.dataset.f;
      if(offTmp.includes(f)){offTmp=offTmp.filter(x=>x!==f);el.classList.add('ghost');}
      else{offTmp.push(f);el.classList.remove('ghost');}break;}
-   case 'cap-ok':{const c=Number($('#capin').value||0);replanificar(semanaVista,c,offTmp||[],null);
+   case 'cap-ok':{const c=num($('#capin').value,'capacidad',0);replanificar(semanaVista,c,offTmp||[],null);
      cerrar();guardarPronto();render();toast('Plan generado');break;}
-   case 'cap-next':{const c=Number($('#capin').value||0);
+   case 'cap-next':{const c=num($('#capin').value,'capacidad',0);
      if(c<=0){toast('Declara cuántas horas tienes');break;}
      abrirCola(semanaVista,c,offTmp||[]);break;}
    case 'cola-up': case 'cola-down':{
@@ -2784,28 +5111,54 @@ document.addEventListener('click',e=>{
      const b=plan.bloques.find(x=>x.id===id);if(!b)break;
      window.__ev=evDe(b);mEvento();break;}
    case 'ficha': mFicha(id);break;
-   case 'b-hecho':{const b=todosBloques().find(x=>x.id===id);b.estado='hecho';registrarSesion(b);
-     cerrar();guardarPronto();render();toast('Registrado');break;}
-   case 'b-deshacer':{const b=todosBloques().find(x=>x.id===id);b.estado='planificado';
-     SES=SES.filter(s=>s.bloqueId!==id);cerrar();guardarPronto();render();break;}
+   case 'b-hecho':{const b=todosBloques().find(x=>x.id===id);
+     const antes=b.estado, nses=SES.length;
+     b.estado='hecho';sello(b);registrarSesion(b);
+     registrarActividad(b.proyecto,'registró',fmtH((b.fin-b.ini)/60)+' en «'+b.nombre+'»');
+     const nuevas=SES.slice(nses).map(x=>x.id);
+     cerrar();guardarPronto();render();
+     registrarAccion('Marcado como hecho',()=>{b.estado=antes;sello(b);SES=SES.filter(x=>!nuevas.includes(x.id));});
+     break;}
+   case 'b-deshacer':{const b=todosBloques().find(x=>x.id===id);
+     const quitadas=SES.filter(s=>s.bloqueId===id).map(copia);
+     b.estado='planificado';sello(b);
+     quitadas.forEach(s=>anotarSesBorrada(s.id));
+     SES=SES.filter(s=>s.bloqueId!==id);cerrar();guardarPronto();render();
+     registrarAccion('Desmarcado',()=>{b.estado='hecho';sello(b);quitadas.forEach(s=>SES.push(s));
+       D.sesBorradas=tumbasSes().filter(t=>!quitadas.some(q=>q.id===t.id));});
+     break;}
    case 'b-mover': mMover(id);break;
    case 'b-mover-ok':{const plan=planActual();const b=plan.bloques.find(x=>x.id===id);
      if(esPasado(el.dataset.f)){toast('No se pueden mover actividades a días pasados');break;}
-     b.fecha=el.dataset.f;b.motivo='Movido a mano.';cerrar();guardarPronto();render();break;}
+     const antes={fecha:b.fecha,motivo:b.motivo};
+     b.fecha=el.dataset.f;b.motivo='Movido a mano.';sello(b);
+     cerrar();guardarPronto();render();
+     registrarAccion('Movido a '+DIAS3[diaSemana(b.fecha)],()=>{Object.assign(b,antes);sello(b);});
+     break;}
    case 'b-anular':{const plan=planActual();const b=plan.bloques.find(x=>x.id===id);
-     b.estado='anulado';
-     if(b.tareaId){D.deuda=D.deuda||[];D.deuda.push({id:uid('deu'),tareaId:b.tareaId,proyecto:b.proyecto,nombre:b.nombre,horas:(b.fin-b.ini)/60,semanaOrigen:plan.id});}
-     cerrar();guardarPronto();render();toast('Anulado. Pasa a deuda.');break;}
+     const antes=b.estado;let deu=null;
+     b.estado='anulado';sello(b);
+     if(b.tareaId){D.deuda=D.deuda||[];deu={id:uid('deu'),tareaId:b.tareaId,proyecto:b.proyecto,nombre:b.nombre,horas:(b.fin-b.ini)/60,semanaOrigen:plan.id};D.deuda.push(deu);}
+     cerrar();guardarPronto();render();
+     registrarAccion('Bloque anulado',()=>{b.estado=antes;sello(b);if(deu)D.deuda=D.deuda.filter(x=>x.id!==deu.id);});
+     break;}
    case 'anular-dia': mAnularDia([el.dataset.f]);break;
    case 'anular-sel': mAnularDia([...sel]);break;
    case 'limpiar-sel': sel.clear();render();break;
-   case 'anular-ok': anularDias(el.dataset.f.split(','),el.dataset.modo);sel.clear();cerrar();render();break;
+   case 'anular-ok':{
+     const plan=planActual();
+     const foto=plan?{bloques:copia(plan.bloques),off:copia(plan.diasOff),jor:copia(plan.jornadas||[]),
+       deuda:copia(D.deuda||[]),usadas:plan.usadas,pp:copia(plan.porProyecto||{})}:null;
+     anularDias(el.dataset.f.split(','),el.dataset.modo);sel.clear();cerrar();render();
+     if(foto)registrarAccion('Día anulado',()=>{plan.bloques=foto.bloques;plan.diasOff=foto.off;
+       plan.jornadas=foto.jor;D.deuda=foto.deuda;plan.usadas=foto.usadas;plan.porProyecto=foto.pp;sello(plan);});
+     break;}
    case 'recuperar-dia':{const plan=planActual()||SEM[semanaId(lunesDe(hoyISO()))];
      plan.diasOff=plan.diasOff.filter(x=>x!==el.dataset.f);
      plan.bloques.forEach(b=>{if(b.fecha===el.dataset.f&&b.estado==='anulado')b.estado='planificado';});
      guardarPronto();render();break;}
    case 'deuda-del': D.deuda=D.deuda.filter(d=>d.id!==id);guardarPronto();render();break;
-   case 'proj-toggle':{const p=P(id);p.activo=!p.activo;guardarPronto();render();
+   case 'proj-toggle':{const p=P(id);p.activo=!p.activo;tocar(p);guardarPronto();render();
      toast(p.activo?p.nombre+' activado':p.nombre+' desactivado. Sus bloques futuros desaparecen.');break;}
    case 'proj-up': case 'proj-down':{
      const i=D.proyectos.findIndex(p=>p.id===id),j=a==='proj-up'?i-1:i+1;
@@ -2838,23 +5191,128 @@ document.addEventListener('click',e=>{
      D.config.compartidos=compartidos().filter(x=>x.proyectoId!==id);
      cerrar();guardarPronto();render();toast('Ya no se comparte. Tus datos siguen aquí.');break;}
    case 'comp-ahora': sincronizarCompartidos(true);break;
+   case 'deshacer': deshacer();break;
+   case 'recargar': recargarLimpio();break;
+   case 'copias': mCopias();break;
+   case 'copia-rest': mConfirmarRestaurar(el.dataset.r,el.dataset.f);break;
+   case 'copia-ok': restaurarCopia(el.dataset.r);break;
+   case 'conf-el': resolverConflicto(Number(el.dataset.i),el.dataset.v);mConflictos();break;
+   case 'conf-todo': conflictosPend.forEach((c,i)=>resolverConflicto(i,el.dataset.v));mConflictos();break;
+   case 'conf-fin':{
+     conflictosPend.forEach((c,i)=>{if(!c.resuelto)resolverConflicto(i,'mio');});
+     conflictosPend=[];cerrar();guardar(false).then(()=>{sucio=true;sincronizar(true);});break;}
+   case 'cierre': mCierre();break;
+   case 'ci-hecho':{const b=todosBloques().find(x=>x.id===id);
+     if(b.estado==='hecho'){b.estado='planificado';SES=SES.filter(s=>s.bloqueId!==b.id);}
+     else{b.estado='hecho';registrarSesion(b);}
+     sello(b);guardarPronto();mCierre();break;}
+   case 'ci-pend': diario(hoyISO()).pendiente=el.dataset.v;guardarPronto();mCierre();break;
+   case 'ci-cerrar': cerrarJornada();break;
+   case 'fam-salir':{const d=diario(hoyISO());d.salida=AHORA();
+     INC.push({id:uid('inc'),fecha:hoyISO(),tipo:'salida del modo familia',alcance:'dia',motivo:''});
+     guardarPronto();render();toast('Queda anotado como uso excepcional');break;}
+   case 'ci-cfg': cfgCierre().activo=!cfgCierre().activo;guardarPronto();render();break;
+   case 'ci-notif': pedirNotificaciones();break;
+   case 'en-set': fijarEnergia(Number(el.dataset.v));break;
+   case 'en-saltar': diario(hoyISO()).saltado=true;guardarPronto();render();break;
+   case 'en-mol':{const d=diario(hoyISO());d.molestias=d.molestias||[];
+     const k=el.dataset.v;
+     d.molestias=d.molestias.includes(k)?d.molestias.filter(x=>x!==k):d.molestias.concat([k]);
+     guardarPronto();render();break;}
+   case 'en-inc': aplicarSinEnergia(el.dataset.v);break;
+   case 'ficha-dur': window.__corta=el.dataset.v==='30';mFicha(id);break;
+   case 'fiscal':{
+     const n=obligacionesSL(id,2);
+     guardarPronto();render();
+     toast(n?('Añadidas '+n+' obligaciones. Revisa los plazos con tu asesoría.'):'Ya estaban todas');
+     break;}
+   case 'indic': mIndicadores(id);break;
+   case 'calc-ext': cerrar();mCalculadora(el.dataset.p);break;
+   case 'cal-tog':{cfgCal()[el.dataset.k]=!cfgCal()[el.dataset.k];guardar(false);render();
+     if(el.dataset.k==='escribir'&&cfgCal().escribir)escribirCalendario(true);
+     if(el.dataset.k==='leer'&&cfgCal().leer)leerCalendario(true);break;}
+   case 'cal-ahora': escribirCalendario(true).then(()=>leerCalendario(true));break;
+   case 'cal-elegir':{
+     modal('<h3>Calendarios</h3><div class="mst">Consultando tu cuenta…</div>');
+     listarCalendarios().then(cs=>{
+       const sel=cfgCal().calendarios;
+       let h2='<h3>¿Qué calendarios bloquean tu agenda?</h3>'+
+         '<div class="mst">Sus eventos entrarán como franjas ocupadas. No se tocan: solo se leen.</div>';
+       if(!cs.length)h2+='<p class="tiny muted">No se han podido leer. ¿Has publicado la versión nueva del script?</p>';
+       cs.forEach(c=>{h2+='<button class="mopt" data-act="cal-sel" data-id="'+esc(c.id)+'">'+
+         (sel.includes(c.id)?'✓ ':'')+esc(c.nombre)+'</button>';});
+       h2+='<div class="row"><button class="btn primary" data-act="cerrar">Listo</button></div>';
+       modal(h2);
+     });break;}
+   case 'cal-sel':{
+     const c=cfgCal(),v=el.dataset.id;
+     c.calendarios=c.calendarios.includes(v)?c.calendarios.filter(x=>x!==v):c.calendarios.concat([v]);
+     guardar(false);
+     el.textContent=(c.calendarios.includes(v)?'✓ ':'')+el.textContent.replace(/^✓ /,'');
+     break;}
+   case 'cho-replan': resolverChoques('replan');break;
+   case 'cho-hueco': resolverChoques('deuda');break;
+   case 'viab': mViabilidad(id);break;
+   case 'aprender':{const p=P(id);p.aprender=p.aprender===false;tocar(p);guardarPronto();mProyecto(id);break;}
+   case 'coment': mComentarios(el.dataset.p,el.dataset.h,el.dataset.t);break;
+   case 'com-add':{const e=document.getElementById('comTxt');
+     anadirComentario(el.dataset.p,el.dataset.h,el.dataset.t,e?e.value:'');break;}
+   case 'activ': mActividad(id);break;
+   case 'correos': mCorreos(id);break;
+   case 'corr-save':{const e=document.getElementById('corrTxt');
+     const c=compartidos().find(x=>x.proyectoId===id);
+     if(c){c.correos=(e?e.value:'').split(',').map(x=>x.trim()).filter(x=>x.indexOf('@')>0);}
+     cerrar();guardar(false);sincronizarCompartidos(true);toast('Guardado');break;}
+   case 'corr-probar':{
+     const c=compartidos().find(x=>x.proyectoId===id);
+     if(!c)break;
+     (async()=>{try{await llamarCanal(c,'resumenAhora',proyectoPaquete(id));toast('Prueba enviada');}
+      catch(e){toast('No se ha podido enviar: '+e.message);}})();break;}
+   case 'meteo-dia': mMeteoDia(el.dataset.f);break;
+   case 'meteo-traer': traerMeteo(true).then(d=>{render();toast(d?'Previsión actualizada':'No hay conexión con la fuente');});break;
+   case 'obra-cfg2': mObraCfg();break;
+   case 'obra-tog':{const o=cfgObra();o.activo=!o.activo;guardarPronto();mObraCfg();
+     if(o.activo)traerMeteo(true).then(()=>render());break;}
+   case 'pano-add':{const o=cfgObra();o.panos.push({id:uid('pn'),nombre:'Paño '+(o.panos.length+1),orientacion:180});
+     guardarPronto();mObraCfg();break;}
+   case 'pano-del':{const o=cfgObra();o.panos.splice(Number(el.dataset.i),1);guardarPronto();mObraCfg();break;}
+   case 'mt-op': aplicarMalTiempo(el.dataset.f,el.dataset.v);break;
+   case 'ind-add':{const p=P(el.dataset.p),i=indic(p);
+     i.campos.push({id:uid('c'),nombre:'Nuevo indicador',tipo:'num'});
+     tocar(p);guardarPronto();mIndicadores(el.dataset.p);break;}
+   case 'ind-del':{const p=P(el.dataset.p),i=indic(p),idx=Number(el.dataset.i);
+     if(!el.dataset.conf){el.dataset.conf='1';el.textContent='¿Seguro?';return;}
+     const campo=i.campos[idx];
+     i.campos.splice(idx,1);
+     Object.values(i.meses).forEach(m=>{if(campo)delete m[campo.id];});
+     tocar(p);guardarPronto();mIndicadores(el.dataset.p);break;}
+   case 'proj-sim': mSimulador();break;
+   case 'sim-crear': crearDesdeSimulador();break;
+   case 'registro': mRegistro();break;
+   case 'reg-borrar': D.registro=[];guardarPronto();mRegistro();break;
+   case 'reg-copiar':{
+     const t=registroTexto();
+     if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(()=>toast('Copiado'),()=>toast('No se ha podido copiar'));
+     else toast('Este navegador no permite copiar solo');
+     break;}
    case 'proj-new': mProyecto(null);break;
    case 'proj-edit': mProyecto(id);break;
    case 'proj-save':{
      const n=$('#pn').value.trim();if(!n)return toast('Ponle nombre');
-     const o={nombre:n,tipo:$('#pt').value,color:$('#pc').value,fechaInicio:$('#pi').value,
-       fechaFin:$('#pf').value||null,fechaLimite:$('#pl').value||null,pct:Number($('#pp').value||0)};
-     if(id)Object.assign(P(id),o);
-     else D.proyectos.push(Object.assign({id:n.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,10)||uid('P'),
-       activo:true,prioridad:3,minimo:0,hitos:[]},o));
+     const o={nombre:texto(n,80),tipo:$('#pt').value,color:$('#pc').value,fechaInicio:fecha($('#pi').value,hoyISO()),
+       fechaFin:fecha($('#pf').value),fechaLimite:fecha($('#pl').value),pct:num($('#pp').value,'pct',0)};
+     if(id)tocar(Object.assign(P(id),o));
+     else D.proyectos.push(tocar(Object.assign({id:n.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,10)||uid('P'),
+       activo:true,prioridad:3,minimo:0,hitos:[]},o)));
      cerrar();guardarPronto();render();break;}
    case 'proj-del':{
      if(!el.dataset.conf){el.dataset.conf='1';el.textContent='Es irreversible. Pulsa otra vez';return;}
+     anotarBorrado(id);
      D.proyectos=D.proyectos.filter(p=>p.id!==id);cerrar();guardarPronto();render();toast('Proyecto eliminado');break;}
    case 'hito-new': mHito(el.dataset.p,null);break;
    case 'hito-edit': mHito(el.dataset.p,el.dataset.h);break;
    case 'hito-save':{const p=P(el.dataset.p);const hid=el.dataset.h;
-     const o={nombre:$('#hn').value.trim(),peso:Number($('#hp').value||0),fecha:$('#hf').value||null,estado:$('#he').value};
+     const o={nombre:texto($('#hn').value,120),peso:num($('#hp').value,'peso',0),fecha:fecha($('#hf').value),estado:$('#he').value};
      if(hid)tocar(Object.assign(p.hitos.find(x=>x.id===hid),o));
      else p.hitos.push(tocar(Object.assign({id:uid('H'),horas:0,tareas:[]},o)));
      const s=p.hitos.reduce((a,x)=>a+x.peso,0);
@@ -2862,8 +5320,12 @@ document.addEventListener('click',e=>{
      if(s!==100)toast('Los pesos suman '+s+', no 100');
      break;}
    case 'hito-del':{const p=P(el.dataset.p);const hh=p.hitos.find(x=>x.id===el.dataset.h);
+     const ih=p.hitos.indexOf(hh), copiaH=copia(hh);
      if(hh){anotarBorrado(hh.id);hh.tareas.forEach(t=>anotarBorrado(t.id));}
      p.hitos=p.hitos.filter(x=>x.id!==el.dataset.h);
+     registrarAccion('Hito eliminado',()=>{p.hitos.splice(ih,0,copiaH);
+       const ids=[copiaH.id].concat(copiaH.tareas.map(t=>t.id));
+       D.borrados=borrados().filter(b=>!ids.includes(b.id));});
      cerrar();guardarPronto();render();break;}
    case 'tarea-new': mTarea(el.dataset.p,el.dataset.h,null);break;
    case 'tarea-edit': mTarea(el.dataset.p,el.dataset.h,el.dataset.t);break;
@@ -2887,22 +5349,31 @@ document.addEventListener('click',e=>{
      const btnr=document.querySelector('[data-act="rec-tog"]');
      const recOn=btnr&&!btnr.classList.contains('ghost');
      const gv=id=>{const e=document.getElementById(id);return e?e.value:'';};
-     const rec=recOn?{activo:true,cada:Math.max(1,Number(gv('rc')||1)),
-       horas:Math.max(0.25,Number(gv('rho')||1)),
+     const rec=recOn?{activo:true,cada:num(gv('rc'),'cada',1),
+       horas:num(gv('rho'),'horasRec',1),
        dia:gv('rd')===''?null:Number(gv('rd')),
        hora:gv('rh')||null,
-       desde:gv('rdesde')||lunesDe(hoyISO()),
-       hasta:gv('rhasta')||null}:null;
-     const o={nombre:$('#tn').value.trim(),horas:Number($('#th').value||0),contexto:$('#tc').value,
+       desde:fecha(gv('rdesde'),lunesDe(hoyISO())),
+       hasta:fecha(gv('rhasta'))}:null;
+     const o={nombre:texto($('#tn').value,140),horas:num($('#th').value,'horasTarea',0),contexto:$('#tc').value,
        desplaza:dz,critica:on('critica'),bloqueante:on('bloqueante'),rec,
        asignado:(document.getElementById('tasg')?document.getElementById('tasg').value:(tid&&hi.tareas.find(x=>x.id===tid)?hi.tareas.find(x=>x.id===tid).asignado:''))||null,
        etiquetas:dz?['luz','jornadaContinua','fisica']:[$('#tc').value==='llamadas'?'comercial':$('#tc').value==='cita'?'cita':'escritorio']};
+     const previa=tid?copia(hi.tareas.find(x=>x.id===tid)):null;
      if(tid)tocar(Object.assign(hi.tareas.find(x=>x.id===tid),o));
      else hi.tareas.push(tocar(Object.assign({id:uid('T'),estado:'pendiente'},o)));
-     cerrar();guardarPronto();render();break;}
+     cerrar();guardarPronto();render();
+     if(previa&&o.asignado!==previa.asignado)registrarActividad(el.dataset.p,'asignó','«'+o.nombre+'» a '+(o.asignado||'nadie'));
+     if(previa){const t=hi.tareas.find(x=>x.id===tid);
+       registrarAccion('Subtarea editada',()=>{restaurar(t,previa);});}
+     break;}
    case 'tarea-del':{const p=P(el.dataset.p),hi=p.hitos.find(x=>x.id===el.dataset.h);
-     anotarBorrado(el.dataset.t);
-     hi.tareas=hi.tareas.filter(x=>x.id!==el.dataset.t);cerrar();guardarPronto();render();break;}
+     const i=hi.tareas.findIndex(x=>x.id===el.dataset.t), t=copia(hi.tareas[i]);
+     anotarBorrado(el.dataset.t);sello(hi);
+     hi.tareas=hi.tareas.filter(x=>x.id!==el.dataset.t);cerrar();guardarPronto();render();
+     registrarAccion('Subtarea eliminada',()=>{hi.tareas.splice(i,0,t);
+       D.borrados=borrados().filter(b=>b.id!==t.id);});
+     break;}
    case 'ej-ok':{const b=todosBloques().find(x=>x.id===id);
      let s=SES.find(x=>x.tipo==='ejercicio'&&x.bloqueId===b.id);
      if(!s){s={id:uid('s'),tipo:'ejercicio',proyecto:'SALUD',fecha:b.fecha,horas:0,bloqueId:b.id,detalle:[]};SES.push(s);}
@@ -2912,7 +5383,7 @@ document.addEventListener('click',e=>{
    case 'sync-toggle':{const sy=syncCfg();
      if(!sy.url)return toast('Pega antes la dirección de la aplicación web');
      sy.activo=!sy.activo;syncEstado=sy.activo?'pend':'off';
-     guardar(false);render();if(sy.activo)sincronizar(true);break;}
+     guardar(false);render();arrancarLatido();if(sy.activo)sincronizar(true);break;}
    case 'sync-probar':{
      (async()=>{try{const j=await syncLlamar('ping');toast('Conectado con «'+(j.hoja||'la hoja')+'»');}
       catch(err){toast('No conecta: '+err.message);}})();break;}
@@ -2921,7 +5392,7 @@ document.addEventListener('click',e=>{
    case 'regla-new': mRegla(null);break;
    case 'regla-edit': mRegla(el.dataset.g);break;
    case 'regla-dia': case 'regla-tag': el.classList.toggle('ghost');break;
-   case 'regla-on':{const g=el.dataset.g;const r=reglaVigente(g,hoyISO());r.activa=r.activa===false;
+   case 'regla-on':{const g=el.dataset.g;const r=reglaVigente(g,hoyISO());r.activa=r.activa===false;sello(r);
      el.textContent=r.activa===false?'Desactivada':'Activa';el.classList.toggle('ghost',r.activa===false);
      guardarPronto();break;}
    case 'regla-save':{
@@ -2942,6 +5413,7 @@ document.addEventListener('click',e=>{
        D.config.reglas.forEach(r=>{if(r.grupo===g&&r.vigenteDesde<desde)r.vigenteHasta=addDays(desde,-1);});
        D.config.reglas=D.config.reglas.filter(r=>!(r.grupo===g&&r.vigenteDesde>=desde));
      }
+     nueva.actualizado=AHORA();
      D.config.reglas.push(nueva);
      cerrar();guardarPronto();render();
      toast(desde<=hoyISO()?'Franja actualizada':'En vigor desde el '+esp(desde));
@@ -2952,11 +5424,8 @@ document.addEventListener('click',e=>{
      D.config.reglas.forEach(r=>{if(r.grupo===g&&r.vigenteDesde<desde)r.vigenteHasta=addDays(desde,-1);});
      D.config.reglas=D.config.reglas.filter(r=>!(r.grupo===g&&r.vigenteDesde>=desde));
      cerrar();guardarPronto();render();toast('Franja retirada desde el '+esp(desde));break;}
-   case 'equip': D.config.equipamiento[el.dataset.k]=!D.config.equipamiento[el.dataset.k];guardarPronto();render();break;
-   case 'export':{
-     const blob=new Blob([JSON.stringify({datos:D,semanas:SEM,sesiones:SES,incidencias:INC,exportado:new Date().toISOString()},null,1)],{type:'application/json'});
-     const u=URL.createObjectURL(blob),a2=document.createElement('a');
-     a2.href=u;a2.download='centro-de-mando-'+hoyISO()+'.json';a2.click();URL.revokeObjectURL(u);break;}
+   case 'equip': D.config.equipamiento[el.dataset.k]=!D.config.equipamiento[el.dataset.k];selloCfg('equipamiento');guardarPronto();render();break;
+   case 'export': exportarJSON();break;
    case 'import-ok': aplicarImport();break;
    case 'reset':{
      if(!el.dataset.conf){el.dataset.conf='1';el.textContent='Borra todo. Pulsa otra vez';return;}
@@ -2966,10 +5435,37 @@ document.addEventListener('click',e=>{
 
 /* ---------- render ---------- */
 function render(){
-  $('#tabs').innerHTML=VISTAS.map(([k,n])=>'<button data-act="tab" data-v="'+k+'" aria-current="'+(vista===k)+'">'+n+'</button>').join('');
+  const nav=$('#tabs');
+  nav.innerHTML=VISTAS.map(([k,n])=>'<button data-act="tab" data-v="'+k+'" aria-current="'+(vista===k)+'">'+n+'</button>').join('');
+  ajustarTabs(nav);
   $('#wkid').textContent=semanaId(lunesDe(hoyISO())).replace('-',' · ');
   const m={panorama:vPanorama,hoy:vHoy,semana:vSemana,analisis:vAnalisis,proyectos:vProyectos,config:vConfig};
   $('#app').innerHTML=(m[vista]||vPanorama)();
+  pintarAviso();
+  if(vista==='config')tamanoDatos().then(r=>{
+    const e=document.getElementById('tam');if(!e)return;
+    const arch=Object.keys(ARCH).length;
+    e.textContent='Se sincronizan '+r.kb(r.sync)+' ('+Object.keys(SEM).length+' semanas vivas, '+SES.length+' sesiones)'+
+      (arch?' · archivo aparte: '+r.kb(r.t.archivo)+' en '+arch+' semanas':'')+
+      (r.cuota&&r.cuota.total?' · el navegador te deja '+r.kb(r.cuota.total):'');
+  });
+}
+
+/* la pestaña activa se trae a la vista, y el difuminado desaparece al llegar al final */
+function ajustarTabs(nav){
+  if(!nav||!nav.querySelector)return;
+  try{
+    const act=nav.querySelector('[aria-current="true"]');
+    if(act&&act.scrollIntoView)act.scrollIntoView({block:'nearest',inline:'center'});
+    const fin=()=>{
+      if(!nav.classList)return;
+      const hay=nav.scrollWidth>nav.clientWidth+4;
+      const alFinal=nav.scrollLeft+nav.clientWidth>=nav.scrollWidth-4;
+      nav.classList.toggle('finTabs',!hay||alFinal);
+    };
+    fin();
+    if(!nav.dataset.lst){nav.dataset.lst='1';nav.addEventListener('scroll',fin,{passive:true});}
+  }catch(e){}
 }
 
 /* ---------- inicio ---------- */
@@ -2979,16 +5475,36 @@ function render(){
   D=cfg||nuevaBase();
   D.deuda=D.deuda||[];D.borrados=D.borrados||[];
   D.config=Object.assign({},CONFIG_DEF,D.config||{});
-  migrarReglas();migrarRecurrentes();migrarReparto();
+  migrarReglas();migrarRecurrentes();migrarReparto();migrarV2();migrarV3();migrarV4();
+  cargarExternos();
   SEM=(await store.get('semanas-plan'))||{};
+  ARCH=(await store.get('archivo-semanas'))||{};
   SES=(await store.get('registro-sesiones'))||[];
   INC=(await store.get('incidencias'))||[];
   syncCfg();
   if(!cfg)await guardar(false);
   syncEstado=syncCfg().activo?'pend':'off';
+  const arch=archivarViejas();
+  if(arch){await guardarArchivo();await guardar(false);}
   render();pintarEstado();
-  sincronizar(false);
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)sincronizar(false);});
+  prepararApp();
+  comprobarVersion();
+  programarAvisoCierre();
+  if(tocaCerrar()&&vista==='hoy')mCierre();
+  sincronizar(false).then(()=>{escribirCalendario(false);leerCalendario(false);});
+  if(cfgObra().activo)traerMeteo(false).then(()=>{
+    render();
+    const r=jornadasEnRiesgo();
+    if(r.length&&!(D.meteo&&(D.meteo.perdidos||[]).some(x=>x.fecha===r[0].fecha)))mMalTiempo(r[0]);
+  });
+  bajarArchivo();
+  arrancarLatido();
+  document.addEventListener('visibilitychange',()=>{
+    if(!document.hidden){pulso();comprobarVersion();}
+    else despedida();                       // al irse a otra app, lo pendiente sale ya
+  });
+  window.addEventListener('pagehide',despedida);
+  window.addEventListener('beforeunload',despedida);
   window.addEventListener('online',()=>sincronizar(false));
 })();
 
