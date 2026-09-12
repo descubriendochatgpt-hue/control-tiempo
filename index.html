@@ -827,15 +827,21 @@ function generarPlan(lunes,capacidad,diasOff,opts={}){
     const jb=bloquesJornada(j);
     bloques=bloques.concat(jb.bloques);
     const obras=tareasObraPendientes();
-    let vi=0,cur=jb.ventanas[0][0],idx=0;
-    while(idx<obras.length&&vi<jb.ventanas.length){
+    const ocup=(opts.ocupados||[]).filter(o=>o.fecha===j.fecha).sort((p,q)=>p.ini-q.ini);
+    let vi=0,cur=jb.ventanas[0][0],idx=0,vueltas=0;
+    while(idx<obras.length&&vi<jb.ventanas.length&&vueltas++<200){
       const o=obras[idx];
       let pend=o.pend;
-      while(pend>0.25&&vi<jb.ventanas.length){
+      while(pend>0.25&&vi<jb.ventanas.length&&vueltas++<400){
         const [a,z]=jb.ventanas[vi];
         if(cur<a)cur=a;
-        const libre=(z-cur)/60;
-        if(libre<0.5){vi++;if(vi<jb.ventanas.length)cur=jb.ventanas[vi][0];continue;}
+        if(cur>=z){vi++;if(vi<jb.ventanas.length)cur=jb.ventanas[vi][0];continue;}
+        const dentro=ocup.find(x=>x.ini<=cur&&x.fin>cur);      // ya ocupado: se salta
+        if(dentro){cur=dentro.fin;continue;}
+        const sig=ocup.find(x=>x.ini>cur);                     // hasta dónde se puede llegar
+        const tope=Math.min(z,sig?sig.ini:z);
+        const libre=(tope-cur)/60;
+        if(libre<0.5){cur=tope;continue;}
         const h=Math.min(pend,libre);
         const fin=cur+Math.round(h*60);
         bloques.push({id:uid('b'),fecha:j.fecha,ini:cur,fin,tipo:'trabajo',proyecto:'CASA',tareaId:o.t.id,
@@ -879,6 +885,7 @@ function generarPlan(lunes,capacidad,diasOff,opts={}){
       const ini=hu.libreMin, fin=ini+Math.round(h*60);
       if(fin>hu.max)continue;
       if(typeof chocaExterno==='function'&&chocaExterno(hu.fecha,ini,fin))continue;
+      if((opts.ocupados||[]).some(o=>o.fecha===hu.fecha&&o.ini<fin&&o.fin>ini))continue;
       bloques.push({id:uid('b'),fecha:hu.fecha,ini,fin,tipo:'trabajo',proyecto:item.proyecto,
         tareaId:item.recurrente?null:item.id,recurrenteId:item.rid||null,nombre:item.nombre,
         hito:item.hitoNombre||null,quien:item.asignado||null,
@@ -1921,6 +1928,10 @@ function pintarEstado(){
   const e=$('#save');if(!e)return;
   const s=syncCfg();
   const corto=typeof innerWidth!=='undefined'&&innerWidth<760;
+  if(!s.url||!s.activo){
+    e.textContent=guardando?'Guardando…':(s.url?'Sincronización apagada':'Sin sincronizar');
+    return;
+  }
   const txt=(corto
     ?{off:guardando?'Guardando…':'Guardado',sync:'Sincronizando…',
        ok:'Al día'+(syncUltima?' '+syncUltima:''),pend:'Sin subir',error:'Sin conexión'}
@@ -1977,7 +1988,40 @@ function adoptar(rem){
   D.config.sync=mio;
   migrarReglas();
   SEM=rem.semanas||{};SES=rem.sesiones||[];INC=rem.incidencias||[];
+  migrarRecurrentes();migrarReparto();migrarV2();migrarV3();migrarV4();migrarV5();
+  fijarMapa();
   sucio=false;syncEstado='ok';syncUltima=horaCorta(rem.actualizado);
+}
+
+/* ¿es la primera sincronización de este dispositivo? */
+function primeraSincro(){const s=syncCfg();return !s.base&&!s.mapa;}
+/* ¿hay trabajo propio aquí, o es una instalación recién abierta? */
+function instalacionVirgen(){
+  return !SES.length&&!Object.keys(SEM).length&&!Object.keys(ARCH||{}).length;
+}
+function mPrimeraVez(rem){
+  window.__remPrim=rem;
+  const dis=rem.dispositivo||'el otro dispositivo';
+  modal('<h3>Primera sincronización de este dispositivo</h3>'+
+    '<div class="mst">En la hoja hay datos de '+esc(dis)+' ('+esp(rem.actualizado.slice(0,10))+') y aquí también tienes trabajo hecho. Elige qué hacer, porque no es lo mismo.</div>'+
+    '<button class="mopt" data-act="prim" data-v="traer">Traer lo de la hoja<small>Se descarta lo que haya en este dispositivo. Es lo normal si acabas de instalar la app aquí.</small></button>'+
+    '<button class="mopt" data-act="prim" data-v="subir">Subir lo de este dispositivo<small>Sustituye lo que hay en la hoja. Solo si aquí está lo bueno.</small></button>'+
+    '<button class="mopt" data-act="prim" data-v="fusionar">Fusionar las dos<small>Puede duplicar cosas si los dos partieron de la plantilla. Úsalo con cuidado.</small></button>'+
+    '<div class="row"><button class="btn ghost" data-act="cerrar">Decidir luego</button></div>');
+}
+async function resolverPrimera(v){
+  const rem=window.__remPrim;
+  cerrar();
+  if(v==='traer'){
+    adoptar(rem);await guardar(false);syncCfg().base=rem.actualizado;
+    await guardar(false);render();toast('Traído todo de la hoja');
+  }else if(v==='subir'){
+    fijarMapa();sucio=true;await syncSubir();render();toast('Subido lo de este dispositivo');
+  }else{
+    const {conf}=fusionarPersonal(rem);
+    if(conf.length){conflictosPend=conf;mConflictos();return;}
+    await guardar(false);await syncSubir();render();toast('Fusionado');
+  }
 }
 
 async function sincronizar(manual){
@@ -1992,6 +2036,17 @@ async function sincronizar(manual){
     else if(rem.actualizado===s.base){
       if(sucio)await syncSubir();
       else{syncEstado='ok';syncUltima=horaCorta(rem.actualizado);if(!syncCfg().mapa)fijarMapa();}
+    }
+    else if(primeraSincro()&&instalacionVirgen()){
+      // dispositivo recién instalado: se trae todo tal cual, sin mezclar con la plantilla
+      adoptar(rem);
+      syncCfg().base=rem.actualizado;
+      await guardar(false);render();
+      registrarOperacion('primera sincronización','adoptado de '+(rem.dispositivo||'la hoja'),0,true);
+      if(manual)toast('Traído todo de la hoja');
+    }
+    else if(primeraSincro()){
+      syncOcupado=false;syncEstado='pend';pintarEstado();mPrimeraVez(rem);return;
     }
     else{
       const {conf,res}=fusionarPersonal(rem);
@@ -2714,7 +2769,13 @@ function canalDe(pid){return compartidos().find(c=>c.proyectoId===pid&&c.activo)
 function autorNombre(){return (D.config.autor||'').trim()||(D.config.sync&&D.config.sync.dispositivo)||'Yo';}
 function tocar(o){o.actualizado=AHORA();return o;}
 function borrados(){D.borrados=D.borrados||[];return D.borrados;}
-function anotarBorrado(id){borrados().push({id,ts:AHORA()});if(borrados().length>800)D.borrados=borrados().slice(-500);}
+function anotarBorrado(id){
+  if(!id)return;
+  const b=borrados();
+  if(b.some(x=>x.id===id))return;
+  b.push({id,ts:AHORA()});
+  if(b.length>3000)D.borrados=b.slice(-2000);
+}
 
 /* ---------- quién trabaja en el proyecto ---------- */
 function miembrosDe(pid){
@@ -2948,7 +3009,7 @@ function fusionarCanalExtra(pid,rem,c){
 /* ============================================================
    VERSIÓN, DESHACER Y APLICACIÓN INSTALABLE
    ============================================================ */
-const VERSION_APP='1.25 · 12/09/2026';
+const VERSION_APP='1.28 · 12/09/2026';
 
 /* ---------- pila de deshacer ---------- */
 var pilaDeshacer=[];
@@ -4861,19 +4922,29 @@ let debT;
 function guardarPronto(){clearTimeout(debT);debT=setTimeout(()=>guardar(true),350);}
 
 function replanificar(lun,cap,off,jor){
-  const plan=generarPlan(lun,cap,off,{jornadas:jor});
-  const prev=SEM[plan.id];
-  if(prev){ // conservar lo ya hecho
-    prev.bloques.filter(b=>b.estado==='hecho').forEach(b=>{
-      const eq=plan.bloques.find(x=>x.fecha===b.fecha&&x.ini===b.ini&&x.nombre===b.nombre);
-      if(eq)eq.estado='hecho';else plan.bloques.push(b);
+  const prev0=SEM[semanaId(lun)];
+  // lo que no debe perderse al regenerar: lo ya hecho y lo que creaste a mano.
+  // Se calcula antes, para que el planificador no coloque nada encima.
+  const conservados=prev0?(prev0.bloques||[]).filter(b=>
+    b.estado==='hecho'||(b.origen==='manual'&&b.estado!=='anulado')):[];
+  const plan=generarPlan(lun,cap,off,{jornadas:jor,
+    ocupados:conservados.map(b=>({fecha:b.fecha,ini:b.ini,fin:b.fin}))});
+  const prev=prev0;
+  if(prev){
+    conservados.forEach(b=>{
+      if(!plan.bloques.some(x=>x.id===b.id))plan.bloques.push(b);
+    });
+    // y los que de verdad desaparecen se marcan como borrados, para que
+    // el otro dispositivo los quite en vez de acumularlos
+    (prev.bloques||[]).forEach(b=>{
+      if(!plan.bloques.some(x=>x.id===b.id))anotarBorrado(b.id);
     });
   }
   SEM[plan.id]=plan;
   registrarDeuda(plan);
+  recalcularSemana(plan);
   return plan;
 }
-
 function registrarSesion(b){
   const horas=(b.fin-b.ini)/60;
   if(b.tipo==='trabajo')SES.push({id:uid('s'),tareaId:b.tareaId||null,nombre:b.nombre,proyecto:b.proyecto,fecha:b.fecha,horas,bloqueId:b.id,autor:autorNombre()});
@@ -5085,12 +5156,15 @@ document.addEventListener('click',e=>{
    case 'cola-back': mDeclarar();break;
    case 'cola-ok':{const S=window.__prio;
      const cola=S.cola.filter(x=>!x.__off);
-     const plan=generarPlan(S.lunes,S.cap,S.off,{cola,notas:S.notas,jornadas:S.jorOff?[]:S.jor});
+     const pv=SEM[semanaId(S.lunes)];
+     const cons=pv?(pv.bloques||[]).filter(b=>b.estado==='hecho'||(b.origen==='manual'&&b.estado!=='anulado')):[];
+     const plan=generarPlan(S.lunes,S.cap,S.off,{cola,notas:S.notas,jornadas:S.jorOff?[]:S.jor,
+       ocupados:cons.map(b=>({fecha:b.fecha,ini:b.ini,fin:b.fin}))});
      const prevP=SEM[plan.id];
-     if(prevP)prevP.bloques.filter(b=>b.estado==='hecho').forEach(b=>{
-       const eq=plan.bloques.find(x=>x.fecha===b.fecha&&x.ini===b.ini&&x.nombre===b.nombre);
-       if(eq)eq.estado='hecho';else plan.bloques.push(b);});
-     if(prevP)prevP.bloques.filter(b=>b.origen==='manual'&&b.estado!=='hecho').forEach(b=>plan.bloques.push(b));
+     if(prevP){
+       cons.forEach(b=>{if(!plan.bloques.some(x=>x.id===b.id))plan.bloques.push(b);});
+       prevP.bloques.forEach(b=>{if(!plan.bloques.some(x=>x.id===b.id))anotarBorrado(b.id);});
+     }
      SEM[plan.id]=plan;registrarDeuda(plan);recalcularSemana(plan);
      cerrar();guardarPronto();render();toast('Plan generado con tu orden');break;}
    case 'blk': if(Date.now()-ultimoDrag<350)break; mBloque(id);break;
@@ -5295,6 +5369,7 @@ document.addEventListener('click',e=>{
      if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(()=>toast('Copiado'),()=>toast('No se ha podido copiar'));
      else toast('Este navegador no permite copiar solo');
      break;}
+   case 'prim': resolverPrimera(el.dataset.v);break;
    case 'proj-new': mProyecto(null);break;
    case 'proj-edit': mProyecto(id);break;
    case 'proj-save':{
