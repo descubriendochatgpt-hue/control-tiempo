@@ -574,7 +574,7 @@ function huecosSemana(lunes,diasOff){
       const min=toMin(r.ini),max=toMin(r.fin);
       const dur=m2h(max-min);
       out.push({fecha:f,dia:i,min,max,libreMin:min,horas:Math.min(dur,r.maxHoras||dur),
-                etiquetas:r.etiquetas||[],regla:r.id,nombre:r.nombre,usadas:0});
+                etiquetas:r.etiquetas||[],regla:r.id,nombre:r.nombre,tipoRegla:r.tipo,usadas:0});
     });
   }
   return out.sort((a,b)=>a.fecha<b.fecha?-1:a.fecha>b.fecha?1:a.min-b.min);
@@ -611,14 +611,17 @@ function cuotaMes(m){
   const c=D.config.cuotas[m];
   return c?c.jornadas:D.config.cuotaDefecto;
 }
+/* Solo las jornadas de fin de semana gastan cuota: las de entre semana
+   salen de tu capacidad ordinaria, no del tiempo con la familia. */
 function jornadasUsadas(mes,excluirSemana){
   let n=0;
   Object.values(todasSemanas()).forEach(s=>{
     if(s.id===excluirSemana)return;
-    (s.jornadas||[]).forEach(j=>{if(mesDe(j.fecha)===mes)n++;});
+    (s.jornadas||[]).forEach(j=>{if(mesDe(j.fecha)===mes&&diaSemana(j.fecha)>=5)n++;});
   });
   return n;
 }
+const esFinde=f=>diaSemana(f)>=5;
 function tareasObraPendientes(){
   const c=P('CASA');if(!c||!c.activo)return[];
   const out=[];
@@ -716,25 +719,34 @@ function tareasDisponibles(){
   });
   return out;
 }
+/* Posición exacta de una tarea en la vista Proyectos: proyecto, hito y subtarea.
+   Es lo que decide el orden dentro de cada nivel de urgencia. */
 function ordenManual(t){
-  const p=P(t.proyecto);if(!p)return 9e6;
+  const ip=D.proyectos.findIndex(x=>x.id===t.proyecto);
+  if(ip<0)return 9e9;
+  const p=D.proyectos[ip];
   const ih=p.hitos.findIndex(h=>h.id===t.hito);
-  if(ih<0)return 9e6;
+  if(ih<0)return ip*1e6+9e5;
   const it=p.hitos[ih].tareas.findIndex(x=>x.id===t.id);
-  return ih*1000+(it<0?0:it);
+  return ip*1e6+ih*1000+(it<0?999:it);
 }
+const porOrden=(a,b)=>ordenManual(a)-ordenManual(b);
 function construirCola(lunes,capacidad){
   const cola=[],notas=[];
   const rec=recurrentesDeSemana(lunes);
   const tar=tareasDisponibles();
-  const deuda=(D.deuda||[]).slice().sort((a,b)=>a.semanaOrigen<b.semanaOrigen?-1:1);
+  const deuda=(D.deuda||[]).slice().sort((a,b)=>{
+    if(a.semanaOrigen!==b.semanaOrigen)return a.semanaOrigen<b.semanaOrigen?-1:1;
+    const ta=tar.find(x=>x.id===a.tareaId), tb=tar.find(x=>x.id===b.tareaId);
+    return (ta?ordenManual(ta):9e9)-(tb?ordenManual(tb):9e9);
+  });
   const bajo=capacidad<D.config.umbrales.bajo;
 
   // 1. mínimos innegociables
   rec.filter(r=>r.minimo).forEach(r=>cola.push(Object.assign({},r,{prio:1,razon:'Mínimo innegociable'})));
   activos().forEach(p=>{
     if(!p.minimo||p.tipo==='habito')return;
-    const cand=tar.filter(t=>t.proyecto===p.id);
+    const cand=tar.filter(t=>t.proyecto===p.id).sort(porOrden);
     let queda=p.minimo;
     cand.forEach(t=>{
       if(queda<=0.25)return;
@@ -743,7 +755,7 @@ function construirCola(lunes,capacidad){
     });
   });
   // 2. bloqueantes y críticas con fecha cercana
-  tar.filter(t=>t.bloqueante||t.critica).forEach(t=>{
+  tar.filter(t=>t.bloqueante||t.critica).sort(porOrden).forEach(t=>{
     if(cola.some(c=>c.id===t.id))return;
     cola.push(Object.assign({},t,{prio:2,razon:t.bloqueante?'Bloquea otras tareas':'Tarea crítica'}));
   });
@@ -751,7 +763,7 @@ function construirCola(lunes,capacidad){
     return {cola,notas};}
   // 3. recurrentes con fecha de publicación
   rec.filter(r=>!r.minimo).forEach(r=>cola.push(Object.assign({},r,{prio:3,razon:'Publica el '+DIAS[diaSemana(r.publica)].toLowerCase()})));
-  tareasRecurrentes(lunes).filter(r=>!r.hora).forEach(r=>cola.push(Object.assign({},r,{prio:3,
+  tareasRecurrentes(lunes).filter(r=>!r.hora).sort(porOrden).forEach(r=>cola.push(Object.assign({},r,{prio:3,
     razon:'Recurrente'+(r.cada>1?' cada '+r.cada+' semanas':' cada semana')+(r.dia!=null?', para el '+DIAS[r.dia].toLowerCase():'')})));
   // 4. deuda, la más antigua primero
   deuda.forEach(d=>{
@@ -761,13 +773,13 @@ function construirCola(lunes,capacidad){
       razon:'Deuda de '+d.semanaOrigen});
   });
   // 5. reparto porcentual ordinario
-  const libres=activos().filter(p=>p.tipo!=='habito');
+  const libres=D.proyectos.filter(p=>p.activo&&p.tipo!=='habito');
   const totalPct=libres.reduce((a,p)=>a+(p.pct||0),0)||100;
   libres.forEach(p=>{
     const cuota=capacidad*(p.pct||0)/totalPct;
     let queda=cuota;
     tar.filter(t=>t.proyecto===p.id&&!cola.some(c=>c.id===t.id&&!c.esDeuda))
-       .sort((a,b)=>ordenManual(a)-ordenManual(b))
+       .sort(porOrden)
        .forEach(t=>{
          if(queda<=0.25)return;
          const h=Math.min(queda,t.pend);queda-=h;
@@ -808,7 +820,8 @@ function generarPlan(lunes,capacidad,diasOff,opts={}){
     if(j&&!diasOff.includes(j.fecha)&&capacidad>=cfg.jornadaObra.horasTrabajo+mins*0.5)jornadas.push(j);
   }
   let bloques=bloquesFijos(lunes,diasOff,jornadas);
-  let usadas=0;
+  let usadas=0;      // capacidad ordinaria consumida
+  let extra=0;       // horas fuera de ella: jornadas de obra y franjas excepcionales
   const porProyecto={};
   tareasRecurrentes(lunes).filter(r=>r.hora).forEach(r=>{
     const f=addDays(lunes,r.dia==null?0:r.dia);
@@ -817,7 +830,9 @@ function generarPlan(lunes,capacidad,diasOff,opts={}){
     bloques.push({id:uid('b'),fecha:f,ini,fin:ini+dur,tipo:'trabajo',proyecto:r.proyecto,
       tareaId:r.id,hito:r.hitoNombre,nombre:r.nombre,estado:'planificado',recFijo:true,
       motivo:'Cita fija recurrente'+(r.cada>1?' cada '+r.cada+' semanas':' cada semana')+' a las '+r.hora+'.'});
-    usadas+=dur/60;porProyecto[r.proyecto]=(porProyecto[r.proyecto]||0)+dur/60;
+    const fueraDe=['cuota','excepcional'].indexOf(clasificaProtegido({fecha:f,ini,fin:ini+dur,tipo:'trabajo'}))>=0;
+    if(fueraDe)extra+=dur/60;else usadas+=dur/60;
+    porProyecto[r.proyecto]=(porProyecto[r.proyecto]||0)+dur/60;
     const est=estadoCelda(r.dia==null?0:r.dia,ini,f);
     if(est==='prot')notas.push({t:'aviso',m:'La cita fija «'+r.nombre+'» está puesta a las '+r.hora+' del '+DIAS[r.dia==null?0:r.dia].toLowerCase()+', dentro del tiempo de familia. Se respeta porque la has fijado tú, pero conviene revisarla.'});
     else if(est==='bloq')notas.push({t:'aviso',m:'La cita fija «'+r.nombre+'» cae en una franja no declarada como tiempo útil ('+r.hora+').'});
@@ -847,7 +862,9 @@ function generarPlan(lunes,capacidad,diasOff,opts={}){
         bloques.push({id:uid('b'),fecha:j.fecha,ini:cur,fin,tipo:'trabajo',proyecto:'CASA',tareaId:o.t.id,
           nombre:o.t.nombre,hito:o.h.nombre,estado:'planificado',
           motivo:'Jornada completa de obra con cargo a la cuota de '+mesDe(j.fecha)+'. Se agrupan tareas para que el viaje se pague una sola vez.'});
-        usadas+=h;porProyecto.CASA=(porProyecto.CASA||0)+h;pend-=h;cur=fin;
+        if(esFinde(j.fecha))extra+=h;      // finde: sale de la cuota, no de tu capacidad
+        else usadas+=h;                      // entre semana: ocupa tu jornada normal
+        porProyecto.CASA=(porProyecto.CASA||0)+h;pend-=h;cur=fin;
       }
       idx++;
     }
@@ -859,7 +876,8 @@ function generarPlan(lunes,capacidad,diasOff,opts={}){
   // cola y huecos
   const {cola,notas:n2}=opts.cola?{cola:opts.cola,notas:opts.notas||[]}:construirCola(lunes,capacidad);
   n2.forEach(n=>notas.push(n));
-  const huecos=huecosSemana(lunes,diasOff);
+  const diasObra=jornadas.map(j=>j.fecha);
+  const huecos=huecosSemana(lunes,diasOff).filter(h=>!diasObra.includes(h.fecha));
   const cargaDia={};
   bloques.filter(b=>b.tipo==='trabajo').forEach(b=>{cargaDia[b.fecha]=(cargaDia[b.fecha]||0)+(b.fin-b.ini)/60;});
   const sinSitio=[];
@@ -891,7 +909,8 @@ function generarPlan(lunes,capacidad,diasOff,opts={}){
         hito:item.hitoNombre||null,quien:item.asignado||null,
         estado:'planificado',deudaId:item.deudaId||null,
         motivo:item.razon+'. Colocada en «'+hu.nombre+'» porque admite '+(item.etiquetas.join(', ')||'cualquier contexto')+'.'});
-      hu.usadas+=h;hu.libreMin=fin;pend-=h;usadas+=h;dset.add(item.proyecto);
+      hu.usadas+=h;hu.libreMin=fin;pend-=h;dset.add(item.proyecto);
+      if(hu.tipoRegla==='excepcional')extra+=h;else usadas+=h;
       cargaDia[hu.fecha]=(cargaDia[hu.fecha]||0)+h;
       porProyecto[item.proyecto]=(porProyecto[item.proyecto]||0)+h;
     }
@@ -916,7 +935,7 @@ function generarPlan(lunes,capacidad,diasOff,opts={}){
   });
   const ahora=AHORA();
   bloques.forEach(b=>{if(!b.actualizado)b.actualizado=ahora;});
-  const plan={id:semId,lunes,actualizado:ahora,capacidad,diasOff,margen,util,bloques,jornadas,notas,
+  const plan={id:semId,lunes,actualizado:ahora,capacidad,diasOff,margen,util,extra,bloques,jornadas,notas,
     porProyecto,usadas,generado:new Date().toISOString(),sinSitio:sinSitio.filter(s=>!s.sinDeuda&&!s.desplaza).map(s=>({tareaId:s.id,proyecto:s.proyecto,nombre:s.nombre,horas:s.pend}))};
   return plan;
 }
@@ -1312,11 +1331,15 @@ function vSemana(){
   });
   const c=totalCoche(plan);
   h+='<span class="ctr" style="--pc:var(--coche)"><b>Coche</b> <span>'+fmtH(c)+' · '+(viajes(plan)*D.config.kmPorViaje*D.config.costeKm).toFixed(2)+' €</span></span>';
+  const ex=plan.extra||0;
+  const jor=(plan.jornadas||[]);
   h+='</div><div class="meters">'+
     '<span>Capacidad <b>'+fmtH(plan.capacidad)+'</b></span>'+
     '<span>Asignadas <b>'+fmtH(plan.usadas)+'</b></span>'+
-    '<span>Margen sin asignar <b>'+fmtH(plan.margen)+'</b></span>'+
     '<span>Sin repartir <b>'+fmtH(Math.max(0,plan.util-plan.usadas))+'</b></span>'+
+    '<span>Margen <b>'+fmtH(plan.margen)+'</b></span>'+
+    (ex>0.05?'<span style="color:var(--coche)">Fuera de tu capacidad <b style="color:var(--coche)">+'+fmtH(ex)+'</b></span>':'')+
+    (jor.length?'<span>Obra <b>'+jor.map(j=>DIAS3[diaSemana(j.fecha)]).join(', ')+'</b></span>':'')+
     '<span>Cuota de finde <b>'+(cuotaMes(mesDe(lun))-jornadasUsadas(mesDe(lun),null))+' de '+cuotaMes(mesDe(lun))+'</b></span>'+
     '</div></div>';
 
@@ -1805,6 +1828,7 @@ function mHito(pid,hid){
   h+='<div class="row"><button class="btn primary" data-act="hito-save" data-p="'+pid+'" data-h="'+(hid||'')+'">Guardar</button>'+
      '<button class="btn ghost" data-act="cerrar">Cancelar</button><span class="spacer"></span>'+
      (hid?'<button class="btn sm" data-act="tarea-new" data-p="'+pid+'" data-h="'+hid+'">Añadir tarea</button>'+
+          '<button class="btn sm" data-act="hito-dup" data-p="'+pid+'" data-h="'+hid+'">Duplicar con sus subtareas</button>'+
           '<button class="btn danger sm" data-act="hito-del" data-p="'+pid+'" data-h="'+hid+'">Eliminar</button>':'')+'</div>';
   modal(h);
 }
@@ -1856,7 +1880,8 @@ function mTarea(pid,hid,tid){
   if(tid&&reg>0)h+='<p class="tiny muted" style="margin-bottom:12px">Ya hay '+fmtH(reg)+' registradas. Cambiar la estimación afecta solo a lo que queda por planificar; el historial no se toca.</p>';
   h+='<div class="row"><button class="btn primary" data-act="tarea-save" data-p="'+pid+'" data-h="'+hid+'" data-t="'+(tid||'')+'">Guardar</button>'+
      '<button class="btn ghost" data-act="cerrar">Cancelar</button><span class="spacer"></span>'+
-     (tid?'<button class="btn danger sm" data-act="tarea-del" data-p="'+pid+'" data-h="'+hid+'" data-t="'+tid+'">Eliminar</button>':'')+'</div>';
+     (tid?'<button class="btn sm" data-act="tarea-dup" data-p="'+pid+'" data-h="'+hid+'" data-t="'+tid+'">Duplicar</button>'+
+          '<button class="btn danger sm" data-act="tarea-del" data-p="'+pid+'" data-h="'+hid+'" data-t="'+tid+'">Eliminar</button>':'')+'</div>';
   modal(h);
 }
 let flags={};
@@ -2352,14 +2377,18 @@ function guardarEvento(){
   else registrarAccion('Bloque creado',()=>{plan.bloques=plan.bloques.filter(x=>x.id!==b.id);recalcularSemana(plan);});
 }
 function recalcularSemana(plan){
-  const pp={};let u=0;
+  const pp={};let u=0,ex=0;
   plan.bloques.forEach(b=>{
     if(b.estado==='anulado')return;
     const hs=(b.fin-b.ini)/60;
-    if(b.tipo==='trabajo'){pp[b.proyecto]=(pp[b.proyecto]||0)+hs;u+=hs;}
+    if(b.tipo==='trabajo'){
+      pp[b.proyecto]=(pp[b.proyecto]||0)+hs;
+      const c=clasificaProtegido(b);
+      if(c==='cuota'||c==='excepcional')ex+=hs;else u+=hs;
+    }
     else if(b.tipo==='reservado'&&P(b.proyecto))pp[b.proyecto]=(pp[b.proyecto]||0)+hs;
   });
-  plan.porProyecto=pp;plan.usadas=u;
+  plan.porProyecto=pp;plan.usadas=u;plan.extra=ex;
 }
 function borrarEvento(){
   const e=window.__ev,plan=SEM[semanaId(lunesDe(e.fecha))];
@@ -2385,14 +2414,10 @@ function notasSemana(lunes){
    ORDEN DE PRIORIDADES ANTES DE PLANIFICAR
    El motor propone; tú reordenas, quitas y decides dónde cae el corte.
    ============================================================ */
-function abrirCola(lunes,cap,off){
+var jorTmp=[];
+function abrirCola(lunes,cap,off,jornadas){
   const {cola,notas}=construirCola(lunes,cap);
-  const semId=semanaId(lunes);
-  const prev=SEM[semId];
-  let jor=prev?(prev.jornadas||[]).slice():[];
-  if(!prev){const j=proponerJornada(lunes,semId);
-    const mins=activos().reduce((a,p)=>a+(p.minimo||0),0);
-    if(j&&!off.includes(j.fecha)&&cap>=D.config.jornadaObra.horasTrabajo+mins*0.5)jor=[j];}
+  const jor=(jornadas||[]).filter(j=>!off.includes(j.fecha));
   window.__prio={lunes,cap,off,cola,notas,jor,jorOff:false};
   mCola();
 }
@@ -2406,20 +2431,30 @@ function etiquetaRazon(it){
 function mCola(){
   const S=window.__prio;
   const util=S.cap*(1-D.config.margenPct/100);
-  const jorH=(S.jor.length&&!S.jorOff)?D.config.jornadaObra.horasTrabajo:0;
+  const jorFinde=S.jorOff?0:S.jor.filter(j=>esFinde(j.fecha)).length;
+  const jorSemana=S.jorOff?0:S.jor.filter(j=>!esFinde(j.fecha)).length;
+  const jorH=D.config.jornadaObra.horasTrabajo*jorFinde;          // lo que va aparte
+  const jorDentro=D.config.jornadaObra.horasTrabajo*jorSemana;    // lo que sí resta
   let h='<h3>Orden de prioridades</h3>'+
     '<div class="mst">'+espCorto(S.lunes)+' – '+espCorto(addDays(S.lunes,6))+' · '+fmtH(S.cap)+
     ' declaradas, '+fmtH(util)+' repartibles tras el margen. Cambia el orden si esta semana tus prioridades son otras.</div>';
 
   if(S.jor.length){
+    const findes=S.jor.filter(j=>esFinde(j.fecha)).length;
     h+='<div class="colarow'+(S.jorOff?' off':'')+'" style="--pc:'+colorDe('CASA')+'">'+
-       '<span class="n">•</span><span><b>Jornada completa de obra</b>'+
-       '<span class="q">'+DIAS[diaSemana(S.jor[0].fecha)]+' '+esp(S.jor[0].fecha)+' · cuota del mes · se coloca antes que nada</span></span>'+
-       '<span class="colabtns"><span class="h">'+fmtH(D.config.jornadaObra.horasTrabajo)+'</span>'+
+       '<span class="n">•</span><span><b>'+S.jor.length+' jornada'+(S.jor.length===1?'':'s')+' de obra</b>'+
+       '<span class="q">'+S.jor.map(j=>DIAS3[diaSemana(j.fecha)]+' '+espCorto(j.fecha)).join(', ')+
+       ' · '+(findes?findes+' de fin de semana, con cargo a la cuota':'')+
+       (findes&&findes<S.jor.length?' y ':'')+
+       (findes<S.jor.length?(S.jor.length-findes)+' entre semana':'')+
+       ' · '+(findes===S.jor.length?'<b style="color:var(--ok)">no gasta tu capacidad</b>'
+             :findes?'lo de finde no gasta capacidad; lo de entre semana sí'
+             :'<b style="color:var(--warn)">ocupa tu jornada normal</b>')+'</span></span>'+
+       '<span class="colabtns"><span class="h">'+fmtH(jorH||D.config.jornadaObra.horasTrabajo)+'</span>'+
        '<button data-act="jor-off" title="Quitar">'+(S.jorOff?'+':'×')+'</button></span></div>';
   }
 
-  let acum=jorH,cortado=false,dentro=jorH,fuera=0;
+  let acum=jorDentro,cortado=false,dentro=jorDentro,fuera=0;   // la obra de finde va aparte; la de entre semana, no
   S.cola.forEach((it,i)=>{
     const p=P(it.proyecto);
     let parcial=null;
@@ -2453,7 +2488,7 @@ function mCola(){
      '<button class="btn primary" data-act="cola-ok">Generar el plan</button>'+
      '<button class="btn ghost" data-act="cola-back">Volver</button>'+
      '<span class="spacer"></span><span class="tiny muted">Entran '+fmtH(dentro)+
-     (fuera>0.05?' · fuera '+fmtH(fuera):'')+'</span></div>';
+     (jorH?' + '+fmtH(jorH)+' de obra':'')+(fuera>0.05?' · fuera '+fmtH(fuera):'')+'</span></div>';
   modal(h);
 }
 /* ============================================================
@@ -3009,7 +3044,7 @@ function fusionarCanalExtra(pid,rem,c){
 /* ============================================================
    VERSIÓN, DESHACER Y APLICACIÓN INSTALABLE
    ============================================================ */
-const VERSION_APP='1.28 · 12/09/2026';
+const VERSION_APP='1.30 · 12/09/2026';
 
 /* ---------- pila de deshacer ---------- */
 var pilaDeshacer=[];
@@ -3048,6 +3083,8 @@ async function comprobarVersion(){
     const u=location.pathname.replace(/[^/]*$/,'')+'index.html?t='+Date.now();
     const r=await fetch(u,{cache:'no-store'});
     if(!r.ok)return;
+    const tipo=String((r.headers&&r.headers.get&&r.headers.get('content-type'))||'');
+    if(tipo&&tipo.indexOf('html')<0)return;
     const t=await r.text();
     const m=t.match(/VERSION_APP\s*=\s*'([^']+)'/);
     if(m&&m[1]!==VERSION_APP){versionRemota=m[1];pintarAviso();}
@@ -3075,11 +3112,20 @@ function irNueva(){location.replace(location.pathname+'?v='+Date.now());}
 /* ---------- instalación y almacenamiento persistente ---------- */
 async function prepararApp(){
   try{
-    if('serviceWorker' in navigator){
+    // Solo se registra si el archivo está publicado de verdad. En una vista
+    // previa o con el HTML suelto no existe, y no tiene sentido intentarlo.
+    if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
       const base=location.pathname.replace(/[^/]*$/,'');
-      await navigator.serviceWorker.register(base+'sw.js',{scope:base});
+      const r=await fetch(base+'sw.js',{method:'GET',cache:'no-store'}).catch(()=>null);
+      const tipo=r&&r.headers&&r.headers.get?String(r.headers.get('content-type')||''):'';
+      if(r&&r.ok&&tipo.indexOf('html')<0){
+        await navigator.serviceWorker.register(base+'sw.js',{scope:base});
+        registrarOperacion('service worker','registrado',0,true);
+      }else{
+        registrarOperacion('service worker','no publicado en este servidor: se omite',0,true);
+      }
     }
-  }catch(e){console.warn('sw',e);}
+  }catch(e){registrarOperacion('service worker','no se ha podido registrar: '+e.message,0,true);}
   try{
     if(navigator.storage&&navigator.storage.persist){
       const ya=await navigator.storage.persisted();
@@ -5136,16 +5182,28 @@ document.addEventListener('click',e=>{
    case 'ver-proyecto': vista='proyectos';render();break;
    case 'sem': semanaVista=addDays(semanaVista,7*Number(el.dataset.d));sel.clear();render();break;
    case 'sem-hoy': semanaVista=lunesDe(hoyISO());render();break;
-   case 'declarar': offTmp=(planActual()?planActual().diasOff.slice():[]);mDeclarar();break;
+   case 'declarar':{
+     const pa=planActual();
+     offTmp=pa?pa.diasOff.slice():[];
+     jorTmp=pa&&pa.jornadas?pa.jornadas.map(j=>j.fecha):(()=>{
+       const j=proponerJornada(semanaVista,semanaId(semanaVista));
+       return j?[j.fecha]:[];
+     })();
+     mDeclarar();break;}
+   case 'jor-toggle':{const f=el.dataset.f;
+     if(esPasado(f)){toast('Ese día ya ha pasado');break;}
+     jorTmp=(jorTmp||[]).includes(f)?jorTmp.filter(x=>x!==f):(jorTmp||[]).concat([f]);
+     mDeclarar();break;}
    case 'cap-quick': $('#capin').value=el.dataset.v;break;
    case 'off-toggle':{const f=el.dataset.f;
      if(offTmp.includes(f)){offTmp=offTmp.filter(x=>x!==f);el.classList.add('ghost');}
      else{offTmp.push(f);el.classList.remove('ghost');}break;}
-   case 'cap-ok':{const c=num($('#capin').value,'capacidad',0);replanificar(semanaVista,c,offTmp||[],null);
+   case 'cap-ok':{const c=num($('#capin').value,'capacidad',0);
+     replanificar(semanaVista,c,offTmp||[],(jorTmp||[]).map(f=>({fecha:f,mes:mesDe(f)})));
      cerrar();guardarPronto();render();toast('Plan generado');break;}
    case 'cap-next':{const c=num($('#capin').value,'capacidad',0);
      if(c<=0){toast('Declara cuántas horas tienes');break;}
-     abrirCola(semanaVista,c,offTmp||[]);break;}
+     abrirCola(semanaVista,c,offTmp||[],(jorTmp||[]).map(f=>({fecha:f,mes:mesDe(f)})));break;}
    case 'cola-up': case 'cola-down':{
      const S=window.__prio,i=Number(el.dataset.i),j=a==='cola-up'?i-1:i+1;
      if(j<0||j>=S.cola.length)break;
@@ -5370,6 +5428,34 @@ document.addEventListener('click',e=>{
      else toast('Este navegador no permite copiar solo');
      break;}
    case 'prim': resolverPrimera(el.dataset.v);break;
+   case 'tarea-dup':{
+     const p=P(el.dataset.p),hi=p.hitos.find(x=>x.id===el.dataset.h);
+     const i=hi.tareas.findIndex(x=>x.id===el.dataset.t);
+     if(i<0)break;
+     const c=JSON.parse(JSON.stringify(hi.tareas[i]));
+     c.id=uid('T');c.nombre=copiaNombre(c.nombre,hi.tareas.map(x=>x.nombre));
+     c.estado='pendiente';delete c.coment;delete c.vence;
+     hi.tareas.splice(i+1,0,tocar(c));
+     cerrar();guardarPronto();render();
+     registrarAccion('Subtarea duplicada',()=>{hi.tareas=hi.tareas.filter(x=>x.id!==c.id);});
+     break;}
+   case 'hito-dup':{
+     const p=P(el.dataset.p);
+     const i=p.hitos.findIndex(x=>x.id===el.dataset.h);
+     if(i<0)break;
+     const c=JSON.parse(JSON.stringify(p.hitos[i]));
+     c.id=uid('H');c.nombre=copiaNombre(c.nombre,p.hitos.map(x=>x.nombre));
+     c.estado='pendiente';c.peso=0;c.avanceManual=undefined;
+     c.tareas=(c.tareas||[]).map(t=>{
+       const n=JSON.parse(JSON.stringify(t));
+       n.id=uid('T');n.estado='pendiente';delete n.coment;delete n.vence;
+       return tocar(n);
+     });
+     p.hitos.splice(i+1,0,tocar(c));
+     cerrar();guardarPronto();render();
+     toast('Duplicado con '+c.tareas.length+' subtareas. Ponle su peso.');
+     registrarAccion('Hito duplicado',()=>{p.hitos=p.hitos.filter(x=>x.id!==c.id);});
+     break;}
    case 'proj-new': mProyecto(null);break;
    case 'proj-edit': mProyecto(id);break;
    case 'proj-save':{
@@ -5507,6 +5593,14 @@ document.addEventListener('click',e=>{
      KEYS.forEach(k=>store.del(k));D=nuevaBase();SEM={};SES=[];INC=[];guardar();render();toast('Todo reiniciado');break;}
   }
 });
+
+/* nombre de una copia, evitando repetir «(copia)» una y otra vez */
+function copiaNombre(n,existentes){
+  const base=String(n||'').replace(/\s*\(copia( \d+)?\)$/,'');
+  if(!existentes.includes(base+' (copia)'))return base+' (copia)';
+  for(let i=2;i<50;i++)if(!existentes.includes(base+' (copia '+i+')'))return base+' (copia '+i+')';
+  return base+' (copia)';
+}
 
 /* ---------- render ---------- */
 function render(){
