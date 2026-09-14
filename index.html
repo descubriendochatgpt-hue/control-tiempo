@@ -917,36 +917,39 @@ function generarPlan(lunes,capacidad,diasOff,opts={}){
     else if(est==='bloq')notas.push({t:'aviso',m:'La cita fija «'+r.nombre+'» cae en una franja no declarada como tiempo útil ('+r.hora+').'});
   });
 
+  /* Las tareas de obra se van consumiendo entre todas las jornadas de la
+     semana: el segundo día sigue donde lo dejó el primero, y lo que no
+     quepa en un día se arrastra al siguiente. */
+  const obras=tareasObraPendientes();
+  let idxObra=0;
   jornadas.forEach(j=>{
     const jb=bloquesJornada(j,opts.ocupados);
     bloques=bloques.concat(jb.bloques);
-    const obras=tareasObraPendientes();
     const ocup=(opts.ocupados||[]).filter(o=>o.fecha===j.fecha).sort((p,q)=>p.ini-q.ini);
-    let vi=0,cur=jb.ventanas[0][0],idx=0,vueltas=0;
-    while(idx<obras.length&&vi<jb.ventanas.length&&vueltas++<200){
-      const o=obras[idx];
-      let pend=o.pend;
-      while(pend>0.25&&vi<jb.ventanas.length&&vueltas++<400){
-        const [a,z]=jb.ventanas[vi];
-        if(cur<a)cur=a;
-        if(cur>=z){vi++;if(vi<jb.ventanas.length)cur=jb.ventanas[vi][0];continue;}
-        const dentro=ocup.find(x=>x.ini<=cur&&x.fin>cur);      // ya ocupado: se salta
-        if(dentro){cur=dentro.fin;continue;}
-        const sig=ocup.find(x=>x.ini>cur);                     // hasta dónde se puede llegar
-        const tope=Math.min(z,sig?sig.ini:z);
-        const libre=(tope-cur)/60;
-        if(libre<0.5){cur=tope;continue;}
-        const h=Math.min(pend,libre);
-        const fin=cur+Math.round(h*60);
-        bloques.push({id:uid('b'),fecha:j.fecha,ini:cur,fin,tipo:'trabajo',proyecto:'CASA',tareaId:o.t.id,
-          nombre:o.t.nombre,hito:o.h.nombre,estado:'planificado',
-          motivo:'Obra el '+DIAS[diaSemana(j.fecha)].toLowerCase()+': el día da '+fmtH(horasUtilesDia(j.fecha,opts.ocupados))+
-            ' útiles, '+fmtH(2*D.config.minCoche/60)+' se van en coche y quedan '+fmtH(jb.horas)+' de trabajo.'+
-            (esFinde(j.fecha)?' Con cargo a la cuota de '+mesDe(j.fecha)+'.':' Entre semana: ocupa el día.')});
-        extra+=h;                          // la obra es siempre esfuerzo aparte
-        porProyecto.CASA=(porProyecto.CASA||0)+h;pend-=h;cur=fin;
-      }
-      idx++;
+    let vi=0,cur=jb.ventanas.length?jb.ventanas[0][0]:0,guard=0;
+    while(idxObra<obras.length&&vi<jb.ventanas.length&&guard++<400){
+      const o=obras[idxObra];
+      if(o.pend<=0.25){idxObra++;continue;}
+      const [a,z]=jb.ventanas[vi];
+      if(cur<a)cur=a;
+      if(cur>=z){vi++;if(vi<jb.ventanas.length)cur=jb.ventanas[vi][0];continue;}
+      const dentro=ocup.find(x=>x.ini<=cur&&x.fin>cur);
+      if(dentro){cur=dentro.fin;continue;}
+      const sig=ocup.find(x=>x.ini>cur);
+      const tope=Math.min(z,sig?sig.ini:z);
+      const libre=(tope-cur)/60;
+      if(libre<0.5){cur=tope;continue;}
+      const h=Math.min(o.pend,libre);
+      const fin2=cur+Math.round(h*60);
+      bloques.push({id:uid('b'),fecha:j.fecha,ini:cur,fin:fin2,tipo:'trabajo',proyecto:'CASA',tareaId:o.t.id,
+        nombre:o.t.nombre,hito:o.h.nombre,estado:'planificado',
+        motivo:'Obra el '+DIAS[diaSemana(j.fecha)].toLowerCase()+': el día da '+fmtH(horasUtilesDia(j.fecha,opts.ocupados))+
+          ' útiles, '+fmtH(2*D.config.minCoche/60)+' se van en coche y quedan '+fmtH(jb.horas)+' de trabajo.'+
+          (esFinde(j.fecha)?' Con cargo a la cuota de '+mesDe(j.fecha)+'.':' Entre semana: ocupa el día.')});
+      extra+=h;porProyecto.CASA=(porProyecto.CASA||0)+h;
+      o.pend=Math.round((o.pend-h)*100)/100;
+      cur=fin2;
+      if(o.pend<=0.25)idxObra++;
     }
     const mes=mesDe(j.fecha),m=parse(j.fecha).getMonth();
     if(m<3||m>9)notas.push({t:'aviso',m:'La jornada de obra del '+esp(j.fecha)+' cae fuera de la ventana meteorológica de abril a octubre. Comprueba la previsión antes de confirmarla.'});
@@ -956,6 +959,8 @@ function generarPlan(lunes,capacidad,diasOff,opts={}){
     if(jb.horas<=0)notas.push({t:'aviso',m:'El '+DIAS[diaSemana(j.fecha)].toLowerCase()+' '+esp(j.fecha)+
       ' no queda tiempo útil para la obra una vez descontado el coche. Revisa tus franjas de ese día o elige otro.'});
   });
+  if(jornadas.length&&idxObra>=obras.length&&obras.length)
+    notas.push({t:'info',m:'Las jornadas de obra cubren todo lo que quedaba pendiente en la obra.'});
 
   // cola y huecos
   const {cola,notas:n2}=opts.cola?{cola:opts.cola,notas:opts.notas||[]}:construirCola(lunes,capacidad,opts.cubierto);
@@ -3389,7 +3394,7 @@ function fusionarCanalExtra(pid,rem,c){
 /* ============================================================
    VERSIÓN, DESHACER Y APLICACIÓN INSTALABLE
    ============================================================ */
-const VERSION_APP='1.39 · 12/09/2026';
+const VERSION_APP='1.40 · 12/09/2026';
 
 /* ---------- pila de deshacer ---------- */
 var pilaDeshacer=[];
