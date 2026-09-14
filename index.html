@@ -96,6 +96,7 @@ input:focus,select,textarea:focus{outline:2px solid var(--muted);outline-offset:
 .gh.today{color:#8fd0ff}
 .gh input{width:auto;margin-top:3px}
 .hlab{grid-column:1;font-size:11px;color:var(--faint);padding-right:5px;text-align:right;border-right:1px solid var(--line);border-top:1px solid var(--line)}
+.hlab.media{font-size:9.5px;opacity:.5;border-top:1px solid rgba(255,255,255,.04)}
 .cell{border-top:1px solid rgba(255,255,255,.035);border-right:1px solid rgba(255,255,255,.035)}
 .cell.hh{border-top:1px solid var(--line)}
 .cell.prot{background:var(--prot);background-image:repeating-linear-gradient(135deg,transparent 0 5px,rgba(255,255,255,.02) 5px 10px)}
@@ -336,6 +337,8 @@ body.ordenando{cursor:grabbing;user-select:none;-webkit-user-select:none}
 .obrarow{display:grid;grid-template-columns:1fr 72px 12px;gap:8px;align-items:center;padding:7px 0;border-top:1px solid var(--line);font-size:13px}
 .obrarow .q{display:block;color:var(--muted);font-size:11px;line-height:1.4}
 .obrarow input{padding:4px 6px;font-size:13px;text-align:right}
+
+.blk b .muted{color:rgba(232,236,239,.55);font-weight:400}
 </style>
 </head>
 <body>
@@ -1394,7 +1397,11 @@ function vSemana(){
     '<button class="btn sm ghost" data-act="limpiar-sel">Quitar selección</button></div>';
 
   // cuadrícula
-  h+='<div class="gridscroll"><div class="grid">';
+  const fila=D.config.zoomSemana||22;
+  h+='<div class="row" style="margin-bottom:8px;justify-content:flex-end"><span class="tiny muted">Altura de la rejilla</span>'+
+     [[22,'Compacta'],[32,'Media'],[44,'Amplia']].map(([v,n])=>
+       '<button class="btn sm '+(fila===v?'':'ghost')+'" data-act="zoom" data-v="'+v+'">'+n+'</button>').join('')+'</div>';
+  h+='<div class="gridscroll"><div class="grid" style="grid-auto-rows:'+fila+'px">';
   h+='<div class="gh" style="grid-column:1"></div>';
   for(let i=0;i<7;i++){
     const f=addDays(lun,i);const off=plan.diasOff.includes(f);
@@ -1408,6 +1415,7 @@ function vSemana(){
   for(let m=INI;m<FIN;m+=30){
     const row=2+(m-INI)/30;
     if(m%60===0)h+='<div class="hlab" style="grid-row:'+row+' / span 2">'+hhmm(m)+'</div>';
+    else if(fila>=32)h+='<div class="hlab media" style="grid-row:'+row+'">'+hhmm(m)+'</div>';
     for(let i=0;i<7;i++){
       const f=addDays(lun,i);
       let cls=(plan.diasOff.includes(f)?'bloq':estadoCelda(i,m,f))+(esPasado(f)?' pasado':'');
@@ -1425,14 +1433,17 @@ function vSemana(){
     const col=b.tipo==='coche'?'var(--coche)':colorDe(b.proyecto);
     const hi=hitoDe(b);
     const qn=quienDe(b);
+    const alto=span*fila;                       // altura real en píxeles
     const bb=b.tipo==='coche'?'#231f33':'color-mix(in srgb,'+col+' 22%, var(--surface2))';
-    const cab='<div class="blk'+(b.tipo==='coche'?' coche':'')+(b.nota?' connota':'')+(span===1?' mini':'')+
+    const cab='<div class="blk'+(b.tipo==='coche'?' coche':'')+(b.nota?' connota':'')+(alto<30?' mini':'')+
       (b.estado==='hecho'?' hecho':'')+(b.estado==='anulado'?' anulado':'')+
       '" style="grid-column:'+(i+2)+';grid-row:'+r1+' / span '+span+';--bc:'+col+';--bb:'+bb+'" '+
       'data-act="blk" data-id="'+b.id+'" title="'+esc((qn?qn+' · ':'')+(hi?hi+' › ':'')+b.nombre+(b.nota?'\n\n'+b.nota:''))+'">';
-    if(span===1){
+    if(alto<30){
       // media hora: hito y tarea comprimidos en un renglón, la nota en el siguiente
-      h+=cab+'<b class="uni">'+(qn?'<span class="quien">'+esc(qn)+'</span> ':'')+esc((hi?hi+' › ':'')+b.nombre)+'</b>'+
+      // muy corto: primero el nombre, que es lo que de verdad necesitas leer
+      h+=cab+'<b class="uni">'+(qn?'<span class="quien">'+esc(qn)+'</span> ':'')+esc(b.nombre)+
+         (hi?'<span class="muted"> · '+esc(hi)+'</span>':'')+'</b>'+
          (b.nota?'<small class="nb" style="-webkit-line-clamp:1">'+esc(b.nota)+'</small>':'')+'</div>';
       return;
     }
@@ -1440,7 +1451,7 @@ function vSemana(){
     h+=cab+
        (hi||qn?'<small class="hito">'+(qn?'<span class="quien">'+esc(qn)+'</span> ':'')+esc(hi||'')+'</small>':'')+
        '<b style="-webkit-line-clamp:'+cn+'">'+esc(b.nombre)+'</b>'+
-       (span>=(hi?4:2)&&!b.nota?'<small>'+hhmm(b.ini)+'–'+hhmm(b.fin)+'</small>':'')+
+       (alto>=78&&!b.nota?'<small>'+hhmm(b.ini)+'–'+hhmm(b.fin)+'</small>':'')+
        (b.nota?'<small class="nb" style="-webkit-line-clamp:'+(span>=4?2:1)+'">'+esc(b.nota)+'</small>':'')+'</div>';
   });
   h+='</div></div>';
@@ -2245,13 +2256,31 @@ function pintaDestino(c){
   document.querySelectorAll('.cell.destino').forEach(x=>x.classList.remove('destino'));
   if(c)c.classList.add('destino');
 }
-function franjaLibre(dia,fecha,ini,fin){
-  for(let m=ini;m<fin;m+=30){
-    const e=estadoCelda(dia,m,fecha);
-    if(e==='prot')return 'familia';
-    if(e==='bloq')return 'bloqueado';
+/* Reparte la duración a partir de una hora, saltando las pausas (comida,
+   arranque, cena) y partiendo el bloque en dos si hace falta. Avisa si algún
+   tramo cae en tiempo protegido o encima de un evento de tu calendario. */
+function segmentosPara(fecha,ini,dur){
+  const d=diaSemana(fecha), [INI,FIN]=limitesDia();
+  const segs=[];let restan=dur,cur=Math.max(ini,INI),prot=false,ext=false,guard=0;
+  while(restan>0&&cur<FIN&&guard++<80){
+    if(estadoCelda(d,cur,fecha)==='bloq'){cur+=30;continue;}    // pausa: se salta
+    let t=0;
+    while(restan>0&&cur<FIN&&estadoCelda(d,cur,fecha)!=='bloq'){
+      if(estadoCelda(d,cur,fecha)==='prot')prot=true;
+      if(typeof chocaExterno==='function'&&chocaExterno(fecha,cur,cur+30))ext=true;
+      cur+=30;t+=30;restan-=30;
+    }
+    if(t>0)segs.push({ini:cur-t,fin:cur});
   }
-  return null;
+  return {segs,prot,ext,incompleto:restan>0,partido:segs.length>1};
+}
+function nombreProtegida(fecha,segs){
+  const d=diaSemana(fecha);
+  for(const s of segs)for(let m=s.ini;m<s.fin;m+=30){
+    const r=reglasDe(d,fecha).find(x=>x.tipo==='protegido'&&toMin(x.ini)<=m&&toMin(x.fin)>m);
+    if(r)return r.nombre;
+  }
+  return 'tiempo protegido';
 }
 function iniciarDrag(){
   if(!drag||drag.activo)return;
@@ -2328,6 +2357,46 @@ document.addEventListener('pointermove',e=>{
 document.addEventListener('pointerup',()=>terminarDrag(true));
 document.addEventListener('pointercancel',()=>terminarDrag(false));
 document.addEventListener('touchmove',e=>{if((drag&&drag.activo)||(typeof arr!=='undefined'&&arr&&arr.activo))e.preventDefault();},{passive:false});
+
+/* ---------- aplicar el movimiento, partiendo el bloque si toca ---------- */
+function aplicarMovimiento(b,plan,fecha,r){
+  const antes=copia(b);
+  const extras=[];
+  b.fecha=fecha;b.ini=r.segs[0].ini;b.fin=r.segs[0].fin;
+  b.motivo='Movido a mano el '+esp(hoyISO())+'.'+(r.partido?' Partido por la pausa del mediodía.':'');
+  sello(b);
+  r.segs.slice(1).forEach(s=>{
+    const c=copia(b);
+    c.id=uid('b');c.ini=s.ini;c.fin=s.fin;
+    c.motivo='Continuación de «'+b.nombre+'» tras la pausa.';
+    c.actualizado=AHORA();
+    plan.bloques.push(c);extras.push(c);
+  });
+  recalcularSemana(plan);
+  guardarPronto();render();
+  const cuota=estadoCelda(diaSemana(fecha),b.ini,fecha)==='cuota';
+  toast(r.partido?'Movido y partido en '+r.segs.length+' tramos por la pausa'
+        :(cuota?'Movido al fin de semana: sale del tiempo de familia'
+               :'Movido a '+DIAS3[diaSemana(fecha)]+' '+hhmm(b.ini)));
+  registrarAccion(r.partido?'Movido y partido':'Movido a '+DIAS3[diaSemana(fecha)]+' '+hhmm(b.ini),()=>{
+    restaurar(b,antes);
+    plan.bloques=plan.bloques.filter(x=>!extras.some(e=>e.id===x.id));
+    recalcularSemana(plan);
+  });
+}
+function mConfirmarMover(){
+  const {b,fecha,r}=window.__mov;
+  const donde=r.prot?nombreProtegida(fecha,r.segs):'un evento de tu calendario';
+  let h='<h3>Eso ocupa '+esc(donde.toLowerCase())+'</h3>'+
+    '<div class="mst">«'+esc(b.nombre)+'» quedaría el '+DIAS[diaSemana(fecha)].toLowerCase()+' '+esp(fecha)+
+    ' en '+r.segs.map(s=>hhmm(s.ini)+'–'+hhmm(s.fin)).join(' y ')+
+    (r.partido?', partido por la pausa del mediodía.':'.')+'</div>';
+  if(r.prot)h+='<div class="badbox" style="margin-bottom:12px">Es tiempo que tenías reservado para otra cosa. Puedes hacerlo, pero que sea porque lo decides.</div>';
+  if(r.ext)h+='<div class="warnbox" style="margin-bottom:12px">Se solapa con un evento de tu calendario de Google.</div>';
+  h+='<div class="row"><button class="btn primary" data-act="mov-si">Sí, muévelo ahí</button>'+
+     '<button class="btn ghost" data-act="mov-no">Déjalo donde estaba</button></div>';
+  modal(h);
+}
 /* ============================================================
    EDITOR DE BLOQUES — crear y modificar desde la cuadrícula
    Selección en cascada: proyecto › hito › tarea, más comentario.
@@ -3122,7 +3191,7 @@ function fusionarCanalExtra(pid,rem,c){
 /* ============================================================
    VERSIÓN, DESHACER Y APLICACIÓN INSTALABLE
    ============================================================ */
-const VERSION_APP='1.33 · 12/09/2026';
+const VERSION_APP='1.34 · 12/09/2026';
 
 /* ---------- pila de deshacer ---------- */
 var pilaDeshacer=[];
@@ -5541,6 +5610,9 @@ document.addEventListener('click',e=>{
      toast('Duplicado con '+c.tareas.length+' subtareas. Ponle su peso.');
      registrarAccion('Hito duplicado',()=>{p.hitos=p.hitos.filter(x=>x.id!==c.id);});
      break;}
+   case 'zoom': D.config.zoomSemana=Number(el.dataset.v);selloCfg('zoomSemana');guardarPronto();render();break;
+   case 'mov-si':{const m=window.__mov;cerrar();aplicarMovimiento(m.b,m.plan,m.fecha,m.r);break;}
+   case 'mov-no': cerrar();render();break;
    case 'proj-new': mProyecto(null);break;
    case 'proj-edit': mProyecto(id);break;
    case 'proj-save':{
