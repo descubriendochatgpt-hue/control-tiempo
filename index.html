@@ -90,7 +90,7 @@ input:focus,select,textarea:focus{outline:2px solid var(--muted);outline-offset:
 .meters{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
 .meters b{color:var(--text);font-weight:600}
 .gridscroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
-.grid{display:grid;grid-template-columns:46px repeat(7,minmax(96px,1fr));grid-auto-rows:22px;min-width:740px;position:relative}
+.grid{display:grid;grid-template-columns:46px repeat(7,minmax(96px,1fr));grid-auto-rows:32px;min-width:740px;position:relative}
 .gh{grid-row:1;position:sticky;top:0;z-index:6;background:var(--surface);border-bottom:1px solid var(--line2);padding:6px 4px;text-align:center;font-size:12px;font-weight:600}
 .gh small{display:block;color:var(--muted);font-weight:400;font-size:11px}
 .gh.today{color:#8fd0ff}
@@ -187,13 +187,13 @@ table.cfg input,table.cfg select{padding:4px 6px;font-size:12px}
 .colarow.fuera b{font-weight:500}
 
 .blk{padding:2px 5px}
-.blk small.hito{font-size:9.5px;line-height:1.15;margin-bottom:0}
-.blk b{font-size:10.5px;line-height:1.2}
-.blk small.nb{font-size:9.5px;line-height:1.15;margin-top:1px}
-.blk small{font-size:9.5px}
+.blk small.hito{font-size:10.5px;line-height:1.2;margin-bottom:0}
+.blk b{font-size:11.5px;line-height:1.25}
+.blk small.nb{font-size:10.5px;line-height:1.2;margin-top:1px}
+.blk small{font-size:10.5px}
 
 .blk.mini{padding:1px 4px}
-.blk b.uni{display:block;font-size:9.5px;line-height:1.05;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.blk b.uni{display:block;font-size:11px;line-height:1.15;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .blk.mini small.nb{line-height:1.05;margin-top:0}
 
 .asa{display:inline-block;color:var(--faint);font-size:13px;letter-spacing:-1px;margin-right:7px;cursor:grab;user-select:none;touch-action:manipulation}
@@ -245,7 +245,7 @@ body.ordenando{cursor:grabbing;user-select:none;-webkit-user-select:none}
 
 .quien{color:#8fc4e8;font-weight:500}
 .tag.quien{border-color:#8fc4e8;color:#8fc4e8}
-.blk .quien{font-size:9.5px}
+.blk .quien{font-size:10.5px}
 
 .gh.pasado{opacity:.45}
 .cell.pasado{opacity:.4}
@@ -339,6 +339,9 @@ body.ordenando{cursor:grabbing;user-select:none;-webkit-user-select:none}
 .obrarow input{padding:4px 6px;font-size:13px;text-align:right}
 
 .blk b .muted{color:rgba(232,236,239,.55);font-weight:400}
+
+.blk.parte{outline:2px dashed var(--warn);outline-offset:-2px}
+.blk.mini{padding:2px 5px}
 </style>
 </head>
 <body>
@@ -455,7 +458,8 @@ const REGLAS_NEUTRAS=[
 
 const CONFIG_DEF={
   sync:{url:'',clave:'',activo:false,base:null,dispositivo:''},
-  diaInicio:'08:00', diaFin:'23:00',   // horario visible y planificable de la cuadrícula
+  diaInicio:'08:00', diaFin:'23:00',
+  zoomSemana:32,      // altura de media hora en la cuadrícula   // horario visible y planificable de la cuadrícula
   margenPct:15,
   costeKm:0.12,
   kmPorViaje:100,
@@ -1397,9 +1401,9 @@ function vSemana(){
     '<button class="btn sm ghost" data-act="limpiar-sel">Quitar selección</button></div>';
 
   // cuadrícula
-  const fila=D.config.zoomSemana||22;
+  const fila=D.config.zoomSemana||32;
   h+='<div class="row" style="margin-bottom:8px;justify-content:flex-end"><span class="tiny muted">Altura de la rejilla</span>'+
-     [[22,'Compacta'],[32,'Media'],[44,'Amplia']].map(([v,n])=>
+     [[26,'Compacta'],[32,'Media'],[44,'Amplia'],[58,'Grande']].map(([v,n])=>
        '<button class="btn sm '+(fila===v?'':'ghost')+'" data-act="zoom" data-v="'+v+'">'+n+'</button>').join('')+'</div>';
   h+='<div class="gridscroll"><div class="grid" style="grid-auto-rows:'+fila+'px">';
   h+='<div class="gh" style="grid-column:1"></div>';
@@ -2303,20 +2307,21 @@ function terminarDrag(commit){
     if(commit&&drag.prev){
       const b=drag.b,plan=drag.plan,dur=b.fin-b.ini;
       const fecha=addDays(plan.lunes,drag.prev.dia);
+      const destino=drag.prev.min;
       if(fecha!==b.fecha&&esPasado(fecha)){
-        toast('No se pueden mover actividades a días pasados');render();drag=null;return;}
-      if(fecha!==b.fecha||drag.prev.min!==b.ini){
-        const choque=franjaLibre(drag.prev.dia,fecha,drag.prev.min,drag.prev.min+dur);
-        if(choque==='familia'){toast('Ahí es tiempo de familia. Cámbialo en Ajustes si de verdad quieres usarlo.');render();drag=null;return;}
-        if(choque==='bloqueado'){toast('Esa franja no es tiempo útil.');render();drag=null;return;}
-        const cuota=estadoCelda(drag.prev.dia,drag.prev.min,fecha)==='cuota';
-        const antes={fecha:b.fecha,ini:b.ini,fin:b.fin,motivo:b.motivo};
-        b.fecha=fecha;b.ini=drag.prev.min;b.fin=drag.prev.min+dur;
-        b.motivo='Movido a mano el '+esp(hoyISO())+'.';sello(b);
-        registrarAccion('Movido a '+DIAS3[drag.prev.dia]+' '+hhmm(b.ini),()=>{Object.assign(b,antes);sello(b);});
-        guardarPronto();render();
-        toast(cuota?'Movido al fin de semana: sale del tiempo de familia':'Movido a '+DIAS3[drag.prev.dia]+' '+hhmm(b.ini));
-        drag=null;return;
+        drag=null;toast('No se pueden mover actividades a días pasados');render();return;}
+      if(fecha!==b.fecha||destino!==b.ini){
+        const r=segmentosPara(fecha,destino,dur);
+        drag=null;
+        if(r.incompleto||!r.segs.length){
+          toast('No cabe entero en lo que queda de ese día');render();return;
+        }
+        if(r.prot||r.ext){
+          window.__mov={b,plan,fecha,r};
+          mConfirmarMover();return;
+        }
+        aplicarMovimiento(b,plan,fecha,r);
+        return;
       }
     }
     render();
@@ -2349,8 +2354,10 @@ document.addEventListener('pointermove',e=>{
   drag.prev={dia,min:m};
   drag.el.style.gridColumn=(dia+2);
   drag.el.style.gridRow=(2+(m-INI)/30)+' / span '+Math.max(1,Math.round(dur/30));
-  const choque=franjaLibre(dia,addDays(drag.plan.lunes,dia),m,m+dur);
-  drag.el.classList.toggle('nodrop',!!choque);
+  const f=addDays(drag.plan.lunes,dia);
+  const r=segmentosPara(f,m,dur);
+  drag.el.classList.toggle('nodrop',!!(r.incompleto||r.prot||r.ext));
+  drag.el.classList.toggle('parte',!!r.partido&&!r.prot&&!r.ext&&!r.incompleto);
   pintaDestino(c);
 },{passive:true});
 
@@ -3191,7 +3198,7 @@ function fusionarCanalExtra(pid,rem,c){
 /* ============================================================
    VERSIÓN, DESHACER Y APLICACIÓN INSTALABLE
    ============================================================ */
-const VERSION_APP='1.34 · 12/09/2026';
+const VERSION_APP='1.35 · 12/09/2026';
 
 /* ---------- pila de deshacer ---------- */
 var pilaDeshacer=[];
@@ -3541,6 +3548,7 @@ function migrarV4(){
 
 /* ---------- modelo 5: meteorología de la obra ---------- */
 function migrarV5(){
+  if(!D.config.zoomSemana||D.config.zoomSemana<26)D.config.zoomSemana=32;
   D.meteo=D.meteo||{perdidos:[]};
   cfgObra();
   D.version=VERSION_DATOS;
