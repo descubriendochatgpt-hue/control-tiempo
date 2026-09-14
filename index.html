@@ -352,6 +352,9 @@ body.ordenando{cursor:grabbing;user-select:none;-webkit-user-select:none}
 .blk.ajustando{outline:2px solid var(--bc);outline-offset:-2px;z-index:22}
 .blk.ajustando .rz::after{opacity:1}
 @media (hover:none){.rz{height:13px}.rz::after{opacity:.45}}
+
+.colarow .pos{display:inline-block;background:var(--surface2);border-radius:4px;padding:0 5px;margin-right:6px;
+  font-size:10px;color:var(--faint);font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
@@ -789,7 +792,7 @@ function ordenManual(t){
   return ip*1e6+ih*1000+(it<0?999:it);
 }
 const porOrden=(a,b)=>ordenManual(a)-ordenManual(b);
-function construirCola(lunes,capacidad){
+function construirCola(lunes,capacidad,cubierto){
   const cola=[],notas=[];
   /* Tope por tarea: da igual por cuántos caminos entre en la cola
      (mínimo, bloqueante, deuda o reparto), nunca se planifican más
@@ -807,7 +810,11 @@ function construirCola(lunes,capacidad){
     return c;
   };
   const rec=recurrentesDeSemana(lunes);
-  const tar=tareasDisponibles();
+  const cub=cubierto||{};
+  const tar=tareasDisponibles().map(t=>{
+    const c=cub[t.id]||0;
+    return c?Object.assign({},t,{pend:Math.round((t.pend-c)*100)/100}):t;
+  }).filter(t=>t.pend>0.25);
   const deuda=(D.deuda||[]).slice().sort((a,b)=>{
     if(a.semanaOrigen!==b.semanaOrigen)return a.semanaOrigen<b.semanaOrigen?-1:1;
     const ta=tar.find(x=>x.id===a.tareaId), tb=tar.find(x=>x.id===b.tareaId);
@@ -936,8 +943,7 @@ function generarPlan(lunes,capacidad,diasOff,opts={}){
           motivo:'Obra el '+DIAS[diaSemana(j.fecha)].toLowerCase()+': el día da '+fmtH(horasUtilesDia(j.fecha,opts.ocupados))+
             ' útiles, '+fmtH(2*D.config.minCoche/60)+' se van en coche y quedan '+fmtH(jb.horas)+' de trabajo.'+
             (esFinde(j.fecha)?' Con cargo a la cuota de '+mesDe(j.fecha)+'.':' Entre semana: ocupa el día.')});
-        if(esFinde(j.fecha))extra+=h;      // finde: sale de la cuota, no de tu capacidad
-        else usadas+=h;                      // entre semana: ocupa tu jornada normal
+        extra+=h;                          // la obra es siempre esfuerzo aparte
         porProyecto.CASA=(porProyecto.CASA||0)+h;pend-=h;cur=fin;
       }
       idx++;
@@ -952,7 +958,7 @@ function generarPlan(lunes,capacidad,diasOff,opts={}){
   });
 
   // cola y huecos
-  const {cola,notas:n2}=opts.cola?{cola:opts.cola,notas:opts.notas||[]}:construirCola(lunes,capacidad);
+  const {cola,notas:n2}=opts.cola?{cola:opts.cola,notas:opts.notas||[]}:construirCola(lunes,capacidad,opts.cubierto);
   n2.forEach(n=>notas.push(n));
   const diasObra=jornadas.map(j=>j.fecha);
   const huecos=huecosSemana(lunes,diasOff).filter(h=>!diasObra.includes(h.fecha));
@@ -994,6 +1000,31 @@ function generarPlan(lunes,capacidad,diasOff,opts={}){
     }
     if(pend>0.25)sinSitio.push(Object.assign({},item,{pend}));
   }
+
+  // Red de seguridad: si por cualquier camino una tarea acabara con más
+  // horas de las que le quedan, se recorta y se deja anotado.
+  (function(){
+    const porT={};
+    bloques.forEach(b=>{if(b.tipo==='trabajo'&&b.tareaId)porT[b.tareaId]=(porT[b.tareaId]||0)+(b.fin-b.ini)/60;});
+    Object.keys(porT).forEach(id=>{
+      const t=tareaPorId2(id);
+      if(!t||t.rec)return;
+      const limite=Math.max(0,t.horas-horasTarea(id)-((opts.cubierto||{})[id]||0));
+      let sobra=Math.round((porT[id]-limite)*100)/100;
+      if(sobra<=0.25)return;
+      const suyos=bloques.filter(b=>b.tipo==='trabajo'&&b.tareaId===id).sort((a,b)=>a.fecha<b.fecha?1:a.fecha>b.fecha?-1:b.ini-a.ini);
+      suyos.forEach(b=>{
+        if(sobra<=0.25)return;
+        const h=(b.fin-b.ini)/60;
+        if(h<=sobra+0.01){b.__quitar=true;sobra-=h;usadas=Math.max(0,usadas-h);
+          porProyecto[b.proyecto]=Math.max(0,(porProyecto[b.proyecto]||0)-h);}
+        else{b.fin=b.fin-Math.round(sobra*60);usadas=Math.max(0,usadas-sobra);
+          porProyecto[b.proyecto]=Math.max(0,(porProyecto[b.proyecto]||0)-sobra);sobra=0;}
+      });
+      notas.push({t:'info',m:'«'+t.nombre+'» ya tenía cubiertas sus horas esta semana: se ha quitado lo que sobraba.'});
+    });
+    bloques=bloques.filter(b=>!b.__quitar);
+  })();
 
   // Fase D
   sinSitio.forEach(it=>{
@@ -1253,6 +1284,12 @@ function quienDe(b){
   if(!b.tareaId)return null;
   for(const p of D.proyectos)for(const h of p.hitos)
     for(const t of h.tareas)if(t.id===b.tareaId)return t.asignado||null;
+  return null;
+}
+
+/* búsqueda de una tarea por identificador, sin depender del orden de módulos */
+function tareaPorId2(id){
+  for(const p of D.proyectos)for(const h of p.hitos)for(const t of h.tareas)if(t.id===id)return t;
   return null;
 }
 /* ============================================================
@@ -1826,7 +1863,7 @@ function mDeclarar(){
       const auto=horasObraDia(f);
       const v=(jorHoras&&jorHoras[f]!==undefined)?jorHoras[f]:auto;
       h+='<div class="obrarow"><span><b>'+DIAS[diaSemana(f)]+' '+espCorto(f)+'</b>'+
-        '<span class="q">'+(esFinde(f)?'con cargo a la cuota, fuera de tu capacidad':'entre semana, sale de tu capacidad')+
+        '<span class="q">'+(esFinde(f)?'con cargo a la cuota':'entre semana, te ocupa ese día')+', fuera de tu capacidad'+
         ' · el día da '+fmtH(auto)+' tras el coche</span></span>'+
         '<input type="number" step="0.5" min="0" max="14" value="'+v+'" data-act="jor-horas" data-f="'+f+'"><span class="pc">h</span></div>';
     });
@@ -1835,7 +1872,7 @@ function mDeclarar(){
     h+='<p class="tiny muted" style="margin-top:6px">'+fmtH(tot)+' de obra en total, más '+
       fmtH(jorTmp.length*2*D.config.minCoche/60)+' de coche. '+
       (nf?nf+' de fin de semana: te quedarían '+Math.max(0,restan-nf)+' de cuota este mes. ':'')+
-      (jorTmp.length-nf?(jorTmp.length-nf)+' entre semana, que ocupa'+((jorTmp.length-nf)===1?'':'n')+' ese día entero. ':'')+
+      (jorTmp.length-nf?(jorTmp.length-nf)+' entre semana, que ocupa'+((jorTmp.length-nf)===1?'':'n')+' ese día pero no gasta'+((jorTmp.length-nf)===1?'':'n')+' capacidad. ':'')+
       'Si necesitas más horas ese día, cámbialas arriba.</p>';
     h+='</div>';
   }else{
@@ -2706,7 +2743,13 @@ function notasSemana(lunes){
    ============================================================ */
 var jorTmp=[], jorHoras={};
 function abrirCola(lunes,cap,off,jornadas){
-  const {cola,notas}=construirCola(lunes,cap);
+  const pv=SEM[semanaId(lunes)];
+  const cub={};
+  if(pv)(pv.bloques||[]).forEach(b=>{
+    if(b.tipo==='trabajo'&&b.tareaId&&b.estado!=='hecho'&&(b.origen==='manual'))
+      cub[b.tareaId]=(cub[b.tareaId]||0)+(b.fin-b.ini)/60;
+  });
+  const {cola,notas}=construirCola(lunes,cap,cub);
   const jor=(jornadas||[]).filter(j=>!off.includes(j.fecha));
   window.__prio={lunes,cap,off,cola,notas,jor,jorOff:false};
   mCola();
@@ -2738,14 +2781,12 @@ function mCola(){
        ' · '+(findes?findes+' de fin de semana, con cargo a la cuota':'')+
        (findes&&findes<S.jor.length?' y ':'')+
        (findes<S.jor.length?(S.jor.length-findes)+' entre semana':'')+
-       ' · '+(findes===S.jor.length?'<b style="color:var(--ok)">no gasta tu capacidad</b>'
-             :findes?'lo de finde no gasta capacidad; lo de entre semana sí'
-             :'<b style="color:var(--warn)">ocupa tu jornada normal</b>')+'</span></span>'+
+       ' · <b style="color:var(--ok)">esfuerzo aparte, no gasta tu capacidad</b></span></span>'+
        '<span class="colabtns"><span class="h">'+fmtH(jorH+jorDentro)+'</span>'+
        '<button data-act="jor-off" title="Quitar">'+(S.jorOff?'+':'×')+'</button></span></div>';
   }
 
-  let acum=jorDentro,cortado=false,dentro=jorDentro,fuera=0;   // la obra de finde va aparte; la de entre semana, no
+  let acum=0,cortado=false,dentro=0,fuera=0;   // la obra va siempre aparte, no gasta capacidad
   S.cola.forEach((it,i)=>{
     const p=P(it.proyecto);
     let parcial=null;
@@ -2759,7 +2800,7 @@ function mCola(){
     h+='<div class="colarow'+(it.__off?' off':'')+(cortado?' fuera':'')+'" style="--pc:'+colorDe(it.proyecto)+'">'+
       '<span class="n">'+(i+1)+'</span>'+
       '<span><b>'+esc(it.nombre)+'</b>'+
-      '<span class="q">'+esc((p?p.nombre:it.proyecto)+(it.hitoNombre?' › '+it.hitoNombre:''))+' · '+esc(etiquetaRazon(it))+
+      '<span class="q">'+posEnProyectos(it)+esc((p?p.nombre:it.proyecto)+(it.hitoNombre?' › '+it.hitoNombre:''))+' · '+esc(etiquetaRazon(it))+
       (it.desplaza?' · <b style="color:var(--warn)">solo en jornada de obra</b>':'')+'</span></span>'+
       '<span class="colabtns"><span class="h">'+fmtH(it.pend)+'</span>'+
       '<button data-act="cola-up" data-i="'+i+'" title="Subir">↑</button>'+
@@ -2779,8 +2820,16 @@ function mCola(){
      '<button class="btn primary" data-act="cola-ok">Generar el plan</button>'+
      '<button class="btn ghost" data-act="cola-back">Volver</button>'+
      '<span class="spacer"></span><span class="tiny muted">Entran '+fmtH(dentro)+
-     (jorH?' + '+fmtH(jorH)+' de obra':'')+(fuera>0.05?' · fuera '+fmtH(fuera):'')+'</span></div>';
+     ((jorH+jorDentro)?' + '+fmtH(jorH+jorDentro)+' de obra':'')+(fuera>0.05?' · fuera '+fmtH(fuera):'')+'</span></div>';
   modal(h);
+}
+
+/* posición exacta que ocupa en la vista Proyectos, para poder comprobarlo */
+function posEnProyectos(it){
+  const o=ordenManual(it);
+  if(o>=9e8)return '';
+  const ip=Math.floor(o/1e6), ih=Math.floor((o%1e6)/1000), itx=o%1000;
+  return '<span class="pos">'+(ip+1)+'.'+(ih+1)+'.'+(itx+1)+'</span> ';
 }
 /* ============================================================
    LISTAS ORDENABLES ARRASTRANDO (proyectos, hitos y subtareas)
@@ -3335,7 +3384,7 @@ function fusionarCanalExtra(pid,rem,c){
 /* ============================================================
    VERSIÓN, DESHACER Y APLICACIÓN INSTALABLE
    ============================================================ */
-const VERSION_APP='1.37 · 12/09/2026';
+const VERSION_APP='1.38 · 12/09/2026';
 
 /* ---------- pila de deshacer ---------- */
 var pilaDeshacer=[];
@@ -5265,7 +5314,10 @@ function replanificar(lun,cap,off,jor){
   // Se calcula antes, para que el planificador no coloque nada encima.
   const conservados=prev0?(prev0.bloques||[]).filter(b=>
     b.estado==='hecho'||(b.origen==='manual'&&b.estado!=='anulado')):[];
-  const plan=generarPlan(lun,cap,off,{jornadas:jor,
+  const cubierto={};
+  conservados.forEach(b=>{if(b.tipo==='trabajo'&&b.tareaId&&b.estado!=='hecho')
+    cubierto[b.tareaId]=(cubierto[b.tareaId]||0)+(b.fin-b.ini)/60;});
+  const plan=generarPlan(lun,cap,off,{jornadas:jor,cubierto,
     ocupados:conservados.map(b=>({fecha:b.fecha,ini:b.ini,fin:b.fin}))});
   const prev=prev0;
   if(prev){
@@ -5515,7 +5567,10 @@ document.addEventListener('click',e=>{
      const cola=S.cola.filter(x=>!x.__off);
      const pv=SEM[semanaId(S.lunes)];
      const cons=pv?(pv.bloques||[]).filter(b=>b.estado==='hecho'||(b.origen==='manual'&&b.estado!=='anulado')):[];
-     const plan=generarPlan(S.lunes,S.cap,S.off,{cola,notas:S.notas,jornadas:S.jorOff?[]:S.jor,
+     const cub={};
+     cons.forEach(b=>{if(b.tipo==='trabajo'&&b.tareaId&&b.estado!=='hecho')
+       cub[b.tareaId]=(cub[b.tareaId]||0)+(b.fin-b.ini)/60;});
+     const plan=generarPlan(S.lunes,S.cap,S.off,{cola,notas:S.notas,jornadas:S.jorOff?[]:S.jor,cubierto:cub,
        ocupados:cons.map(b=>({fecha:b.fecha,ini:b.ini,fin:b.fin}))});
      const prevP=SEM[plan.id];
      if(prevP){
