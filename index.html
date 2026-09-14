@@ -1008,7 +1008,11 @@ function generarPlan(lunes,capacidad,diasOff,opts={}){
     bloques.forEach(b=>{if(b.tipo==='trabajo'&&b.tareaId)porT[b.tareaId]=(porT[b.tareaId]||0)+(b.fin-b.ini)/60;});
     Object.keys(porT).forEach(id=>{
       const t=tareaPorId2(id);
-      if(!t||t.rec)return;
+      if(!t){    // la subtarea ya no existe: fuera sus bloques
+        bloques.forEach(b=>{if(b.tareaId===id&&b.estado!=='hecho')b.__quitar=true;});
+        return;
+      }
+      if(t.rec)return;
       const limite=Math.max(0,t.horas-horasTarea(id)-((opts.cubierto||{})[id]||0));
       let sobra=Math.round((porT[id]-limite)*100)/100;
       if(sobra<=0.25)return;
@@ -1809,7 +1813,8 @@ function vConfig(){
      '<p class="tiny muted" style="margin:4px 0 0">Centro de mando '+esc(VERSION_APP)+' · modelo de datos '+VERSION_DATOS+'</p>'+
      '<div id="tam" class="tiny muted" style="margin-top:6px">Calculando el tamaño de los datos…</div>'+
      '<div class="row" style="margin-top:10px"><button class="btn ghost" data-act="recargar">Buscar versión nueva</button>'+
-     '<button class="btn ghost" data-act="registro">Registro técnico</button></div></div>';
+     '<button class="btn ghost" data-act="registro">Registro técnico</button>'+
+     '<button class="btn ghost" data-act="limpiar">Limpiar bloques sin dueño</button></div></div>';
 
   h+='<div class="card"><b style="font-size:14px">Datos</b>'+
      '<div class="row" style="margin-top:10px">'+
@@ -3384,7 +3389,7 @@ function fusionarCanalExtra(pid,rem,c){
 /* ============================================================
    VERSIÓN, DESHACER Y APLICACIÓN INSTALABLE
    ============================================================ */
-const VERSION_APP='1.38 · 12/09/2026';
+const VERSION_APP='1.39 · 12/09/2026';
 
 /* ---------- pila de deshacer ---------- */
 var pilaDeshacer=[];
@@ -5290,6 +5295,59 @@ function registroTexto(){
   ).join('\n');
 }
 /* ============================================================
+   LIMPIEZA DE HUÉRFANOS
+   Bloques y deudas que apuntan a subtareas, hitos o proyectos
+   que ya no existen. Se quitan los que aún no has hecho; lo ya
+   registrado se conserva, porque es historial.
+   ============================================================ */
+function existeTarea(id){
+  if(!id)return false;
+  for(const p of D.proyectos)for(const h of p.hitos)for(const t of h.tareas)if(t.id===id)return true;
+  return false;
+}
+function existeProyecto(id){return !!P(id);}
+
+function limpiarHuerfanos(opts){
+  const soloFuturo=!(opts&&opts.todo);
+  let bloques=0,deudas=0;
+  const tocadas=new Set();
+  Object.values(SEM).forEach(w=>{
+    const antes=(w.bloques||[]).length;
+    w.bloques=(w.bloques||[]).filter(b=>{
+      if(b.estado==='hecho')return true;                       // historial: no se toca
+      if(soloFuturo&&b.fecha<hoyISO())return true;             // el pasado tampoco
+      if(b.tipo!=='trabajo')return b.proyecto==='PERSONAL'||existeProyecto(b.proyecto);
+      if(b.tareaId&&!existeTarea(b.tareaId)){anotarBorrado(b.id);return false;}
+      if(!existeProyecto(b.proyecto)&&b.proyecto!=='PERSONAL'){anotarBorrado(b.id);return false;}
+      return true;
+    });
+    if((w.bloques||[]).length!==antes){bloques+=antes-w.bloques.length;tocadas.add(w.id);}
+  });
+  const d0=(D.deuda||[]).length;
+  D.deuda=(D.deuda||[]).filter(x=>(!x.tareaId||existeTarea(x.tareaId))&&existeProyecto(x.proyecto));
+  deudas=d0-D.deuda.length;
+  tocadas.forEach(id=>{if(SEM[id])recalcularSemana(SEM[id]);});
+  return {bloques,deudas};
+}
+
+/* al borrar algo, se lleva por delante lo que tuviera planificado */
+function borrarRastro(ids){
+  const set=Array.isArray(ids)?ids:[ids];
+  let n=0;
+  Object.values(SEM).forEach(w=>{
+    const antes=(w.bloques||[]).length;
+    w.bloques=(w.bloques||[]).filter(b=>{
+      if(b.estado==='hecho')return true;
+      if(!set.includes(b.tareaId)&&!set.includes(b.proyecto))return true;
+      anotarBorrado(b.id);return false;
+    });
+    if(w.bloques.length!==antes){n+=antes-w.bloques.length;recalcularSemana(w);}
+  });
+  const d0=(D.deuda||[]).length;
+  D.deuda=(D.deuda||[]).filter(x=>!set.includes(x.tareaId)&&!set.includes(x.proyecto));
+  return {bloques:n,deudas:d0-(D.deuda||[]).length};
+}
+/* ============================================================
    PERSISTENCIA, ACCIONES E INICIO
    ============================================================ */
 let guardando=false;
@@ -5309,6 +5367,7 @@ let debT;
 function guardarPronto(){clearTimeout(debT);debT=setTimeout(()=>guardar(true),350);}
 
 function replanificar(lun,cap,off,jor){
+  limpiarHuerfanos();
   const prev0=SEM[semanaId(lun)];
   // lo que no debe perderse al regenerar: lo ya hecho y lo que creaste a mano.
   // Se calcula antes, para que el planificador no coloque nada encima.
@@ -5850,6 +5909,10 @@ document.addEventListener('click',e=>{
        p2.bloques=foto.bloques;p2.usadas=foto.usadas;p2.extra=foto.extra;p2.porProyecto=foto.pp;
      });
      break;}
+   case 'limpiar':{const r=limpiarHuerfanos({todo:true});
+     guardarPronto();render();
+     toast(r.bloques||r.deudas?('Quitados '+r.bloques+' bloque(s) y '+r.deudas+' deuda(s) sin dueño')
+                              :'No había nada que limpiar');break;}
    case 'proj-new': mProyecto(null);break;
    case 'proj-edit': mProyecto(id);break;
    case 'proj-save':{
@@ -5863,6 +5926,7 @@ document.addEventListener('click',e=>{
    case 'proj-del':{
      if(!el.dataset.conf){el.dataset.conf='1';el.textContent='Es irreversible. Pulsa otra vez';return;}
      anotarBorrado(id);
+     borrarRastro([id].concat((P(id)?P(id).hitos:[]).reduce((a,h)=>a.concat(h.tareas.map(t=>t.id)),[])));
      D.proyectos=D.proyectos.filter(p=>p.id!==id);cerrar();guardarPronto();render();toast('Proyecto eliminado');break;}
    case 'hito-new': mHito(el.dataset.p,null);break;
    case 'hito-edit': mHito(el.dataset.p,el.dataset.h);break;
@@ -5878,6 +5942,7 @@ document.addEventListener('click',e=>{
      const ih=p.hitos.indexOf(hh), copiaH=copia(hh);
      if(hh){anotarBorrado(hh.id);hh.tareas.forEach(t=>anotarBorrado(t.id));}
      p.hitos=p.hitos.filter(x=>x.id!==el.dataset.h);
+     if(hh)borrarRastro(hh.tareas.map(t=>t.id));
      registrarAccion('Hito eliminado',()=>{p.hitos.splice(ih,0,copiaH);
        const ids=[copiaH.id].concat(copiaH.tareas.map(t=>t.id));
        D.borrados=borrados().filter(b=>!ids.includes(b.id));});
@@ -5925,7 +5990,10 @@ document.addEventListener('click',e=>{
    case 'tarea-del':{const p=P(el.dataset.p),hi=p.hitos.find(x=>x.id===el.dataset.h);
      const i=hi.tareas.findIndex(x=>x.id===el.dataset.t), t=copia(hi.tareas[i]);
      anotarBorrado(el.dataset.t);sello(hi);
-     hi.tareas=hi.tareas.filter(x=>x.id!==el.dataset.t);cerrar();guardarPronto();render();
+     hi.tareas=hi.tareas.filter(x=>x.id!==el.dataset.t);
+     const r=borrarRastro(el.dataset.t);
+     cerrar();guardarPronto();render();
+     if(r.bloques)toast('Eliminada. Quitados '+r.bloques+' bloque(s) que tenía en el calendario.');
      registrarAccion('Subtarea eliminada',()=>{hi.tareas.splice(i,0,t);
        D.borrados=borrados().filter(b=>b.id!==t.id);});
      break;}
@@ -6047,6 +6115,8 @@ function ajustarTabs(nav){
   syncCfg();
   if(!cfg)await guardar(false);
   syncEstado=syncCfg().activo?'pend':'off';
+  const huer=limpiarHuerfanos();
+  if(huer.bloques||huer.deudas)registrarOperacion('limpieza','quitados '+huer.bloques+' bloques y '+huer.deudas+' deudas sin dueño',0,true);
   const arch=archivarViejas();
   if(arch){await guardarArchivo();await guardar(false);}
   render();pintarEstado();
