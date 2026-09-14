@@ -791,6 +791,21 @@ function ordenManual(t){
 const porOrden=(a,b)=>ordenManual(a)-ordenManual(b);
 function construirCola(lunes,capacidad){
   const cola=[],notas=[];
+  /* Tope por tarea: da igual por cuántos caminos entre en la cola
+     (mínimo, bloqueante, deuda o reparto), nunca se planifican más
+     horas de las que de verdad le quedan. */
+  const puesto={};
+  const empujar=(item,deseadas,total)=>{
+    const id=item.id;
+    const usado=puesto[id]||0;
+    const libre=Math.max(0,(total===undefined?item.pend:total)-usado);
+    const h=Math.min(deseadas===undefined?item.pend:deseadas,libre);
+    if(h<=0.25)return null;
+    puesto[id]=usado+h;
+    const c=Object.assign({},item,{pend:Math.round(h*100)/100});
+    cola.push(c);
+    return c;
+  };
   const rec=recurrentesDeSemana(lunes);
   const tar=tareasDisponibles();
   const deuda=(D.deuda||[]).slice().sort((a,b)=>{
@@ -801,34 +816,35 @@ function construirCola(lunes,capacidad){
   const bajo=capacidad<D.config.umbrales.bajo;
 
   // 1. mínimos innegociables
-  rec.filter(r=>r.minimo).forEach(r=>cola.push(Object.assign({},r,{prio:1,razon:'Mínimo innegociable'})));
+  rec.filter(r=>r.minimo).forEach(r=>empujar(Object.assign({},r,{prio:1,razon:'Mínimo innegociable'})));
   activos().forEach(p=>{
     if(!p.minimo||p.tipo==='habito')return;
     const cand=tar.filter(t=>t.proyecto===p.id).sort(porOrden);
     let queda=p.minimo;
     cand.forEach(t=>{
       if(queda<=0.25)return;
-      const h=Math.min(queda,t.pend);queda-=h;
-      cola.push(Object.assign({},t,{pend:h,prio:1,razon:'Mínimo semanal de '+p.nombre}));
+      const c=empujar(Object.assign({},t,{prio:1,razon:'Mínimo semanal de '+p.nombre}),Math.min(queda,t.pend),t.pend);
+      if(c)queda-=c.pend;
     });
   });
   // 2. bloqueantes y críticas con fecha cercana
   tar.filter(t=>t.bloqueante||t.critica).sort(porOrden).forEach(t=>{
-    if(cola.some(c=>c.id===t.id))return;
-    cola.push(Object.assign({},t,{prio:2,razon:t.bloqueante?'Bloquea otras tareas':'Tarea crítica'}));
+    empujar(Object.assign({},t,{prio:2,razon:t.bloqueante?'Bloquea otras tareas':'Tarea crítica'}),t.pend,t.pend);
   });
   if(bajo){notas.push({t:'aviso',m:'Capacidad por debajo de '+D.config.umbrales.bajo+' h: esta semana solo da para los mínimos y lo que bloquea a otros. No se planifica nada más.'});
     return {cola,notas};}
   // 3. recurrentes con fecha de publicación
-  rec.filter(r=>!r.minimo).forEach(r=>cola.push(Object.assign({},r,{prio:3,razon:'Publica el '+DIAS[diaSemana(r.publica)].toLowerCase()})));
-  tareasRecurrentes(lunes).filter(r=>!r.hora).sort(porOrden).forEach(r=>cola.push(Object.assign({},r,{prio:3,
+  rec.filter(r=>!r.minimo).forEach(r=>empujar(Object.assign({},r,{prio:3,razon:'Publica el '+DIAS[diaSemana(r.publica)].toLowerCase()})));
+  tareasRecurrentes(lunes).filter(r=>!r.hora).sort(porOrden).forEach(r=>empujar(Object.assign({},r,{prio:3,
     razon:'Recurrente'+(r.cada>1?' cada '+r.cada+' semanas':' cada semana')+(r.dia!=null?', para el '+DIAS[r.dia].toLowerCase():'')})));
   // 4. deuda, la más antigua primero
   deuda.forEach(d=>{
     const t=tar.find(x=>x.id===d.tareaId);
-    cola.push({id:d.tareaId||uid('d'),proyecto:d.proyecto,nombre:d.nombre,pend:d.horas,hitoNombre:t?t.hitoNombre:null,
-      etiquetas:t?t.etiquetas:['escritorio'],desplaza:t?t.desplaza:false,prio:4,esDeuda:true,deudaId:d.id,
-      razon:'Deuda de '+d.semanaOrigen});
+    // la deuda adelanta la tarea, no duplica sus horas: el tope es lo que le queda
+    const total=t?t.pend:d.horas;
+    empujar({id:d.tareaId||uid('d'),proyecto:d.proyecto,nombre:d.nombre,pend:d.horas,hitoNombre:t?t.hitoNombre:null,
+      hito:t?t.hito:null,etiquetas:t?t.etiquetas:['escritorio'],desplaza:t?t.desplaza:false,prio:4,esDeuda:true,
+      deudaId:d.id,razon:'Deuda de '+d.semanaOrigen},Math.min(d.horas,total),total);
   });
   // 5. reparto porcentual ordinario
   const libres=D.proyectos.filter(p=>p.activo&&p.tipo!=='habito');
@@ -836,13 +852,12 @@ function construirCola(lunes,capacidad){
   libres.forEach(p=>{
     const cuota=capacidad*(p.pct||0)/totalPct;
     let queda=cuota;
-    tar.filter(t=>t.proyecto===p.id&&!cola.some(c=>c.id===t.id&&!c.esDeuda))
-       .sort(porOrden)
-       .forEach(t=>{
-         if(queda<=0.25)return;
-         const h=Math.min(queda,t.pend);queda-=h;
-         cola.push(Object.assign({},t,{pend:h,prio:5,razon:'Reparto ordinario ('+p.pct+' % a '+p.nombre+')'}));
-       });
+    tar.filter(t=>t.proyecto===p.id).sort(porOrden).forEach(t=>{
+      if(queda<=0.25)return;
+      const c=empujar(Object.assign({},t,{prio:5,razon:'Reparto ordinario ('+p.pct+' % a '+p.nombre+')'}),
+        Math.min(queda,t.pend),t.pend);
+      if(c)queda-=c.pend;
+    });
   });
   return {cola,notas};
 }
@@ -1377,7 +1392,9 @@ function vSemana(){
     '<b style="font-size:15px">'+espCorto(lun)+' – '+espCorto(dom)+'</b>'+
     '<button class="btn sm" data-act="sem" data-d="1">›</button>'+
     '<button class="btn sm ghost" data-act="sem-hoy">Semana actual</button><span class="spacer"></span>'+
-    '<button class="btn '+(plan?'':'primary')+'" data-act="declarar">'+(plan?'Replanificar':'Declarar capacidad')+'</button></div>';
+    '<button class="btn '+(plan?'':'primary')+'" data-act="declarar">'+(plan?'Replanificar':'Declarar capacidad')+'</button>'+
+    (plan&&lun===lunesDe(hoyISO())?'<button class="btn ghost" data-act="replan-resto" title="Mantiene lo hecho y lo que has puesto a mano">Reprogramar lo que queda</button>':'')+
+    '</div>';
 
   if(!plan){
     return h+'<div class="card"><b>Esta semana no está planificada.</b><p class="tiny muted" style="margin-top:6px">Declara cuántas horas útiles tienes y el reparto se genera entero. Capacidad teórica del calendario: '+fmtH(capacidadTeorica(lun))+'.</p>'+
@@ -1844,7 +1861,10 @@ function mBloque(id){
   if(b.nota)h+='<div class="warnbox" style="margin-bottom:12px">'+esc(b.nota)+'</div>';
   h+='<button class="mopt" data-act="ev-edit" data-id="'+b.id+'">Editar el bloque<small>Proyecto, hito, subtarea, día, hora y comentario</small></button>';
   if(b.ejercicio)h+='<button class="mopt" data-act="ficha" data-id="'+b.id+'">Abrir la ficha del día<small>Ejercicios, series y repeticiones de hoy</small></button>';
-  if(b.estado!=='hecho')h+='<button class="mopt" data-act="b-hecho" data-id="'+b.id+'">Marcar hecho<small>Registra '+fmtH((b.fin-b.ini)/60)+' en '+esc(nombreDe(b.proyecto))+'</small></button>';
+  if(b.estado!=='hecho'){
+    h+='<button class="mopt" data-act="b-hecho" data-id="'+b.id+'">Marcar hecho<small>Registra '+fmtH((b.fin-b.ini)/60)+' en '+esc(nombreDe(b.proyecto))+'</small></button>';
+    if(b.tareaId)h+='<button class="mopt" data-act="b-medias" data-id="'+b.id+'">No lo he terminado<small>Registra estas horas y dices cuántas faltan, para replanificarlas</small></button>';
+  }
   else h+='<button class="mopt" data-act="b-deshacer" data-id="'+b.id+'">Deshacer «hecho»</button>';
   if(!b.fijo){
     h+='<button class="mopt" data-act="b-mover" data-id="'+b.id+'">Mover a otro día<small>O arrástralo directamente por la cuadrícula</small></button>';
@@ -2040,6 +2060,25 @@ function repartoResumen(){
       :'<span class="tiny" style="color:var(--warn)">suma '+Math.round(suma)+' %</span>'+
        '<button class="btn sm" data-act="pct-norm">Ajustar a 100</button>')+'</div>'+
     '<div class="row tiny muted" style="margin-top:8px;gap:14px">'+desglose+'</div></div>';
+}
+
+function mMedias(id){
+  const plan=planActual()||SEM[semanaId(lunesDe(hoyISO()))];
+  const b=plan.bloques.find(x=>x.id===id);if(!b)return;
+  const t=tareaPorId(b.tareaId);
+  const hechas=b.tareaId?horasTarea(b.tareaId):0;
+  const dur=(b.fin-b.ini)/60;
+  let h='<h3>No lo he terminado</h3>'+
+    '<div class="mst">«'+esc(b.nombre)+'»'+(t?' · estimada en '+fmtH(t.horas)+', llevas '+fmtH(hechas)+' registradas':'')+'.</div>';
+  h+='<div class="row" style="margin-bottom:10px">'+
+     '<div class="field" style="flex:1"><label>Horas que has dedicado hoy</label>'+
+     '<input id="mdHechas" type="number" step="0.25" min="0" value="'+dur+'"></div>'+
+     '<div class="field" style="flex:1"><label>Horas que faltan</label>'+
+     '<input id="mdFaltan" type="number" step="0.25" min="0" value="1"></div></div>';
+  h+='<p class="tiny muted" style="margin-bottom:12px">Las horas que faltan se suman a la estimación de la subtarea, así que reaparecerá en el reparto hasta que la des por terminada. Si pones 0, queda cerrada.</p>';
+  h+='<div class="row"><button class="btn primary" data-act="md-ok" data-id="'+id+'">Guardar</button>'+
+     '<button class="btn ghost" data-act="cerrar">Cancelar</button></div>';
+  modal(h);
 }
 /* ============================================================
    SINCRONIZACIÓN CON GOOGLE SHEETS
@@ -3296,7 +3335,7 @@ function fusionarCanalExtra(pid,rem,c){
 /* ============================================================
    VERSIÓN, DESHACER Y APLICACIÓN INSTALABLE
    ============================================================ */
-const VERSION_APP='1.36 · 12/09/2026';
+const VERSION_APP='1.37 · 12/09/2026';
 
 /* ---------- pila de deshacer ---------- */
 var pilaDeshacer=[];
@@ -5719,6 +5758,43 @@ document.addEventListener('click',e=>{
    case 'zoom': D.config.zoomSemana=Number(el.dataset.v);selloCfg('zoomSemana');guardarPronto();render();break;
    case 'mov-si':{const m=window.__mov;cerrar();aplicarMovimiento(m.b,m.plan,m.fecha,m.r,m.tipo);break;}
    case 'mov-no': cerrar();render();break;
+   case 'b-medias': mMedias(id);break;
+   case 'md-ok':{
+     const plan=planActual()||SEM[semanaId(lunesDe(hoyISO()))];
+     const b=plan.bloques.find(x=>x.id===id);if(!b)break;
+     const hechas=num(document.getElementById('mdHechas').value,'horasTarea',0);
+     const faltan=num(document.getElementById('mdFaltan').value,'horasTarea',0);
+     const t=tareaPorId(b.tareaId);
+     const antesT=t?copia(t):null, antesB=copia(b), nses=SES.length;
+     b.estado='hecho';sello(b);
+     if(hechas>0){
+       SES.push({id:uid('s'),tareaId:b.tareaId||null,nombre:b.nombre,proyecto:b.proyecto,
+         fecha:b.fecha,horas:hechas,bloqueId:b.id,autor:autorNombre()});
+     }
+     if(t&&faltan>0){t.horas=Math.round((horasTarea(t.id)+faltan)*100)/100;tocar(t);}
+     if(t&&faltan<=0){t.estado='completada';tocar(t);}
+     const nuevas=SES.slice(nses).map(x=>x.id);
+     cerrar();guardarPronto();render();
+     toast(faltan>0?('Registradas '+fmtH(hechas)+'. Quedan '+fmtH(faltan)+', vuelven al reparto.')
+                   :('Registradas '+fmtH(hechas)+'. Subtarea terminada.'));
+     registrarAccion('Marcado a medias',()=>{
+       restaurar(b,antesB);
+       SES=SES.filter(x=>!nuevas.includes(x.id));
+       if(t&&antesT)restaurar(t,antesT);
+     });
+     break;}
+   case 'replan-resto':{
+     const plan=planActual();
+     if(!plan){toast('Esta semana no está planificada');break;}
+     const foto={bloques:copia(plan.bloques),usadas:plan.usadas,extra:plan.extra,pp:copia(plan.porProyecto||{})};
+     replanificar(plan.lunes,plan.capacidad,plan.diasOff,plan.jornadas);
+     guardarPronto();render();
+     toast('Replanificado de hoy en adelante');
+     registrarAccion('Replanificado lo que queda',()=>{
+       const p2=SEM[semanaId(plan.lunes)];
+       p2.bloques=foto.bloques;p2.usadas=foto.usadas;p2.extra=foto.extra;p2.porProyecto=foto.pp;
+     });
+     break;}
    case 'proj-new': mProyecto(null);break;
    case 'proj-edit': mProyecto(id);break;
    case 'proj-save':{
