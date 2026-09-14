@@ -1711,16 +1711,33 @@ function mDeclarar(){
   const teor=capacidadTeorica(lun);
   const cap=plan?plan.capacidad:Math.round(teor*10)/10;
   let h='<h3>Capacidad de la semana</h3><div class="mst">'+espCorto(lun)+' – '+espCorto(addDays(lun,6))+
-    '. El calendario da '+fmtH(teor)+' teóricas.</div>';
+    '. El calendario da '+fmtH(teor)+' teóricas de lunes a viernes. Las jornadas de obra van aparte y no descuentan de aquí.</div>';
   h+='<div class="row" style="margin-bottom:12px">'+
     '<button class="btn sm" data-act="cap-quick" data-v="'+(teor*0.5).toFixed(1)+'">Floja</button>'+
     '<button class="btn sm" data-act="cap-quick" data-v="'+teor.toFixed(1)+'">Normal</button>'+
     '<button class="btn sm" data-act="cap-quick" data-v="'+(teor*1.6).toFixed(1)+'">Fuerte</button></div>';
   h+='<div class="field" style="margin-bottom:12px"><label>Horas útiles</label><input id="capin" type="number" step="0.5" min="0" value="'+cap+'"></div>';
   h+='<div class="field" style="margin-bottom:14px"><label>Días completos no disponibles</label><div class="row">';
-  for(let i=0;i<7;i++){const f=addDays(lun,i);const on=plan&&plan.diasOff.includes(f);
+  for(let i=0;i<7;i++){const f=addDays(lun,i);const on=(offTmp||[]).includes(f);
     h+='<button class="btn sm '+(on?'':'ghost')+'" data-act="off-toggle" data-f="'+f+'">'+DIAS3[i]+'</button>';}
   h+='</div></div>';
+  const mes=mesDe(lun), restan=cuotaMes(mes)-jornadasUsadas(mes,semanaId(lun));
+  h+='<div class="field" style="margin-bottom:14px"><label>Días de obra esta semana</label><div class="row">';
+  for(let i=0;i<7;i++){
+    const f=addDays(lun,i), on=(jorTmp||[]).includes(f), pas=esPasado(f);
+    h+='<button class="btn sm '+(on?'':'ghost')+'" data-act="jor-toggle" data-f="'+f+'"'+
+       (pas?' disabled style="opacity:.35"':'')+'>'+DIAS3[i]+'</button>';
+  }
+  const nf=(jorTmp||[]).filter(esFinde).length, ns=(jorTmp||[]).length-nf;
+  h+='</div><p class="tiny muted" style="margin-top:6px">'+
+     ((jorTmp||[]).length
+       ? jorTmp.length+' jornada'+(jorTmp.length===1?'':'s')+' de '+fmtH(D.config.jornadaObra.horasTrabajo)+
+         ', más '+fmtH(2*D.config.minCoche/60)+' de coche'+(jorTmp.length===1?'':' cada una')+'. '+
+         (nf&&ns ? nf+' de fin de semana, con cargo a la cuota, y '+ns+' entre semana que te ocupa'+(ns===1?'':'n')+' el día. Te quedan '+Math.max(0,restan-nf)+' de cuota.'
+          : nf ? (nf===1?'Es de fin de semana':'Son de fin de semana')+', con cargo a la cuota: te quedarían '+Math.max(0,restan-nf)+' este mes. No gasta'+(nf===1?'':'n')+' tu capacidad.'
+          : 'Entre semana: no gasta cuota, pero te ocupa el día entero.')
+       : 'Sin jornadas de obra. Te quedan '+restan+' de cuota en '+MESES[Number(mes.slice(5))-1]+'.')+
+     '</p></div>';
   h+='<div class="row"><button class="btn primary" data-act="cap-next">Ver prioridades</button>'+
      '<button class="btn ghost" data-act="cap-ok">Generar sin revisar</button>'+
      '<button class="btn ghost" data-act="cerrar">Cancelar</button></div>';
@@ -3044,7 +3061,7 @@ function fusionarCanalExtra(pid,rem,c){
 /* ============================================================
    VERSIÓN, DESHACER Y APLICACIÓN INSTALABLE
    ============================================================ */
-const VERSION_APP='1.30 · 12/09/2026';
+const VERSION_APP='1.31 · 12/09/2026';
 
 /* ---------- pila de deshacer ---------- */
 var pilaDeshacer=[];
