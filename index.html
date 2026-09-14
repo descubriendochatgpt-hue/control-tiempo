@@ -332,6 +332,10 @@ body.ordenando{cursor:grabbing;user-select:none;-webkit-user-select:none}
   .brand{font-size:13px}
   .rings{grid-template-columns:1fr 1fr}
 }
+
+.obrarow{display:grid;grid-template-columns:1fr 72px 12px;gap:8px;align-items:center;padding:7px 0;border-top:1px solid var(--line);font-size:13px}
+.obrarow .q{display:block;color:var(--muted);font-size:11px;line-height:1.4}
+.obrarow input{padding:4px 6px;font-size:13px;text-align:right}
 </style>
 </head>
 <body>
@@ -453,7 +457,7 @@ const CONFIG_DEF={
   costeKm:0.12,
   kmPorViaje:100,
   minCoche:50,                 // minutos por trayecto
-  jornadaObra:{salida:'08:00',vueltaFin:'19:00',horasTrabajo:8.5},
+  jornadaObra:{salida:'08:00'},   // las horas de cada jornada salen de lo que da ese día
   umbrales:{bajo:8,alto:20},
   equipamiento:{mancuernas:false,bandas:true,barra:true},
   inicioPlanSalud:'2026-10-05', // semana 1 del plan de 6 meses
@@ -579,6 +583,36 @@ function huecosSemana(lunes,diasOff){
   }
   return out.sort((a,b)=>a.fecha<b.fecha?-1:a.fecha>b.fecha?1:a.min-b.min);
 }
+/* Horas que de verdad da un día concreto según tus franjas, descontando
+   lo que ya esté ocupado. Es lo que vale una jornada de obra ese día:
+   no hay ninguna cifra fija. */
+function horasUtilesDia(fecha,ocupados){
+  const d=diaSemana(fecha);
+  let h=0;
+  reglasDe(d,fecha).forEach(r=>{
+    if(r.tipo!=='disponible'&&r.tipo!=='cuota'&&r.tipo!=='excepcional')return;
+    if(r.tipo==='excepcional'&&r.activa===false)return;
+    const ini=toMin(r.ini),fin=toMin(r.fin);
+    let dur=(fin-ini)/60;
+    if(r.tipo==='disponible'&&r.maxHoras)dur=Math.min(dur,r.maxHoras);
+    // los tramos reservados o bloqueados dentro de la franja no cuentan
+    if(r.tipo==='cuota'||r.tipo==='excepcional'){
+      reglasDe(d,fecha).forEach(x=>{
+        if(x.tipo!=='reservado'&&x.tipo!=='bloqueado')return;
+        const a=Math.max(ini,toMin(x.ini)), b=Math.min(fin,toMin(x.fin));
+        if(b>a)dur-=(b-a)/60;
+      });
+    }
+    h+=Math.max(0,dur);
+  });
+  (ocupados||[]).forEach(o=>{if(o.fecha===fecha)h-=(o.fin-o.ini)/60;});
+  return Math.max(0,Math.round(h*100)/100);
+}
+/* Lo que queda para trabajar una vez descontado el coche de ida y vuelta */
+function horasObraDia(fecha,ocupados){
+  const coche=2*D.config.minCoche/60;
+  return Math.max(0,Math.round((horasUtilesDia(fecha,ocupados)-coche)*100)/100);
+}
 function capacidadTeorica(lunes){
   return huecosSemana(lunes,[]).reduce((a,h)=>a+h.horas,0);
 }
@@ -645,24 +679,31 @@ function proponerJornada(lunes,semId){
   }
   return null;
 }
-function bloquesJornada(j){
+function bloquesJornada(j,ocupados){
   const cfg=D.config, vc=cfg.minCoche;
-  const sal=toMin(cfg.jornadaObra.salida)+20;          // 20 min de movilidad antes de salir
+  const d=diaSemana(j.fecha);
+  // primera franja aprovechable del día: de ahí sale la hora de salida
+  const aprov=reglasDe(d,j.fecha).filter(r=>r.tipo==='disponible'||r.tipo==='cuota'||
+    (r.tipo==='excepcional'&&r.activa!==false)).map(r=>toMin(r.ini));
+  const INI=toMin(cfg.diaInicio||'08:00');
+  const primera=aprov.length?Math.min.apply(null,aprov):toMin('09:00');
+  const movilidad=20;                                  // antes de salir
+  let sal=Math.max(INI+movilidad,primera-vc);
+  const horas=(j.horas!==undefined&&j.horas!==null)?j.horas:horasObraDia(j.fecha,ocupados);
+  const trab=Math.max(0,Math.round(horas*60));
   const iniObra=sal+vc;
   const cIni=toMin('15:00'), cFin=toMin('15:30');
-  const trab=Math.round(cfg.jornadaObra.horasTrabajo*60);
-  // ventanas de trabajo, saltando la comida
   const v=[];let queda=trab,cur=iniObra;
-  if(cur<cIni){const t=Math.min(queda,cIni-cur);v.push([cur,cur+t]);queda-=t;cur=cFin;}
-  if(queda>0){v.push([Math.max(cur,cFin),Math.max(cur,cFin)+queda]);}
-  const fin=v[v.length-1][1];
+  if(cur<cIni){const t=Math.min(queda,cIni-cur);if(t>0){v.push([cur,cur+t]);queda-=t;}cur=cFin;}
+  if(queda>0)v.push([Math.max(cur,cFin),Math.max(cur,cFin)+queda]);
+  const fin=v.length?v[v.length-1][1]:iniObra;
   const b=[
    {id:uid('b'),fecha:j.fecha,ini:sal,fin:sal+vc,tipo:'coche',proyecto:'CASA',nombre:'Coche a la obra',
-    estado:'planificado',motivo:D.config.kmPorViaje+' km ida y vuelta. Se contabiliza aparte de las horas de trabajo.'},
+    estado:'planificado',motivo:D.config.kmPorViaje+' km. Se contabiliza aparte de las horas de trabajo.'},
    {id:uid('b'),fecha:j.fecha,ini:fin,fin:fin+vc,tipo:'coche',proyecto:'CASA',nombre:'Coche de vuelta',
     estado:'planificado',motivo:'Vuelta de la obra.'}
   ];
-  return {bloques:b,ventanas:v};
+  return {bloques:b,ventanas:v,horas:trab/60};
 }
 
 /* ---------- Fase B — la cola ---------- */
@@ -816,8 +857,7 @@ function generarPlan(lunes,capacidad,diasOff,opts={}){
   if(jorForzadas)jorForzadas.forEach(j=>{if(!diasOff.includes(j.fecha))jornadas.push(j);});
   else{
     const j=proponerJornada(lunes,semId);
-    const mins=activos().reduce((a,p)=>a+(p.minimo||0),0);
-    if(j&&!diasOff.includes(j.fecha)&&capacidad>=cfg.jornadaObra.horasTrabajo+mins*0.5)jornadas.push(j);
+    if(j&&!diasOff.includes(j.fecha)&&horasObraDia(j.fecha,opts.ocupados)>=2)jornadas.push(j);
   }
   let bloques=bloquesFijos(lunes,diasOff,jornadas);
   let usadas=0;      // capacidad ordinaria consumida
@@ -839,7 +879,7 @@ function generarPlan(lunes,capacidad,diasOff,opts={}){
   });
 
   jornadas.forEach(j=>{
-    const jb=bloquesJornada(j);
+    const jb=bloquesJornada(j,opts.ocupados);
     bloques=bloques.concat(jb.bloques);
     const obras=tareasObraPendientes();
     const ocup=(opts.ocupados||[]).filter(o=>o.fecha===j.fecha).sort((p,q)=>p.ini-q.ini);
@@ -861,7 +901,9 @@ function generarPlan(lunes,capacidad,diasOff,opts={}){
         const fin=cur+Math.round(h*60);
         bloques.push({id:uid('b'),fecha:j.fecha,ini:cur,fin,tipo:'trabajo',proyecto:'CASA',tareaId:o.t.id,
           nombre:o.t.nombre,hito:o.h.nombre,estado:'planificado',
-          motivo:'Jornada completa de obra con cargo a la cuota de '+mesDe(j.fecha)+'. Se agrupan tareas para que el viaje se pague una sola vez.'});
+          motivo:'Obra el '+DIAS[diaSemana(j.fecha)].toLowerCase()+': el día da '+fmtH(horasUtilesDia(j.fecha,opts.ocupados))+
+            ' útiles, '+fmtH(2*D.config.minCoche/60)+' se van en coche y quedan '+fmtH(jb.horas)+' de trabajo.'+
+            (esFinde(j.fecha)?' Con cargo a la cuota de '+mesDe(j.fecha)+'.':' Entre semana: ocupa el día.')});
         if(esFinde(j.fecha))extra+=h;      // finde: sale de la cuota, no de tu capacidad
         else usadas+=h;                      // entre semana: ocupa tu jornada normal
         porProyecto.CASA=(porProyecto.CASA||0)+h;pend-=h;cur=fin;
@@ -870,7 +912,11 @@ function generarPlan(lunes,capacidad,diasOff,opts={}){
     }
     const mes=mesDe(j.fecha),m=parse(j.fecha).getMonth();
     if(m<3||m>9)notas.push({t:'aviso',m:'La jornada de obra del '+esp(j.fecha)+' cae fuera de la ventana meteorológica de abril a octubre. Comprueba la previsión antes de confirmarla.'});
-    notas.push({t:'info',m:'Jornada de obra el '+DIAS[diaSemana(j.fecha)].toLowerCase()+' '+esp(j.fecha)+', '+fmtH(D.config.jornadaObra.horasTrabajo)+' de trabajo por '+fmtH(2*D.config.minCoche/60)+' de coche. Cuota de '+mes+': '+(jornadasUsadas(mes,semId)+1)+' de '+cuotaMes(mes)+'.'});
+    notas.push({t:'info',m:'Obra el '+DIAS[diaSemana(j.fecha)].toLowerCase()+' '+esp(j.fecha)+': '+fmtH(jb.horas)+
+      ' de trabajo, las que da ese día, por '+fmtH(2*D.config.minCoche/60)+' de coche.'+
+      (esFinde(j.fecha)?' Cuota de '+mes+': '+(jornadasUsadas(mes,semId)+1)+' de '+cuotaMes(mes)+'.':' Entre semana, sale de tu capacidad.')});
+    if(jb.horas<=0)notas.push({t:'aviso',m:'El '+DIAS[diaSemana(j.fecha)].toLowerCase()+' '+esp(j.fecha)+
+      ' no queda tiempo útil para la obra una vez descontado el coche. Revisa tus franjas de ese día o elige otro.'});
   });
 
   // cola y huecos
@@ -1722,22 +1768,36 @@ function mDeclarar(){
     h+='<button class="btn sm '+(on?'':'ghost')+'" data-act="off-toggle" data-f="'+f+'">'+DIAS3[i]+'</button>';}
   h+='</div></div>';
   const mes=mesDe(lun), restan=cuotaMes(mes)-jornadasUsadas(mes,semanaId(lun));
-  h+='<div class="field" style="margin-bottom:14px"><label>Días de obra esta semana</label><div class="row">';
+  h+='<div class="field" style="margin-bottom:10px"><label>Días de obra esta semana</label><div class="row">';
   for(let i=0;i<7;i++){
     const f=addDays(lun,i), on=(jorTmp||[]).includes(f), pas=esPasado(f);
     h+='<button class="btn sm '+(on?'':'ghost')+'" data-act="jor-toggle" data-f="'+f+'"'+
        (pas?' disabled style="opacity:.35"':'')+'>'+DIAS3[i]+'</button>';
   }
-  const nf=(jorTmp||[]).filter(esFinde).length, ns=(jorTmp||[]).length-nf;
-  h+='</div><p class="tiny muted" style="margin-top:6px">'+
-     ((jorTmp||[]).length
-       ? jorTmp.length+' jornada'+(jorTmp.length===1?'':'s')+' de '+fmtH(D.config.jornadaObra.horasTrabajo)+
-         ', más '+fmtH(2*D.config.minCoche/60)+' de coche'+(jorTmp.length===1?'':' cada una')+'. '+
-         (nf&&ns ? nf+' de fin de semana, con cargo a la cuota, y '+ns+' entre semana que te ocupa'+(ns===1?'':'n')+' el día. Te quedan '+Math.max(0,restan-nf)+' de cuota.'
-          : nf ? (nf===1?'Es de fin de semana':'Son de fin de semana')+', con cargo a la cuota: te quedarían '+Math.max(0,restan-nf)+' este mes. No gasta'+(nf===1?'':'n')+' tu capacidad.'
-          : 'Entre semana: no gasta cuota, pero te ocupa el día entero.')
-       : 'Sin jornadas de obra. Te quedan '+restan+' de cuota en '+MESES[Number(mes.slice(5))-1]+'.')+
-     '</p></div>';
+  h+='</div>';
+  if((jorTmp||[]).length){
+    h+='<div style="margin-top:8px">';
+    jorTmp.slice().sort().forEach(f=>{
+      const auto=horasObraDia(f);
+      const v=(jorHoras&&jorHoras[f]!==undefined)?jorHoras[f]:auto;
+      h+='<div class="obrarow"><span><b>'+DIAS[diaSemana(f)]+' '+espCorto(f)+'</b>'+
+        '<span class="q">'+(esFinde(f)?'con cargo a la cuota, fuera de tu capacidad':'entre semana, sale de tu capacidad')+
+        ' · el día da '+fmtH(auto)+' tras el coche</span></span>'+
+        '<input type="number" step="0.5" min="0" max="14" value="'+v+'" data-act="jor-horas" data-f="'+f+'"><span class="pc">h</span></div>';
+    });
+    const nf=jorTmp.filter(esFinde).length;
+    const tot=jorTmp.reduce((a,f)=>a+((jorHoras&&jorHoras[f]!==undefined)?jorHoras[f]:horasObraDia(f)),0);
+    h+='<p class="tiny muted" style="margin-top:6px">'+fmtH(tot)+' de obra en total, más '+
+      fmtH(jorTmp.length*2*D.config.minCoche/60)+' de coche. '+
+      (nf?nf+' de fin de semana: te quedarían '+Math.max(0,restan-nf)+' de cuota este mes. ':'')+
+      (jorTmp.length-nf?(jorTmp.length-nf)+' entre semana, que ocupa'+((jorTmp.length-nf)===1?'':'n')+' ese día entero. ':'')+
+      'Si necesitas más horas ese día, cámbialas arriba.</p>';
+    h+='</div>';
+  }else{
+    h+='<p class="tiny muted" style="margin-top:6px">Sin jornadas de obra. Te quedan '+restan+
+       ' de cuota en '+MESES[Number(mes.slice(5))-1]+'.</p>';
+  }
+  h+='</div>';
   h+='<div class="row"><button class="btn primary" data-act="cap-next">Ver prioridades</button>'+
      '<button class="btn ghost" data-act="cap-ok">Generar sin revisar</button>'+
      '<button class="btn ghost" data-act="cerrar">Cancelar</button></div>';
@@ -2431,7 +2491,7 @@ function notasSemana(lunes){
    ORDEN DE PRIORIDADES ANTES DE PLANIFICAR
    El motor propone; tú reordenas, quitas y decides dónde cae el corte.
    ============================================================ */
-var jorTmp=[];
+var jorTmp=[], jorHoras={};
 function abrirCola(lunes,cap,off,jornadas){
   const {cola,notas}=construirCola(lunes,cap);
   const jor=(jornadas||[]).filter(j=>!off.includes(j.fecha));
@@ -2450,8 +2510,9 @@ function mCola(){
   const util=S.cap*(1-D.config.margenPct/100);
   const jorFinde=S.jorOff?0:S.jor.filter(j=>esFinde(j.fecha)).length;
   const jorSemana=S.jorOff?0:S.jor.filter(j=>!esFinde(j.fecha)).length;
-  const jorH=D.config.jornadaObra.horasTrabajo*jorFinde;          // lo que va aparte
-  const jorDentro=D.config.jornadaObra.horasTrabajo*jorSemana;    // lo que sí resta
+  const hDe=j=>(j.horas!==undefined&&j.horas!==null)?j.horas:horasObraDia(j.fecha);
+  const jorH=S.jorOff?0:S.jor.filter(j=>esFinde(j.fecha)).reduce((a,j)=>a+hDe(j),0);        // lo que va aparte
+  const jorDentro=S.jorOff?0:S.jor.filter(j=>!esFinde(j.fecha)).reduce((a,j)=>a+hDe(j),0);  // lo que sí resta
   let h='<h3>Orden de prioridades</h3>'+
     '<div class="mst">'+espCorto(S.lunes)+' – '+espCorto(addDays(S.lunes,6))+' · '+fmtH(S.cap)+
     ' declaradas, '+fmtH(util)+' repartibles tras el margen. Cambia el orden si esta semana tus prioridades son otras.</div>';
@@ -2467,7 +2528,7 @@ function mCola(){
        ' · '+(findes===S.jor.length?'<b style="color:var(--ok)">no gasta tu capacidad</b>'
              :findes?'lo de finde no gasta capacidad; lo de entre semana sí'
              :'<b style="color:var(--warn)">ocupa tu jornada normal</b>')+'</span></span>'+
-       '<span class="colabtns"><span class="h">'+fmtH(jorH||D.config.jornadaObra.horasTrabajo)+'</span>'+
+       '<span class="colabtns"><span class="h">'+fmtH(jorH+jorDentro)+'</span>'+
        '<button data-act="jor-off" title="Quitar">'+(S.jorOff?'+':'×')+'</button></span></div>';
   }
 
@@ -3061,7 +3122,7 @@ function fusionarCanalExtra(pid,rem,c){
 /* ============================================================
    VERSIÓN, DESHACER Y APLICACIÓN INSTALABLE
    ============================================================ */
-const VERSION_APP='1.31 · 12/09/2026';
+const VERSION_APP='1.33 · 12/09/2026';
 
 /* ---------- pila de deshacer ---------- */
 var pilaDeshacer=[];
@@ -4254,7 +4315,7 @@ function simularProyecto(p,opts){
   const pocas=muestras.length<6;
   const teorica=capacidadTeorica(lunesDe(hoyISO()))*0.85*((p.pct||0)/100||0.3);
   const pend=pendienteProyecto(p);
-  const jorH=D.config.jornadaObra.horasTrabajo;
+  const jorH=horasObraDia(addDays(lunesDe(hoyISO()),5))||6;   // lo que da un sábado tuyo
   const N=opts.n||1000, TOPE=opts.tope||160;
   const fechas=[];
   for(let k=0;k<N;k++){
@@ -5137,6 +5198,7 @@ document.addEventListener('change',e=>{
     cfgObra().umbrales[k]=num(el.value,cl,cfgObra().umbrales[k]);selloCfg('obra');guardarPronto();render();}
   if(a==='pano-nom'){cfgObra().panos[Number(el.dataset.i)].nombre=texto(el.value,40)||'Paño';selloCfg('obra');guardarPronto();}
   if(a==='pano-ori'){cfgObra().panos[Number(el.dataset.i)].orientacion=num(el.value,'orientacion',180);selloCfg('obra');guardarPronto();}
+  if(a==='jor-horas'){jorHoras[el.dataset.f]=num(el.value,'capacidad',0);mDeclarar();}
   if(a==='ci-min'){cfgCierre().minutos=num(el.value,'minutosCierre',5);guardarPronto();render();}
   if(a==='sim-campo'){leerSim();mSimulador();return;}
   if(a==='ind-nom'){const p=P(el.dataset.p),i=indic(p);
@@ -5206,21 +5268,27 @@ document.addEventListener('click',e=>{
        const j=proponerJornada(semanaVista,semanaId(semanaVista));
        return j?[j.fecha]:[];
      })();
+     jorHoras={};
+     jorTmp.forEach(f=>{
+       const g=pa&&(pa.jornadas||[]).find(x=>x.fecha===f);
+       jorHoras[f]=(g&&g.horas!==undefined)?g.horas:horasObraDia(f);
+     });
      mDeclarar();break;}
    case 'jor-toggle':{const f=el.dataset.f;
      if(esPasado(f)){toast('Ese día ya ha pasado');break;}
-     jorTmp=(jorTmp||[]).includes(f)?jorTmp.filter(x=>x!==f):(jorTmp||[]).concat([f]);
+     if((jorTmp||[]).includes(f)){jorTmp=jorTmp.filter(x=>x!==f);delete jorHoras[f];}
+     else{jorTmp=(jorTmp||[]).concat([f]);jorHoras[f]=horasObraDia(f);}
      mDeclarar();break;}
    case 'cap-quick': $('#capin').value=el.dataset.v;break;
    case 'off-toggle':{const f=el.dataset.f;
      if(offTmp.includes(f)){offTmp=offTmp.filter(x=>x!==f);el.classList.add('ghost');}
      else{offTmp.push(f);el.classList.remove('ghost');}break;}
    case 'cap-ok':{const c=num($('#capin').value,'capacidad',0);
-     replanificar(semanaVista,c,offTmp||[],(jorTmp||[]).map(f=>({fecha:f,mes:mesDe(f)})));
+     replanificar(semanaVista,c,offTmp||[],(jorTmp||[]).map(f=>({fecha:f,mes:mesDe(f),horas:jorHoras[f]})));
      cerrar();guardarPronto();render();toast('Plan generado');break;}
    case 'cap-next':{const c=num($('#capin').value,'capacidad',0);
      if(c<=0){toast('Declara cuántas horas tienes');break;}
-     abrirCola(semanaVista,c,offTmp||[],(jorTmp||[]).map(f=>({fecha:f,mes:mesDe(f)})));break;}
+     abrirCola(semanaVista,c,offTmp||[],(jorTmp||[]).map(f=>({fecha:f,mes:mesDe(f),horas:jorHoras[f]})));break;}
    case 'cola-up': case 'cola-down':{
      const S=window.__prio,i=Number(el.dataset.i),j=a==='cola-up'?i-1:i+1;
      if(j<0||j>=S.cola.length)break;
