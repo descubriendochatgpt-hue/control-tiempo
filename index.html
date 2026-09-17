@@ -355,6 +355,9 @@ body.ordenando{cursor:grabbing;user-select:none;-webkit-user-select:none}
 
 .colarow .pos{display:inline-block;background:var(--surface2);border-radius:4px;padding:0 5px;margin-right:6px;
   font-size:10px;color:var(--faint);font-variant-numeric:tabular-nums}
+
+.confrow.hecho{border-color:var(--ok);opacity:.75}
+.confrow .btn.primary{background:var(--ok);border-color:var(--ok);color:#08110d}
 </style>
 </head>
 <body>
@@ -676,15 +679,21 @@ function jornadasUsadas(mes,excluirSemana){
   return n;
 }
 const esFinde=f=>diaSemana(f)>=5;
+/* Tareas que hay que hacer en la obra, en el mismo orden que tienen
+   en la vista Proyectos: primero los hitos de arriba, y dentro, sus
+   subtareas de arriba abajo. */
 function tareasObraPendientes(){
   const c=P('CASA');if(!c||!c.activo)return[];
   const out=[];
-  c.hitos.forEach(h=>h.tareas.forEach(t=>{
-    const pend=t.horas-horasTarea(t.id);
+  c.hitos.forEach((h,ih)=>h.tareas.forEach((t,it)=>{
+    if(t.rec)return;
+    const pend=Math.round((t.horas-horasTarea(t.id))*100)/100;
     if(t.asignado&&t.asignado!==autorNombre())return;
-    if(t.desplaza&&t.estado!=='completada'&&pend>0.25)out.push({t,h,pend,proyecto:'CASA'});
+    if(t.estado==='completada'||pend<=0.25)return;
+    if(!t.desplaza&&t.contexto!=='obra')return;
+    out.push({t,h,pend,proyecto:'CASA',orden:ih*1000+it});
   }));
-  return out;
+  return out.sort((a,b)=>a.orden-b.orden);
 }
 function proponerJornada(lunes,semId){
   if(!D.config.autoJornadaObra)return null;
@@ -859,8 +868,8 @@ function construirCola(lunes,capacidad,cubierto){
   libres.forEach(p=>{
     const cuota=capacidad*(p.pct||0)/totalPct;
     let queda=cuota;
-    tar.filter(t=>t.proyecto===p.id).sort(porOrden).forEach(t=>{
-      if(queda<=0.25)return;
+    tar.filter(t=>t.proyecto===p.id&&!t.desplaza&&t.contexto!=='obra').sort(porOrden).forEach(t=>{
+      if(queda<=0.25)return;   // lo de obra va por su jornada, no gasta cuota ordinaria
       const c=empujar(Object.assign({},t,{prio:5,razon:'Reparto ordinario ('+p.pct+' % a '+p.nombre+')'}),
         Math.min(queda,t.pend),t.pend);
       if(c)queda-=c.pend;
@@ -898,6 +907,8 @@ function generarPlan(lunes,capacidad,diasOff,opts={}){
     const j=proponerJornada(lunes,semId);
     if(j&&!diasOff.includes(j.fecha)&&horasObraDia(j.fecha,opts.ocupados)>=2)jornadas.push(j);
   }
+  // siempre en orden de fecha: el primer día de obra ataca las primeras tareas
+  jornadas.sort((a,b)=>a.fecha<b.fecha?-1:a.fecha>b.fecha?1:0);
   let bloques=bloquesFijos(lunes,diasOff,jornadas);
   let usadas=0;      // capacidad ordinaria consumida
   let extra=0;       // horas fuera de ella: jornadas de obra y franjas excepcionales
@@ -972,12 +983,27 @@ function generarPlan(lunes,capacidad,diasOff,opts={}){
   const sinSitio=[];
   const proyDia={};
 
-  for(const item of cola){
+  /* Primero lo que exige la franja comercial, que es única al día: si no
+     se coloca ahora, se la lleva cualquier tarea que no la necesitaba.
+     El resto mantiene el orden de prioridades tal cual. */
+  const escasa=it=>{
+    const com=(it.etiquetas||[]).includes('comercial');
+    if(com&&it.publica)return 0;   // exige franja comercial y además tiene fecha
+    if(com)return 1;               // exige franja comercial
+    return 2;                      // el resto, por orden de prioridad
+  };
+  const colaOrden=cola.slice().sort((a,b)=>escasa(a)-escasa(b));
+  for(const item of colaOrden){
     if(usadas>=util-0.25){sinSitio.push(item);continue;}
     let pend=item.pend;
     if(item.desplaza){sinSitio.push(item);continue;}
-    const orden=item.publica?huecos.slice().sort((a,b)=>a.fecha<b.fecha?-1:a.fecha>b.fecha?1:a.min-b.min)
-      :huecos.slice().sort((a,b)=>((cargaDia[a.fecha]||0)-(cargaDia[b.fecha]||0))||(a.fecha<b.fecha?-1:a.fecha>b.fecha?1:0)||a.min-b.min);
+    /* Un hueco «comercial» o que admite salir a una cita es escaso: solo
+       hay uno al día. Si la tarea no lo necesita, se deja para quien sí. */
+    const coste=hu=>((hu.etiquetas||[]).includes('comercial')&&!(item.etiquetas||[]).includes('comercial'))?1:0;
+    const orden=item.publica
+      ? huecos.slice().sort((a,b)=>(coste(a)-coste(b))||(a.fecha<b.fecha?-1:a.fecha>b.fecha?1:0)||a.min-b.min)
+      : huecos.slice().sort((a,b)=>((cargaDia[a.fecha]||0)-(cargaDia[b.fecha]||0))||(coste(a)-coste(b))||
+          (a.fecha<b.fecha?-1:a.fecha>b.fecha?1:0)||a.min-b.min);
     for(const hu of orden){
       if(pend<=0.25)break;
       if(usadas>=util-0.25)break;
@@ -994,7 +1020,8 @@ function generarPlan(lunes,capacidad,diasOff,opts={}){
       if(typeof chocaExterno==='function'&&chocaExterno(hu.fecha,ini,fin))continue;
       if((opts.ocupados||[]).some(o=>o.fecha===hu.fecha&&o.ini<fin&&o.fin>ini))continue;
       bloques.push({id:uid('b'),fecha:hu.fecha,ini,fin,tipo:'trabajo',proyecto:item.proyecto,
-        tareaId:item.recurrente?null:item.id,recurrenteId:item.rid||null,nombre:item.nombre,
+        tareaId:(item.recurrente&&item.rid)?null:item.id,   // las recurrentes de subtarea sí llevan su id
+        recurrenteId:item.rid||null,nombre:item.nombre,
         hito:item.hitoNombre||null,quien:item.asignado||null,
         estado:'planificado',deudaId:item.deudaId||null,
         motivo:item.razon+'. Colocada en «'+hu.nombre+'» porque admite '+(item.etiquetas.join(', ')||'cualquier contexto')+'.'});
@@ -3394,7 +3421,7 @@ function fusionarCanalExtra(pid,rem,c){
 /* ============================================================
    VERSIÓN, DESHACER Y APLICACIÓN INSTALABLE
    ============================================================ */
-const VERSION_APP='1.40 · 12/09/2026';
+const VERSION_APP='1.42 · 12/09/2026';
 
 /* ---------- pila de deshacer ---------- */
 var pilaDeshacer=[];
@@ -3571,13 +3598,14 @@ function construirMapa(){
 function fijarMapa(){syncCfg().mapa=construirMapa();}
 
 function resolver(loc,rem,campos,clave,etiqueta,conf,res){
+  /* la clave viaja con el conflicto para poder fijar la referencia al resolverlo */
   const la=loc.actualizado||VIEJO, ra=rem.actualizado||VIEJO;
   if(iguales(loc,rem,campos)){if(ra>la)loc.actualizado=ra;return;}
   const ba=mapaBase[clave];
   const cambioAqui = ba===undefined ? true : la!==ba;
   const cambioAlla = ba===undefined ? true : ra!==ba;
   if(cambioAqui&&cambioAlla){
-    conf.push({etiqueta,campos,loc,rem,
+    conf.push({etiqueta,campos,loc,rem,clave,
       resumen:{mio:resumenCampos(loc,campos),suyo:resumenCampos(rem,campos)}});
     return;
   }
@@ -3648,7 +3676,14 @@ function fusionarPersonal(rem){
         if(enterrado(rb.id,rb.actualizado))return;
         lw.bloques.push(JSON.parse(JSON.stringify(rb)));res.cambios++;return;
       }
-      resolver(lb,rb,CAMPOS_BLOQUE,lb.id,'Bloque «'+(lb.nombre||'')+'»',conf,res);
+      // Un bloque que ha generado el planificador no es una decisión tuya:
+      // si difiere, gana el más reciente y no se pregunta nada.
+      const autom=(lb.origen!=='manual'&&lb.estado!=='hecho'&&rb.origen!=='manual'&&rb.estado!=='hecho');
+      if(autom){
+        if((rb.actualizado||VIEJO)>(lb.actualizado||VIEJO)){copiar(lb,rb,CAMPOS_BLOQUE);res.cambios++;}
+      }else{
+        resolver(lb,rb,CAMPOS_BLOQUE,lb.id,'Bloque «'+(lb.nombre||'')+'»',conf,res);
+      }
     });
     lw.bloques=(lw.bloques||[]).filter(b=>!enterrado(b.id,b.actualizado));
   });
@@ -3700,11 +3735,15 @@ function mConflictos(){
   let h='<h3>'+n+' '+(n===1?'cambio a decidir':'cambios a decidir')+'</h3>'+
     '<div class="mst">Estas piezas se han tocado en los dos dispositivos desde la última sincronización. Todo lo demás ya se ha fusionado sin tocar nada.</div>';
   conflictosPend.forEach((c,i)=>{
-    h+='<div class="confrow"><b>'+esc(c.etiqueta)+'</b>'+
+    const r=c.resuelto;
+    h+='<div class="confrow'+(r?' hecho':'')+'"><b>'+esc(c.etiqueta)+'</b>'+
+      (r?'<span class="tiny" style="color:var(--ok)"> · te quedas con '+(r==='mio'?'lo de aquí':'lo de allí')+'</span>':'')+
       '<div class="opt"><span class="tiny muted">Este dispositivo</span><span>'+esc(c.resumen.mio)+'</span>'+
-      '<button class="btn sm" data-act="conf-el" data-i="'+i+'" data-v="mio">Quedarme con esta</button></div>'+
+      '<button class="btn sm'+(r==='mio'?' primary':'')+'" data-act="conf-el" data-i="'+i+'" data-v="mio">'+
+      (r==='mio'?'Elegida':'Quedarme con esta')+'</button></div>'+
       '<div class="opt"><span class="tiny muted">La otra copia</span><span>'+esc(c.resumen.suyo)+'</span>'+
-      '<button class="btn sm" data-act="conf-el" data-i="'+i+'" data-v="suyo">Quedarme con esta</button></div></div>';
+      '<button class="btn sm'+(r==='suyo'?' primary':'')+'" data-act="conf-el" data-i="'+i+'" data-v="suyo">'+
+      (r==='suyo'?'Elegida':'Quedarme con esta')+'</button></div></div>';
   });
   h+='<div class="row" style="margin-top:12px"><button class="btn primary" data-act="conf-fin">Aplicar y sincronizar</button>'+
      '<button class="btn ghost" data-act="conf-todo" data-v="mio">Todo lo de aquí</button>'+
@@ -3721,6 +3760,9 @@ function resolverConflicto(i,v){
     if(c.sello)selloCfg(c.sello);
     else c.loc.actualizado=AHORA();
   }
+  // la referencia se pone al día: esta pieza ya está decidida
+  const m=syncCfg().mapa;
+  if(m&&c.clave)m[c.clave]=c.sello?D.config.sellos[c.sello]:c.loc.actualizado;
   c.resuelto=v;
 }
 
@@ -5747,10 +5789,10 @@ document.addEventListener('click',e=>{
    case 'copia-rest': mConfirmarRestaurar(el.dataset.r,el.dataset.f);break;
    case 'copia-ok': restaurarCopia(el.dataset.r);break;
    case 'conf-el': resolverConflicto(Number(el.dataset.i),el.dataset.v);mConflictos();break;
-   case 'conf-todo': conflictosPend.forEach((c,i)=>resolverConflicto(i,el.dataset.v));mConflictos();break;
-   case 'conf-fin':{
-     conflictosPend.forEach((c,i)=>{if(!c.resuelto)resolverConflicto(i,'mio');});
-     conflictosPend=[];cerrar();guardar(false).then(()=>{sucio=true;sincronizar(true);});break;}
+   case 'conf-todo':
+     conflictosPend.forEach((c,i)=>resolverConflicto(i,el.dataset.v));
+     cerrarConflictos();break;
+   case 'conf-fin': cerrarConflictos();break;
    case 'cierre': mCierre();break;
    case 'ci-hecho':{const b=todosBloques().find(x=>x.id===id);
      if(b.estado==='hecho'){b.estado='planificado';SES=SES.filter(s=>s.bloqueId!==b.id);}
@@ -6067,6 +6109,19 @@ function copiaNombre(n,existentes){
   if(!existentes.includes(base+' (copia)'))return base+' (copia)';
   for(let i=2;i<50;i++)if(!existentes.includes(base+' (copia '+i+')'))return base+' (copia '+i+')';
   return base+' (copia)';
+}
+
+/* Cierra los conflictos aplicando lo elegido y SUBE el resultado.
+   No se vuelve a fusionar: si no, la misma pieza volvería a preguntarse. */
+function cerrarConflictos(){
+  conflictosPend.forEach((c,i)=>{if(!c.resuelto)resolverConflicto(i,'mio');});
+  const n=conflictosPend.length;
+  conflictosPend=[];
+  cerrar();
+  guardar(false).then(()=>syncSubir()).then(()=>{
+    render();
+    toast(n+' '+(n===1?'cambio resuelto y subido':'cambios resueltos y subidos'));
+  }).catch(()=>toast('Resuelto, pero no se ha podido subir todavía'));
 }
 
 /* ---------- render ---------- */
