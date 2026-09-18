@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Centro de mando">
+  <rect width="64" height="64" rx="14" fill="#171C22"/>
+  <circle cx="32" cy="32" r="21" fill="none" stroke="#2B333C" stroke-width="6"/>
+  <path d="M32 11a21 21 0 1 1-18.2 31.5" fill="none" stroke="#3E86B8" stroke-width="6" stroke-linecap="round"/>
+  <g fill="#E8ECEF">
+    <rect x="22" y="27" width="4" height="10" rx="1"/>
+    <rect x="30" y="23" width="4" height="18" rx="1"/>
+    <rect x="38" y="27" width="4" height="10" rx="1"/>
+  </g>
+</svg>
