@@ -15,7 +15,7 @@ datos y usuarios) · Vercel (publicación). Todo tiene plan gratuito.
 |------|-------------|--------|
 | 1 | Estructura del proyecto y esquema de base de datos | ✅ Hecha |
 | 2 | Inicio de sesión, roles admin/empleado, gestión de usuarios, panel básico | ✅ Hecha |
-| 3 | Clientes (ficha, filtros, interacciones) y pipeline kanban | ⏳ Pendiente |
+| 3 | Clientes (ficha, filtros, interacciones) y pipeline kanban | ✅ Hecha |
 | 4 | Holded: sincronizar contactos y generar/consultar facturas | ⏳ Pendiente |
 
 ---
@@ -39,8 +39,8 @@ crm/
 │       └── (app)/              ← zona privada (requiere sesión)
 │           ├── layout.tsx      ← menú lateral común
 │           ├── page.tsx        ← /          Panel
-│           ├── clientes/       ← /clientes  (Fase 3)
-│           ├── pipeline/       ← /pipeline  (Fase 3)
+│           ├── clientes/       ← /clientes, /clientes/nuevo, /clientes/[id] (ficha)
+│           ├── pipeline/       ← /pipeline (kanban), /pipeline/nueva, /pipeline/[id]
 │           └── usuarios/       ← /usuarios  (solo admin)
 │   (Fase 4 añadirá src/lib/holded/ con la conexión a Holded)
 └── .env.example                ← plantilla de claves secretas
@@ -69,6 +69,23 @@ lineas_negocio ─┬─< clientes >── perfiles (responsable)
 **Permisos (los aplica la propia base de datos):** el admin ve todo; un
 empleado solo ve los clientes y oportunidades de los que es responsable; un
 usuario dado de baja no ve nada y no puede entrar.
+
+---
+
+## Cómo funciona (Fase 3)
+
+- **Clientes**: listado con buscador y filtros por línea, estado y responsable
+  (los filtros quedan en la dirección de la página, puedes guardarla en
+  favoritos). En la ficha: datos, cambio rápido de estado, oportunidades del
+  cliente e histórico de interacciones (llamadas, emails, reuniones…).
+- **Pipeline**: tablero con 5 columnas. Arrastra una tarjeta para cambiar de
+  etapa (en el móvil, usa el desplegable de la tarjeta). Al pasar a "Perdido"
+  pregunta el motivo.
+- **Todo cambio de estado o etapa queda anotado solo** en el histórico del cliente.
+- **Facturación estimada** del panel = suma de las oportunidades abiertas
+  (nuevo, contactado, propuesta). En la Fase 4 se añadirá lo facturado real.
+- Un empleado siempre es el responsable de lo que crea; solo el admin puede
+  reasignar clientes y oportunidades, y solo el admin puede eliminar clientes.
 
 ---
 

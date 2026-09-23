@@ -16,6 +16,8 @@ export async function iniciarSesion(
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error?.code === "user_banned")
+    return { error: "Tu usuario está dado de baja. Habla con un administrador." };
   if (error) return { error: "Email o contraseña incorrectos." };
 
   redirect("/");

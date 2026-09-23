@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ETIQUETA_ROL, type Perfil } from "@/lib/tipos";
 import { cambiarActivo, cambiarRol } from "./actions";
 import { FormularioAlta } from "./formulario-alta";
+import { BotonConfirmar } from "@/components/boton-confirmar";
 
 export default async function UsuariosPage() {
   const yo = await requireAdmin();
@@ -60,9 +61,12 @@ export default async function UsuariosPage() {
                       "Activo"
                     ) : (
                       <form action={cambiarActivo.bind(null, u.id, !u.activo)}>
-                        <button className="btn-secundario">
+                        <BotonConfirmar
+                          mensaje={u.activo ? `¿Dar de baja a ${u.nombre}? No podrá entrar al CRM.` : `¿Reactivar a ${u.nombre}?`}
+                          className="btn-secundario"
+                        >
                           {u.activo ? "Dar de baja" : "Reactivar"}
-                        </button>
+                        </BotonConfirmar>
                       </form>
                     )}
                   </td>

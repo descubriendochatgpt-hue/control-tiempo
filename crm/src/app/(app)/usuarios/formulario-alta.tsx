@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef } from "react";
+import { enviarSinVaciar } from "@/lib/enviar-formulario";
 import { crearUsuario, type EstadoFormulario } from "./actions";
 
 export function FormularioAlta() {
@@ -15,7 +16,7 @@ export function FormularioAlta() {
   }, [estado]);
 
   return (
-    <form ref={form} action={accion} className="grid gap-3 md:grid-cols-5 md:items-end">
+    <form ref={form} onSubmit={enviarSinVaciar(accion)} className="grid gap-3 md:grid-cols-5 md:items-end">
       <label className="block">
         <span className="text-xs font-medium text-slate-600">Nombre</span>
         <input name="nombre" required className="input mt-1" />

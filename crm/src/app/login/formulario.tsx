@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { enviarSinVaciar } from "@/lib/enviar-formulario";
 import { iniciarSesion, type EstadoLogin } from "./actions";
 
 export function FormularioLogin({ avisoInicial }: { avisoInicial?: string }) {
@@ -10,7 +11,7 @@ export function FormularioLogin({ avisoInicial }: { avisoInicial?: string }) {
   );
 
   return (
-    <form action={accion} className="space-y-4">
+    <form onSubmit={enviarSinVaciar(accion)} className="space-y-4">
       <label className="block">
         <span className="text-sm font-medium text-slate-700">Email</span>
         <input
